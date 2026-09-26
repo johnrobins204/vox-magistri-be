@@ -3,3 +3,31 @@ venv/
 env/
 .venv/
 ENV/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+venv-dnd-server/
+.env/
+.venv/
+
+# Editor cruft
+.vscode/
+.idea/
+
+# Local data
+*.db
+dev.db
+logs/
+
+# Node frontend (if applicable)
+node_modules/
+
+# Corpus output
+corpus.txt
+corpus.txt.tmp.*
