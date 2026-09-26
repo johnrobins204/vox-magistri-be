@@ -185,7 +185,7 @@ async def post_message(
         )
 
     # Optionally compute queue position if inference exposes it (best-effort)
-    queue_pos = getattr(inference, "queue_position", None)
+    queue_pos = inference.queue_position(message_id)
     response.headers["Location"] = f"/api/v1/sessions/{session_id}/messages/{message_id}"
     return {"message_id": message_id, "status": "queued", "queue_position": queue_pos}
 
