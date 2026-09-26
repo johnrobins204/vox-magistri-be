@@ -1,9 +1,9 @@
 # app/factory.py
-from api.v1 import session
+from api.v1 import sessions, intelligence, ws
 from app.deps import set_services
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from services.logger import get_logger  # or from services.logger import get_logger
+from services.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -26,11 +26,16 @@ def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Include routers
-    app.include_router(session.router)
-    app.include_router(admin.router)
+    # ------------------------------------------------------------
+    # Include Routers (v1 API)
+    # ------------------------------------------------------------
+    app.include_router(sessions.router)       # /api/v1/sessions/...
+    app.include_router(intelligence.router)   # /api/v1/intel/...
+    app.include_router(ws.router)             # /api/v1/ws/...
 
+    # ------------------------------------------------------------
     # Startup hook: optional warmup
+    # ------------------------------------------------------------
     @app.on_event("startup")
     async def _on_startup():
         logger.info("App startup: checking services")
@@ -40,7 +45,9 @@ def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
         else:
             logger.info("Inference model not loaded or not provided")
 
+    # ------------------------------------------------------------
     # Shutdown hook: graceful cleanup
+    # ------------------------------------------------------------
     @app.on_event("shutdown")
     async def _on_shutdown():
         logger.info("App shutdown: cleaning up services")
