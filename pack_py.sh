@@ -10,8 +10,8 @@ count=0
 # pre-check tools
 command -v python3 >/dev/null 2>&1 || PY_OK=0 && PY_OK=1
 
-find . -path "./$OUT" -prune -o -type f -print0 | while IFS= read -r -d '' f; do
-  case "$(printf '%s' "$f" | tr '[:upper:]' '[:lower:]')" in
+git ls-files -z | while IFS= read -r -d '' f; do
+  case "${f,,}" in
     *.py|*.md)
       rel="${f#./}"
       size=$(wc -c < "$f" 2>/dev/null || echo 0)
@@ -21,6 +21,8 @@ find . -path "./$OUT" -prune -o -type f -print0 | while IFS= read -r -d '' f; do
         sha=$(shasum -a256 "$f" | awk '{print $1}')
       elif command -v python3 >/dev/null 2>&1; then
         sha=$(python3 - <<'PY' "$f"
+
+        
 import hashlib,sys
 h=hashlib.sha256()
 with open(sys.argv[1],"rb") as fh:
