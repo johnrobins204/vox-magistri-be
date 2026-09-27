@@ -75,12 +75,6 @@ async def get_message(
     logger.debug("get_message: message not found", extra={"session_id": session_id, "message_id": message_id})
     raise HTTPException(status_code=404, detail="Message not found")
 
-
-
-@router.get(
-    "/sessions/{session_id}/messages/{message_id}/status",
-    dependencies=[Depends(require_local_token)],
-)
 async def get_message_status(
     session_id: str,
     message_id: str,

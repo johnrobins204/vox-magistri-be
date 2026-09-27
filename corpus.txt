@@ -133,8 +133,261 @@ def snapshot_session(
 ===FILE_END===
 
 ===FILE_START===
-{"path":"api/v1/sessions.py","size":0,"sha256":""}
+{"path":"api/v1/session.py","size":9318,"sha256":"8db440e7771d5b8b7a4f77b981571f710cf07c3d2919e6e11bdcf0af8ebce131"}
 ===CONTENT===
+# app/api/v1/session.py (top imports)
+from typing import Annotated, Any, List, Optional
+from uuid import uuid4
+
+from app.deps import get_inference_service, get_session_store, require_local_token
+from services.logger import get_logger
+from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
+from app.types import InferenceService, SessionStore
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, WebSocket, status
+from fastapi.responses import JSONResponse
+
+router = APIRouter(prefix="/api/v1", tags=["sessions"])
+logger = get_logger(__name__)
+
+
+# Configurable limits (tweak in config.py later)
+MAX_INPUT_TOKENS = 1024
+MAX_QUEUE_RETRY_AFTER = 5  # seconds
+
+router = APIRouter(prefix="/api/v1", tags=["sessions"])
+
+
+@router.post("/sessions", response_model=SessionCreateResp, status_code=status.HTTP_201_CREATED)
+async def create_session(
+    response: Response,
+    store: Annotated[Any, Depends(get_session_store)],
+):
+    session_id = str(uuid4())
+    store.create_session(session_id)
+    response.headers["Location"] = f"/api/v1/sessions/{session_id}"
+    logger.info("session.created", extra={"session_id": session_id})
+    return SessionCreateResp(session_id=session_id, capabilities={"streaming": True})
+
+
+
+@router.get("/sessions/{session_id}/messages", 
+            response_model=list[MessageResp], 
+            dependencies=[Depends(require_local_token)]
+            )
+async def list_messages(
+    session_id: str,
+    store: Annotated[Any, Depends(get_session_store)],
+):
+    session = store.get_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+@router.get(
+    "/sessions/{session_id}/messages/{message_id}",
+    response_model=MessageResp,
+    dependencies=[Depends(require_local_token)],
+)
+
+@router.get(
+    "/sessions/{session_id}/messages/{message_id}/status",
+    dependencies=[Depends(require_local_token)],
+)
+
+async def get_message(
+    session_id: str,
+    message_id: str,
+    store: Annotated[SessionStore, Depends(get_session_store)],
+):
+    session = store.get_session(session_id)
+    if session is None:
+        logger.debug("get_message: session not found", extra={"session_id": session_id, "message_id": message_id})
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    for m in session:
+        if m.get("id") == message_id:
+            logger.info("get_message: found", extra={"session_id": session_id, "message_id": message_id})
+            return m
+
+    logger.debug("get_message: message not found", extra={"session_id": session_id, "message_id": message_id})
+    raise HTTPException(status_code=404, detail="Message not found")
+
+
+
+@router.get(
+    "/sessions/{session_id}/messages/{message_id}/status",
+    dependencies=[Depends(require_local_token)],
+)
+async def get_message_status(
+    session_id: str,
+    message_id: str,
+    store: Annotated[SessionStore, Depends(get_session_store)],
+    inference: Annotated[InferenceService, Depends(get_inference_service)],
+):
+    session = store.get_session(session_id)
+    if session is None:
+        logger.debug("get_message_status: session not found",
+                      extra=
+                        {
+                          "session_id": session_id, 
+                          "message_id": message_id
+                        }
+                    )
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    msg = None
+    for m in session:
+        if m.get("id") == message_id:
+            msg = m
+            break
+
+    if msg is None:
+        logger.debug("get_message_status: message not found", extra={"session_id": session_id, "message_id": message_id})
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    status_val = msg.get("status", "unknown")
+    meta = msg.get("meta", {})
+
+    queue_pos = None
+    eta_seconds = None
+    try:
+        queue_pos = inference.queue_position(message_id)
+    except Exception:
+        queue_pos = None
+    try:
+        eta_seconds = inference.estimate_wait(message_id)
+    except Exception:
+        eta_seconds = None
+
+    resp = {
+        "message_id": message_id,
+        "status": status_val,
+        "meta": meta,
+    }
+    if queue_pos is not None:
+        resp["queue_position"] = queue_pos
+    if eta_seconds is not None:
+        resp["estimated_wait_seconds"] = eta_seconds
+
+    logger.info("get_message_status", 
+                extra={
+                    "session_id": session_id, 
+                    "message_id": message_id, 
+                    "status": status_val, 
+                    "queue_position": queue_pos
+                    }
+                )
+    return resp
+
+
+
+@router.post("/sessions/{session_id}/messages", 
+             status_code=status.HTTP_202_ACCEPTED, 
+             dependencies=[Depends(require_local_token)]
+             )
+async def post_message(
+    session_id: str,
+    payload: MessageCreateReq,
+    response: Response,
+    store: Annotated[Any, Depends(get_session_store)],
+    inference: Annotated[Any, Depends(get_inference_service)],
+):
+    # Basic session existence check
+    if store.get_session(session_id) is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Prompt length validation (simple heuristic)
+    if len(payload.content) > MAX_INPUT_TOKENS * 4:  # rough char->token heuristic
+        raise HTTPException(status_code=400, detail=f"Prompt too long (max ~{MAX_INPUT_TOKENS} tokens)")
+
+    # Idempotency by client_message_id
+    if payload.client_message_id:
+        existing = store.get_by_client_id(session_id, payload.client_message_id)
+        if existing:
+            # Return existing message metadata
+            return JSONResponse(status_code=200, content={"message_id": existing["id"], "status": existing["status"]})
+
+    # Create message record
+    message_id = str(uuid4())
+    msg = store.create_message(session_id, message_id, payload.dict())
+
+    # Enqueue; inference.enqueue should return True if queued, False if queue full.
+    queued = inference.enqueue(session_id=session_id, message_id=message_id, prompt=payload.content, store=store)
+    if not queued:
+        # Queue full: inform client to retry later
+        return JSONResponse(
+            status_code=429,
+            content={"status": "queued_full", "retry_after": MAX_QUEUE_RETRY_AFTER, "message_id": message_id},
+            headers={"Retry-After": str(MAX_QUEUE_RETRY_AFTER)}
+        )
+
+    # Optionally compute queue position if inference exposes it (best-effort)
+    queue_pos = inference.queue_position(message_id)
+    response.headers["Location"] = f"/api/v1/sessions/{session_id}/messages/{message_id}"
+    return {"message_id": message_id, "status": "queued", "queue_position": queue_pos}
+
+
+@router.websocket("/stream")
+async def stream_ws(
+    ws: WebSocket,
+    authorization: Optional[str] = Header(None),
+    session_id: Optional[str] = None,
+    store = Depends(get_session_store),
+    inference = Depends(get_inference_service),
+):
+    """
+    WebSocket streaming with Authorization header (Bearer token).
+    Handshake: client sends {"action":"start","message_id":"...","prompt":"..."}.
+    """
+    # Validate Authorization header
+    if not authorization or not authorization.startswith("Bearer "):
+        await ws.close(code=1008)
+        return
+    token = authorization.split(" ", 1)[1]
+    if not inference.validate_token(token):
+        await ws.close(code=1008)
+        return
+
+    # Optional session check
+    if session_id and store.get_session(session_id) is None:
+        await ws.close(code=1008)
+        return
+
+    await ws.accept()
+    try:
+        data = await ws.receive_json()
+        action = data.get("action")
+        if action == "start":
+            message_id = data.get("message_id") or str(uuid4())
+            prompt = data.get("prompt", "")
+            # If session provided, ensure message record exists
+            if session_id:
+                if store.get_session(session_id) is None:
+                    await ws.send_json({"type": "error", "message": "session not found"})
+                    await ws.close()
+                    return
+                # create message record if not present
+                if not store.get_by_client_id(session_id, message_id) and not any(m["id"] == message_id for m in store.list_messages(session_id)):
+                    store.create_message(session_id, message_id, {"content": "", "role": "assistant"})
+
+            # Stream tokens from inference.generate_tokens
+            async for tk in inference.generate_tokens(prompt=prompt, session_id=session_id, message_id=message_id):
+                await ws.send_json({"type": "token", "token": tk, "message_id": message_id})
+            await ws.send_json({"type": "done", "message_id": message_id})
+
+        elif action == "cancel":
+            mid = data.get("message_id")
+            inference.cancel(mid)
+            await ws.send_json({"type": "cancelled", "message_id": mid})
+        else:
+            await ws.send_json({"type": "error", "message": f"unknown action {action}"})
+    except Exception as exc:
+        try:
+            await ws.send_json({"type": "error", "message": str(exc)})
+        except Exception:
+            pass
+    finally:
+        await ws.close()
 
 ===FILE_END===
 
@@ -321,10 +574,10 @@ def require_local_token(authorization: str | None = Header(None)):
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/factory.py","size":2537,"sha256":"4c27d965c1ba347eff238529dd194ef1e79e82f1aed140f348d198c9ed536b71"}
+{"path":"app/factory.py","size":2535,"sha256":"0b1ebca69e0d0bff03d95a9a511d517bf28030c12f4436b52fc5ac851891947b"}
 ===CONTENT===
 # app/factory.py
-from api.v1 import sessions, intelligence, ws
+from api.v1 import session, intelligence, ws
 from app.deps import set_services
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -354,7 +607,7 @@ def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
     # ------------------------------------------------------------
     # Include Routers (v1 API)
     # ------------------------------------------------------------
-    app.include_router(sessions.router)       # /api/v1/sessions/...
+    app.include_router(session.router)        # /api/v1/sessions/...
     app.include_router(intelligence.router)   # /api/v1/intel/...
     app.include_router(ws.router)             # /api/v1/ws/...
 
@@ -386,7 +639,6 @@ def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
                     logger.exception("Error shutting down inference service")
 
     return app
-
 ===FILE_END===
 
 ===FILE_START===
@@ -2775,6 +3027,67 @@ from services import (
 ===FILE_END===
 
 ===FILE_START===
+{"path":"services/build_services.py","size":1362,"sha256":"d87b2bd8f4ab94fe48700a43b7848f306ee2625e42e902076132e301f0c58097"}
+===CONTENT===
+# services/build_services.py
+
+from typing import Any, Dict
+
+from services.session_service import SessionService
+from services.tool_service import ToolService
+from services.game_service import GameService
+
+class InferenceStub:
+    model_loaded = False
+
+    def enqueue(self, *, session_id: str, message_id: str, prompt: str, store) -> bool:
+        return True
+
+    def cancel(self, message_id: str) -> bool:
+        return True
+
+    def validate_token(self, token: str) -> bool:
+        return True
+
+    def queue_position(self, message_id: str):
+        return 0
+
+    def estimate_wait(self, message_id: str):
+        return 0.0
+
+    async def generate_tokens(self, *, prompt: str, session_id: str | None, message_id: str):
+        yield prompt
+
+    async def shutdown(self):
+        pass
+
+
+def build_services(repos: Dict[str, Any], enable_tool_discovery: bool = True) -> Dict[str, Any]:
+    """
+    Construct all runtime services used by the API layer.
+    """
+
+    session_store = repos.get("session")
+
+    tool_service = ToolService(
+        default_context={"repos": repos},
+        discover_on_init=enable_tool_discovery
+    )
+
+    game_service = GameService()
+
+    inference_service = InferenceStub()
+
+    return {
+        "session": session_store,
+        "tool": tool_service,
+        "game": game_service,
+        "inference": inference_service,
+    }
+
+===FILE_END===
+
+===FILE_START===
 {"path":"services/game_service.py","size":7265,"sha256":"83b777bb8b0302e53dfdbc3c4139cf33fbf7f23b4dc578b4f852ce65a2622092"}
 ===CONTENT===
 # services/game_service.py
@@ -3137,6 +3450,88 @@ if __name__ == "__main__":
     init_logging(debug_enabled=True)
     log = get_logger("logger_test")
     log.info("Logger initialized for standalone test.")
+
+===FILE_END===
+
+===FILE_START===
+{"path":"services/repos.py","size":2542,"sha256":"b67ff48fdf9c8ed600fa3e483aeeb2a375fe6d71ccac3784309845d958d605dc"}
+===CONTENT===
+# services/repos.py
+
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+
+class InMemorySessionStore:
+    """
+    Minimal in-memory session store compatible with app.types.SessionStore.
+    Stores sessions as dict: {session_id: [message_dict, ...]}
+    """
+
+    def __init__(self):
+        self._sessions: Dict[str, List[Dict[str, Any]]] = {}
+
+    def get_session(self, session_id: str) -> Optional[List[Dict[str, Any]]]:
+        return self._sessions.get(session_id)
+
+    def create_session(self, session_id: str) -> None:
+        self._sessions[session_id] = []
+
+    def create_message(self, session_id: str, message_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        msg = {
+            "id": message_id,
+            "client_message_id": payload.get("client_message_id"),
+            "role": payload.get("role", "user"),
+            "content": payload.get("content"),
+            "status": "queued",
+            "meta": payload.get("meta") or {},
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        }
+        self._sessions[session_id].append(msg)
+        return msg
+
+    def get_by_client_id(self, session_id: str, client_message_id: str) -> Optional[Dict[str, Any]]:
+        for m in self._sessions.get(session_id, []):
+            if m.get("client_message_id") == client_message_id:
+                return m
+        return None
+
+    def list_messages(self, session_id: str) -> List[Dict[str, Any]]:
+        return self._sessions.get(session_id, [])
+
+    def update_message_status(self, session_id: str, message_id: str, status: str) -> None:
+        for m in self._sessions.get(session_id, []):
+            if m.get("id") == message_id:
+                m["status"] = status
+                m["updated_at"] = datetime.utcnow()
+                return
+
+
+# ------------------------------------------------------------
+# Repo factory functions expected by app/main.py
+# ------------------------------------------------------------
+
+DEFAULT_REPOS: Dict[str, Any] = {
+    "session": InMemorySessionStore(),
+}
+
+def make_default_repos() -> Dict[str, Any]:
+    return {
+        "session": InMemorySessionStore(),
+    }
+
+def seed_sample_data(repos: Dict[str, Any]) -> None:
+    """
+    Optional: seed a demo session for development.
+    """
+    store = repos["session"]
+    store.create_session("demo")
+    store.create_message("demo", "msg-1", {
+        "client_message_id": None,
+        "role": "user",
+        "content": "Hello world!",
+        "meta": {},
+    })
 
 ===FILE_END===
 

@@ -1,0 +1,61 @@
+{
+  "ollama": {
+    "base_url": "http://127.0.0.1:11434",
+    "model": "llama3.1:8b",            // CONFIRM MODEL NAME
+    "timeout_seconds": 30.0,
+    "stream": false                    // CONFIRM IF YOU WANT STREAMING
+  },
+
+  "app": {
+    "environment": "development",      // development | staging | production
+    "seed_sample_data": false,         // CONFIRM
+    "max_turns": 6,                    // used by prompt builders
+    "max_field_len": 240               // used by prompt builders
+  },
+
+  "server": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "allowed_origins": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173"
+    ]
+  },
+
+  "tools": {
+    "enable_discovery": true,          // CONFIRM
+    "tool_packages": ["intelligence.tools"]  // where tools live
+  },
+
+  "prompts": {
+    "enable_narration": true,          // CONFIRM
+    "enable_adjudication": true,       // CONFIRM
+    "verbosity_default": "normal",     // brief | short | normal | long | verbose
+    "dm_voice": {
+      "tone": "neutral",               // CONFIRM
+      "persona": "classic_dm",         // CONFIRM
+      "sensory_focus": "balanced",     // CONFIRM
+      "consequence_level": "moderate"  // CONFIRM
+    }
+  },
+
+  "world": {
+    "enable_world_guidance": true,     // CONFIRM
+    "default_modes": ["Clarify", "Expand", "Connect", "Challenge"]
+  },
+
+  "database": {
+    "url": "sqlite:///./dnd.db",       // CONFIRM OR REMOVE
+    "echo": false
+  },
+
+  "auth": {
+    "local_dev_token": "dev",          // CONFIRM
+    "enable_auth": true                // future JWT support
+  },
+
+  "logging": {
+    "level": "INFO",                   // DEBUG | INFO | WARN | ERROR
+    "log_dir": "logs"                  // CONFIRM
+  }
+}
