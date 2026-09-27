@@ -1,0 +1,38 @@
+Scanning git-tracked files for duplicates...
+
+Duplicate file names detected:
+--------------------------------
+app. __init__.py
+app.deps.py
+app.factory.py
+app.main.py
+app.types.py
+chat_tools.__init__,py
+chat_tools.clear.py
+chat_tools.narrate.py
+chat_tools.roll.py
+data.__init__.py
+data.migrations.py
+data.models.py
+data.repos.py
+intelligence.__init__.py
+intelligence.client.py
+intelligence.prompt_builders.py
+intelligence.prompts.py
+intelligence.quest_guide.py
+intelligence.tool_handler.py
+intelligence.world_guide.py
+intelligence.writer.py
+services.__init__.py
+services.game_service.py
+services.logger.py
+services.session_service.py
+services.tool_service.py
+v1.intelligence.py
+v1.ws.py
+voice_configs.voice_congfigs.json
+
+Detailed duplicate report:
+--------------------------------
+
+=== app. __init__.py ===

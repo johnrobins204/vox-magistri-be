@@ -8,9 +8,9 @@ from uvicorn import Config, Server
 
 from app.factory import create_app
 from app.deps import get_inference_service
-from services.logger import init_logging, get_logger
-from services.build_services import build_services
-from services.repos import DEFAULT_REPOS, make_default_repos, seed_sample_data
+from app.services.logger import init_logging, get_logger
+from app.services.build_services import build_services
+from app.services.repos import DEFAULT_REPOS, make_default_repos, seed_sample_data
 
 logger = get_logger("dnd_app")
 

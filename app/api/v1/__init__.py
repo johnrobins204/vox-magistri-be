@@ -6,7 +6,7 @@ Routers exposed here:
 - admin: (optional) admin/debug/tool endpoints
 """
 
-from . import session
+from ....api.v1 import session
 
 # Optional: only import admin if you implement it
 try:

@@ -16,7 +16,7 @@ from app.deps import (
     get_inference_service,
     get_session_store,
 )
-from services.session_service import SessionService
+from app.services.session_service import SessionService
 
 
 router = APIRouter(prefix="/api/v1/intel", tags=["intelligence"])

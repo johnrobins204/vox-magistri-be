@@ -1,7 +1,7 @@
 # services/inference_service.py
 
-from intelligence.client import OllamaClient
-from services.logger import get_logger
+from app.intelligence.client import OllamaClient
+from app.services.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -17,8 +17,8 @@ class OllamaInferenceService:
     def __init__(self, settings):
         # settings must provide ollama_base_url and ollama_model
         self.client = OllamaClient(
-            base_url=settings.ollama_base_url,
-            default_model=settings.ollama_model,
+            base_url=settings.ollama.base_url,
+            default_model=settings.ollama.model,
         )
         self.model_loaded = True
 

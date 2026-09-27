@@ -133,7 +133,7 @@ def snapshot_session(
 ===FILE_END===
 
 ===FILE_START===
-{"path":"api/v1/session.py","size":9318,"sha256":"8db440e7771d5b8b7a4f77b981571f710cf07c3d2919e6e11bdcf0af8ebce131"}
+{"path":"api/v1/session.py","size":9193,"sha256":"50fbfa2489b62b2e895755edd6fb0559446f5aae57c41ed35bfd0fc2bfad3fa7"}
 ===CONTENT===
 # app/api/v1/session.py (top imports)
 from typing import Annotated, Any, List, Optional
@@ -212,12 +212,6 @@ async def get_message(
     logger.debug("get_message: message not found", extra={"session_id": session_id, "message_id": message_id})
     raise HTTPException(status_code=404, detail="Message not found")
 
-
-
-@router.get(
-    "/sessions/{session_id}/messages/{message_id}/status",
-    dependencies=[Depends(require_local_token)],
-)
 async def get_message_status(
     session_id: str,
     message_id: str,
@@ -518,6 +512,197 @@ Keep this file empty or include a small version string.
 """
 
 __version__ = "0.1.0"
+
+===FILE_END===
+
+===FILE_START===
+{"path":"app/config.py","size":5685,"sha256":"a383e0da73bb5b83d5493b30b872514e0d4ba0631e86d6dcf8444491fa9b1e8c"}
+===CONTENT===
+# app/config.py
+"""
+Application configuration loader for the DnD server.
+
+Features:
+- Namespaced settings (ollama, app, server, tools, prompts, world, database, auth, logging)
+- Typed Pydantic models for safety and autocomplete
+- Single settings.json file at project root
+- Read-only access (no setters)
+- get_settings() returns the full typed Settings object
+- get_namespace("ollama") returns a dict for that namespace
+- get("ollama.model") returns a single value via dotted path
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from functools import lru_cache
+from typing import Any, Dict
+
+from pydantic import BaseModel, Field
+
+
+# ------------------------------------------------------------
+# Namespace Models
+# ------------------------------------------------------------
+
+class OllamaSettings(BaseModel):
+    base_url: str = Field(default="http://127.0.0.1:11434")
+    model: str = Field(default="llama3.1:8b")
+    timeout_seconds: float = Field(default=30.0)
+    stream: bool = Field(default=False)
+
+
+class AppSettings(BaseModel):
+    environment: str = Field(default="development")
+    seed_sample_data: bool = Field(default=False)
+    max_turns: int = Field(default=6)
+    max_field_len: int = Field(default=240)
+
+
+class ServerSettings(BaseModel):
+    host: str = Field(default="127.0.0.1")
+    port: int = Field(default=5000)
+    allowed_origins: list[str] = Field(default_factory=lambda: [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ])
+
+
+class ToolSettings(BaseModel):
+    enable_discovery: bool = Field(default=True)
+    tool_packages: list[str] = Field(default_factory=lambda: ["intelligence.tools"])
+
+
+class PromptVoiceSettings(BaseModel):
+    tone: str = Field(default="neutral")
+    persona: str = Field(default="classic_dm")
+    sensory_focus: str = Field(default="balanced")
+    consequence_level: str = Field(default="moderate")
+
+
+class PromptSettings(BaseModel):
+    enable_narration: bool = Field(default=True)
+    enable_adjudication: bool = Field(default=True)
+    verbosity_default: str = Field(default="normal")
+    dm_voice: PromptVoiceSettings = Field(default_factory=PromptVoiceSettings)
+
+
+class WorldSettings(BaseModel):
+    enable_world_guidance: bool = Field(default=True)
+    default_modes: list[str] = Field(default_factory=lambda: ["Clarify", "Expand", "Connect", "Challenge"])
+
+
+class DatabaseSettings(BaseModel):
+    url: str = Field(default="sqlite:///./dnd.db")
+    echo: bool = Field(default=False)
+
+
+class AuthSettings(BaseModel):
+    local_dev_token: str = Field(default="dev")
+    enable_auth: bool = Field(default=True)
+
+
+class LoggingSettings(BaseModel):
+    level: str = Field(default="INFO")
+    log_dir: str = Field(default="logs")
+
+
+# ------------------------------------------------------------
+# Root Settings Model
+# ------------------------------------------------------------
+
+class Settings(BaseModel):
+    ollama: OllamaSettings = Field(default_factory=OllamaSettings)
+    app: AppSettings = Field(default_factory=AppSettings)
+    server: ServerSettings = Field(default_factory=ServerSettings)
+    tools: ToolSettings = Field(default_factory=ToolSettings)
+    prompts: PromptSettings = Field(default_factory=PromptSettings)
+    world: WorldSettings = Field(default_factory=WorldSettings)
+    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    auth: AuthSettings = Field(default_factory=AuthSettings)
+    logging: LoggingSettings = Field(default_factory=LoggingSettings)
+
+
+# ------------------------------------------------------------
+# File Loader
+# ------------------------------------------------------------
+
+def _load_json(path: str) -> dict:
+    """Load JSON file if present; return {} if missing or invalid."""
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+# ------------------------------------------------------------
+# Settings Accessors
+# ------------------------------------------------------------
+
+@lru_cache()
+def get_settings() -> Settings:
+    """
+    Load settings.json once and cache it.
+    Environment variables override JSON values.
+    """
+    data = _load_json("settings.json")
+
+    # Environment overrides (flat or nested)
+    env_overrides = {}
+
+    for key, value in os.environ.items():
+        if "__" in key:
+            # Nested override: e.g., OLLAMA__MODEL
+            ns, field = key.split("__", 1)
+            ns = ns.lower()
+            field = field.lower()
+            env_overrides.setdefault(ns, {})[field] = value
+        else:
+            # Flat override (rare)
+            env_overrides[key.lower()] = value
+
+    # Merge JSON + env overrides
+    merged = {**data}
+
+    for ns, fields in env_overrides.items():
+        if isinstance(fields, dict):
+            merged.setdefault(ns, {})
+            merged[ns].update(fields)
+        else:
+            merged[ns] = fields
+
+    return Settings(**merged)
+
+
+def get_namespace(name: str) -> Dict[str, Any]:
+    """
+    Return a namespace as a plain dictionary.
+    Example: get_namespace("ollama")
+    """
+    settings = get_settings()
+    ns = getattr(settings, name, None)
+    if ns is None:
+        raise KeyError(f"Namespace '{name}' not found")
+    return ns.dict()
+
+
+def get(path: str) -> Any:
+    """
+    Return a single setting via dotted path.
+    Example: get("ollama.model")
+    """
+    settings = get_settings()
+    parts = path.split(".")
+    obj = settings
+    for part in parts:
+        obj = getattr(obj, part, None)
+        if obj is None:
+            raise KeyError(f"Setting '{path}' not found")
+    return obj
 
 ===FILE_END===
 
@@ -3027,7 +3212,7 @@ from services import (
 ===FILE_END===
 
 ===FILE_START===
-{"path":"services/build_services.py","size":1362,"sha256":"d87b2bd8f4ab94fe48700a43b7848f306ee2625e42e902076132e301f0c58097"}
+{"path":"services/build_services.py","size":905,"sha256":"c7755182844033c50a1fde0e1b6af92e0974c299b78a781bcb4fc59d220a859f"}
 ===CONTENT===
 # services/build_services.py
 
@@ -3036,31 +3221,8 @@ from typing import Any, Dict
 from services.session_service import SessionService
 from services.tool_service import ToolService
 from services.game_service import GameService
-
-class InferenceStub:
-    model_loaded = False
-
-    def enqueue(self, *, session_id: str, message_id: str, prompt: str, store) -> bool:
-        return True
-
-    def cancel(self, message_id: str) -> bool:
-        return True
-
-    def validate_token(self, token: str) -> bool:
-        return True
-
-    def queue_position(self, message_id: str):
-        return 0
-
-    def estimate_wait(self, message_id: str):
-        return 0.0
-
-    async def generate_tokens(self, *, prompt: str, session_id: str | None, message_id: str):
-        yield prompt
-
-    async def shutdown(self):
-        pass
-
+from services.inference_service import OllamaInferenceService
+from app.config import get_settings
 
 def build_services(repos: Dict[str, Any], enable_tool_discovery: bool = True) -> Dict[str, Any]:
     """
@@ -3076,13 +3238,15 @@ def build_services(repos: Dict[str, Any], enable_tool_discovery: bool = True) ->
 
     game_service = GameService()
 
-    inference_service = InferenceStub()
+    settings = get_settings()
+
+    inference = OllamaInferenceService(settings)
 
     return {
         "session": session_store,
         "tool": tool_service,
         "game": game_service,
-        "inference": inference_service,
+        "inference": inference,
     }
 
 ===FILE_END===
@@ -3288,6 +3452,83 @@ class _InMemorySessionRepo:
         run["active"] = False
         run["ended_at"] = time.time()
         return True
+
+===FILE_END===
+
+===FILE_START===
+{"path":"services/inference_service.py","size":2503,"sha256":"2ff4cb4d60a587ad14f27452f5bfebff8ebd7cc1de31dbed002bb2e2dd063968"}
+===CONTENT===
+# services/inference_service.py
+
+from intelligence.client import OllamaClient
+from services.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class OllamaInferenceService:
+    """
+    Minimal viable inference adapter that connects the FastAPI backend
+    to your existing intelligence/ Ollama client.
+
+    This satisfies the InferenceService interface expected by the API layer.
+    """
+
+    def __init__(self, settings):
+        # settings must provide ollama_base_url and ollama_model
+        self.client = OllamaClient(
+            base_url=settings.ollama_base_url,
+            default_model=settings.ollama_model,
+        )
+        self.model_loaded = True
+
+    # ------------------------------------------------------------
+    # Queueing (minimal stub for now)
+    # ------------------------------------------------------------
+    def enqueue(self, *, session_id: str, message_id: str, prompt: str, store) -> bool:
+        # No queue yet — always accept
+        return True
+
+    def queue_position(self, message_id: str):
+        # No queue yet — always 0
+        return 0
+
+    def estimate_wait(self, message_id: str):
+        # No queue yet — always 0
+        return 0.0
+
+    # ------------------------------------------------------------
+    # Token generation (non-streaming for now)
+    # ------------------------------------------------------------
+    async def generate_tokens(self, *, prompt: str, session_id: str | None, message_id: str):
+        """
+        For now, call Ollama synchronously and yield the full response as one token.
+        Later we can switch to Ollama's streaming API.
+        """
+        try:
+            text = self.client.generate(prompt)
+            yield text
+        except Exception as exc:
+            logger.exception("Ollama generate failed")
+            yield f"[error] {exc}"
+
+    # ------------------------------------------------------------
+    # Cancellation (stub)
+    # ------------------------------------------------------------
+    def cancel(self, message_id: str) -> bool:
+        return True
+
+    # ------------------------------------------------------------
+    # Token validation (stub)
+    # ------------------------------------------------------------
+    def validate_token(self, token: str) -> bool:
+        return True
+
+    # ------------------------------------------------------------
+    # Shutdown hook
+    # ------------------------------------------------------------
+    async def shutdown(self):
+        pass
 
 ===FILE_END===
 

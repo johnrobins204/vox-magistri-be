@@ -3,7 +3,7 @@ from typing import Annotated, Any, List, Optional
 from uuid import uuid4
 
 from app.deps import get_inference_service, get_session_store, require_local_token
-from services.logger import get_logger
+from app.services.logger import get_logger
 from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
 from app.types import InferenceService, SessionStore
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, WebSocket, status

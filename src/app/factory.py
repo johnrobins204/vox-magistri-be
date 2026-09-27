@@ -1,9 +1,10 @@
 # app/factory.py
-from api.v1 import admin, session
+from api.v1 import session
+from app.api.v1 import admin
 from app.deps import set_services
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from services.logger import get_logger  # or from services.logger import get_logger
+from app.services.logger import get_logger  # or from services.logger import get_logger
 
 logger = get_logger(__name__)
 

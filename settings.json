@@ -1,16 +1,16 @@
 {
   "ollama": {
     "base_url": "http://127.0.0.1:11434",
-    "model": "llama3.1:8b",            // CONFIRM MODEL NAME
+    "model": "llama3.1:8b",           
     "timeout_seconds": 30.0,
-    "stream": false                    // CONFIRM IF YOU WANT STREAMING
+    "stream": false                    
   },
 
   "app": {
-    "environment": "development",      // development | staging | production
-    "seed_sample_data": false,         // CONFIRM
-    "max_turns": 6,                    // used by prompt builders
-    "max_field_len": 240               // used by prompt builders
+    "environment": "development",      
+    "seed_sample_data": false,         
+    "max_turns": 6,                    
+    "max_field_len": 240              
   },
 
   "server": {
@@ -23,39 +23,39 @@
   },
 
   "tools": {
-    "enable_discovery": true,          // CONFIRM
-    "tool_packages": ["intelligence.tools"]  // where tools live
+    "enable_discovery": true,         
+    "tool_packages": ["intelligence.tools"] 
   },
 
   "prompts": {
-    "enable_narration": true,          // CONFIRM
-    "enable_adjudication": true,       // CONFIRM
-    "verbosity_default": "normal",     // brief | short | normal | long | verbose
+    "enable_narration": true,          
+    "enable_adjudication": true,      
+    "verbosity_default": "normal",   
     "dm_voice": {
-      "tone": "neutral",               // CONFIRM
-      "persona": "classic_dm",         // CONFIRM
-      "sensory_focus": "balanced",     // CONFIRM
-      "consequence_level": "moderate"  // CONFIRM
+      "tone": "neutral",             
+      "persona": "classic_dm",         
+      "sensory_focus": "balanced",     
+      "consequence_level": "moderate" 
     }
   },
 
   "world": {
-    "enable_world_guidance": true,     // CONFIRM
+    "enable_world_guidance": true,     
     "default_modes": ["Clarify", "Expand", "Connect", "Challenge"]
   },
 
   "database": {
-    "url": "sqlite:///./dnd.db",       // CONFIRM OR REMOVE
+    "url": "sqlite:///./dnd.db",       
     "echo": false
   },
 
   "auth": {
-    "local_dev_token": "dev",          // CONFIRM
-    "enable_auth": true                // future JWT support
+    "local_dev_token": "dev",         
+    "enable_auth": true                
   },
 
   "logging": {
-    "level": "INFO",                   // DEBUG | INFO | WARN | ERROR
-    "log_dir": "logs"                  // CONFIRM
+    "level": "INFO",                
+    "log_dir": "logs"                
   }
 }

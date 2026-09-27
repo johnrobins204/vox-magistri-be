@@ -2,10 +2,10 @@
 
 from typing import Any, Dict
 
-from services.session_service import SessionService
-from services.tool_service import ToolService
-from services.game_service import GameService
-from services.inference_service import OllamaInferenceService
+from app.services.session_service import SessionService
+from app.services.tool_service import ToolService
+from app.services.game_service import GameService
+from app.services.inference_service import OllamaInferenceService
 from app.config import get_settings
 
 def build_services(repos: Dict[str, Any], enable_tool_discovery: bool = True) -> Dict[str, Any]:
