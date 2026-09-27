@@ -4,15 +4,14 @@ set -euo pipefail
 echo "Scanning git-tracked files for duplicates..."
 echo
 
-TMP="$(mktemp)"
-git ls-files > "$TMP"
+# 1. List all git-tracked files
+git ls-files > all_files.txt
 
-# Build normalized keys: parentfolder.filename
-# Example: app/api/v1/session.py → api.session.py
+# 2. Build normalized keys: parentFolder.fileName
+#    Example: src/app/api/v1/session.py → v1.session.py
 awk -F/ '
 {
     if (NF == 1) {
-        # File at repo root
         key = "ROOT." $NF
     } else {
         parent = $(NF-1)
@@ -20,32 +19,35 @@ awk -F/ '
         key = parent "." file
     }
     print key
-}' "$TMP" | sort | uniq -d > "$TMP.dupes"
+}' all_files.txt > keys.txt
+
+# 3. Find duplicate keys
+sort keys.txt | uniq -d > dupes.txt
 
 echo "Duplicate file names detected:"
 echo "--------------------------------"
-cat "$TMP.dupes"
+cat dupes.txt
 echo
 
 echo "Detailed duplicate report:"
 echo "--------------------------------"
 
+# 4. For each duplicate key, show all matching files + metadata
 while read -r key; do
     echo
     echo "=== $key ==="
 
-    # Extract filename from key
-    filename=$(echo "$key" | awk -F. '{print $2}')
+    filename="${key#*.}"   # everything after the dot
 
-    # Find all matching files in repo
-    grep "/$filename$" "$TMP" | while read -r path; do
-        size=$(stat -c%s "$path" 2>/dev/null || echo "?")
+    # Find all files ending with this filename
+    grep "/$filename$" all_files.txt | while read -r path; do
+        size=$(stat -c%s "$path")
         mod=$(git log -1 --format="%ci" -- "$path" 2>/dev/null || echo "no git history")
         echo "File: $path"
         echo "  Size: $size bytes"
         echo "  Last edit: $mod"
     done
-done < "$TMP.dupes"
+done < dupes.txt
 
 echo
 echo "Done."
