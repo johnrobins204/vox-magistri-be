@@ -5,7 +5,7 @@ from uuid import uuid4
 from app.deps import get_inference_service, get_session_store, require_local_token
 from app.services.logger import get_logger
 from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
-from app.types import InferenceService, SessionStore
+from app.type_defs import InferenceService, SessionStore
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, WebSocket, status
 from fastapi.responses import JSONResponse
 
