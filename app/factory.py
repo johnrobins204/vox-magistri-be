@@ -1,6 +1,5 @@
 # app/factory.py
-from api.v1 import session
-from app.api.v1 import intelligence, ws
+from app.api.v1 import intelligence, ws, session
 from app.deps import set_services
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

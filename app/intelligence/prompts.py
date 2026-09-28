@@ -1,4 +1,4 @@
-from dndnd.prompting import (
+from prompting import (
     WORLD_GUIDANCE_MODES,
     build_session_prompt,
     build_world_guidance_prompt,

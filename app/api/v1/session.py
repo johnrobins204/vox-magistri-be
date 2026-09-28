@@ -1,5 +1,5 @@
 # app/api/v1/session.py (top imports)
-from typing import Annotated, Any, List, Optional
+from typing import Annotated, Any, Optional
 from uuid import uuid4
 
 from app.deps import get_inference_service, get_session_store, require_local_token

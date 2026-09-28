@@ -1,31 +1,39 @@
-def run_narrate_tool(args, session, game, session_run):
-    from dndnd.config import get_settings
-    from dndnd.intelligence.client import OllamaClient
-    from dndnd.intelligence.game_chat import PromptStage, build_normal_narration, strip_preamble
+# app/intelligence/tools/narrate.py
 
-    settings = get_settings()
-    client = OllamaClient(settings)
-    model_name = settings.ollama_model
+NAME = "narrate"
 
-    prompt = build_normal_narration(
+def run(args: dict, context: dict):
+    """
+    Modern narration tool.
+    Uses the unified inference service and prompt builders.
+    """
+
+    # Extract context
+    game = context.get("game")
+    session_run = context.get("session_run")
+    inference = context.get("inference")
+
+    # Extract user input
+    user_text = args.get("text") or args.get("input") or ""
+
+    # Build narration prompt using your unified prompt builder
+    from app.intelligence.prompt_builders import build_narration_prompt
+
+    prompt = build_narration_prompt(
         game=game,
         session_run=session_run,
+        user_input=user_text,
         voice_key="dm_voice",
-        user_input=args,
     )
 
-    raw = client.generate(prompt)
-    response, preamble = strip_preamble(raw)
+    # Generate text using the central inference service
+    raw = inference.generate(prompt)
 
-    stages = [
-        PromptStage(
-            name="Narrate",
-            model=model_name,
-            prompt=prompt,
-            raw_response=raw,
-            parsed_response=response,
-            stripped_preamble=preamble,
-        )
-    ]
-
-    return response, stages
+    # Return normalized tool output
+    return {
+        "text": raw,
+        "meta": {
+            "prompt": prompt,
+            "tool": NAME,
+        }
+    }
