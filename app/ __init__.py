@@ -1,8 +1,5 @@
 # app/__init__.py
-"""
-App package marker.
 
-Keep this file empty or include a small version string.
-"""
+from app import config, deps, factory, types
 
-__version__ = "0.1.0"
+__all__ = ["config", "deps", "factory", "types"]

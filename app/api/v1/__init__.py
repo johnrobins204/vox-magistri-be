@@ -2,14 +2,11 @@
 Version 1 API namespace.
 
 Routers exposed here:
+- intelligence: intelligence-related endpoints
 - session: chat/session lifecycle endpoints
-- admin: (optional) admin/debug/tool endpoints
+- ws: WebSocket endpoints
 """
 
-from ....api.v1 import session
+from app.api.v1 import session, intelligence, ws
 
-# Optional: only import admin if you implement it
-try:
-    from . import admin
-except ImportError:
-    admin = None
+__all__ = ["session", "intelligence", "ws"]

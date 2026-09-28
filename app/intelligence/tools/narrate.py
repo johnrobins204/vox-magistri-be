@@ -17,9 +17,9 @@ def run(args: dict, context: dict):
     user_text = args.get("text") or args.get("input") or ""
 
     # Build narration prompt using your unified prompt builder
-    from app.intelligence.prompt_builders import build_narration_prompt
+    from app.intelligence.prompt_builders import build_narrator_prompt
 
-    prompt = build_narration_prompt(
+    prompt = build_narrator_prompt(
         game=game,
         session_run=session_run,
         user_input=user_text,
