@@ -51,12 +51,6 @@ async def list_messages(
     response_model=MessageResp,
     dependencies=[Depends(require_local_token)],
 )
-
-@router.get(
-    "/sessions/{session_id}/messages/{message_id}/status",
-    dependencies=[Depends(require_local_token)],
-)
-
 async def get_message(
     session_id: str,
     message_id: str,
@@ -64,17 +58,31 @@ async def get_message(
 ):
     session = store.get_session(session_id)
     if session is None:
-        logger.debug("get_message: session not found", extra={"session_id": session_id, "message_id": message_id})
+        logger.debug(
+            "get_message: session not found",
+            extra={"session_id": session_id, "message_id": message_id},
+        )
         raise HTTPException(status_code=404, detail="Session not found")
 
     for m in session:
         if m.get("id") == message_id:
-            logger.info("get_message: found", extra={"session_id": session_id, "message_id": message_id})
+            logger.info(
+                "get_message: found",
+                extra={"session_id": session_id, "message_id": message_id},
+            )
             return m
 
-    logger.debug("get_message: message not found", extra={"session_id": session_id, "message_id": message_id})
+    logger.debug(
+        "get_message: message not found",
+        extra={"session_id": session_id, "message_id": message_id},
+    )
     raise HTTPException(status_code=404, detail="Message not found")
 
+
+@router.get(
+    "/sessions/{session_id}/messages/{message_id}/status",
+    dependencies=[Depends(require_local_token)],
+)
 async def get_message_status(
     session_id: str,
     message_id: str,
@@ -83,13 +91,10 @@ async def get_message_status(
 ):
     session = store.get_session(session_id)
     if session is None:
-        logger.debug("get_message_status: session not found",
-                      extra=
-                        {
-                          "session_id": session_id, 
-                          "message_id": message_id
-                        }
-                    )
+        logger.debug(
+            "get_message_status: session not found",
+            extra={"session_id": session_id, "message_id": message_id},
+        )
         raise HTTPException(status_code=404, detail="Session not found")
 
     msg = None
@@ -99,7 +104,10 @@ async def get_message_status(
             break
 
     if msg is None:
-        logger.debug("get_message_status: message not found", extra={"session_id": session_id, "message_id": message_id})
+        logger.debug(
+            "get_message_status: message not found",
+            extra={"session_id": session_id, "message_id": message_id},
+        )
         raise HTTPException(status_code=404, detail="Message not found")
 
     status_val = msg.get("status", "unknown")
@@ -107,10 +115,12 @@ async def get_message_status(
 
     queue_pos = None
     eta_seconds = None
+
     try:
         queue_pos = inference.queue_position(message_id)
     except Exception:
         queue_pos = None
+
     try:
         eta_seconds = inference.estimate_wait(message_id)
     except Exception:
@@ -121,21 +131,23 @@ async def get_message_status(
         "status": status_val,
         "meta": meta,
     }
+
     if queue_pos is not None:
         resp["queue_position"] = queue_pos
     if eta_seconds is not None:
         resp["estimated_wait_seconds"] = eta_seconds
 
-    logger.info("get_message_status", 
-                extra={
-                    "session_id": session_id, 
-                    "message_id": message_id, 
-                    "status": status_val, 
-                    "queue_position": queue_pos
-                    }
-                )
-    return resp
+    logger.info(
+        "get_message_status",
+        extra={
+            "session_id": session_id,
+            "message_id": message_id,
+            "status": status_val,
+            "queue_position": queue_pos,
+        },
+    )
 
+    return resp
 
 
 @router.post("/sessions/{session_id}/messages", 
