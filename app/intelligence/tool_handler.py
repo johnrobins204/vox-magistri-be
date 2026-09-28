@@ -17,7 +17,7 @@ import logging
 import re
 from typing import Any, Callable, Dict, Optional, Tuple
 
-from .tools import discover_tools
+from app.intelligence.tools import discover_tools
 
 logger = logging.getLogger(__name__)
 

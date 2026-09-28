@@ -1,17 +1,13 @@
 # CORPUS-V1
 
 ===FILE_START===
-{"path":"app/ __init__.py","size":126,"sha256":"2329b5668d50d251790e1c960605dbf6adff3da5d76e99438a58be38a6bacf62"}
+{"path":"app/ __init__.py","size":113,"sha256":"83439ffb706afa25c91b7af8ae0081818a96981241c2e3f1fc6c8147aec60d43"}
 ===CONTENT===
 # app/__init__.py
-"""
-App package marker.
 
-Keep this file empty or include a small version string.
-"""
+from app import config, deps, factory, types
 
-__version__ = "0.1.0"
-
+__all__ = ["config", "deps", "factory", "types"]
 ===FILE_END===
 
 ===FILE_START===
@@ -26,23 +22,20 @@ This module exposes versioned API namespaces such as `v1`.
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/api/v1/__init__.py","size":296,"sha256":"750af4be8ac1aefc925e902416741860af04373e8063fe4bdfcab79fbca80916"}
+{"path":"app/api/v1/__init__.py","size":268,"sha256":"9f3a71673dadc033ace25458e0a92b7e10c7efb6919e9642a7825f980aa7e26a"}
 ===CONTENT===
 """
 Version 1 API namespace.
 
 Routers exposed here:
+- intelligence: intelligence-related endpoints
 - session: chat/session lifecycle endpoints
-- admin: (optional) admin/debug/tool endpoints
+- ws: WebSocket endpoints
 """
 
-from ....api.v1 import session
+from app.api.v1 import session, intelligence, ws
 
-# Optional: only import admin if you implement it
-try:
-    from . import admin
-except ImportError:
-    admin = None
+__all__ = ["session", "intelligence", "ws"]
 
 ===FILE_END===
 
@@ -147,10 +140,10 @@ def snapshot_session(
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/api/v1/session.py","size":9197,"sha256":"8a72e63c4f833fbd5eafb24fff6f46e4de2015b8210a6053edf245a8b02ef6e7"}
+{"path":"app/api/v1/session.py","size":9191,"sha256":"1800cd344bb88459f6f18d0feb7f55a54c7ae9dd3b4a7efb54664eeed36d624c"}
 ===CONTENT===
 # app/api/v1/session.py (top imports)
-from typing import Annotated, Any, List, Optional
+from typing import Annotated, Any, Optional
 from uuid import uuid4
 
 from app.deps import get_inference_service, get_session_store, require_local_token
@@ -759,11 +752,10 @@ def require_local_token(authorization: str | None = Header(None)):
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/factory.py","size":2561,"sha256":"5c89aed3e57cecb2828cfd4b042bf16c713e0e11e219aa00e49d731148c24d82"}
+{"path":"app/factory.py","size":2543,"sha256":"c7e4d94195b03ae4142c47024b73a52e22f43545bab6da02f573e0859d72a040"}
 ===CONTENT===
 # app/factory.py
-from api.v1 import session
-from app.api.v1 import intelligence, ws
+from app.api.v1 import intelligence, ws, session
 from app.deps import set_services
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -853,62 +845,6 @@ from app.intelligence import (
     writer,  # noqa: F401
 )
 from . import tools
-
-===FILE_END===
-
-===FILE_START===
-{"path":"app/intelligence/chat_tools/clear.py","size":154,"sha256":"db77679e6f5b94c9ce3ee56a31b4136a5a94e24634fe5bf6538235947e1d7f33"}
-===CONTENT===
-def run_clear_tool(args, session, game, session_run):
-    session_run.entries.clear()
-    session.commit()
-    return "Conversation history cleared.", []
-
-===FILE_END===
-
-===FILE_START===
-{"path":"app/intelligence/chat_tools/narrate.py","size":862,"sha256":"9d4e925c98a5694cd3c617ed017c3278e28b1f432abd59c23658af5b7e0933b8"}
-===CONTENT===
-def run_narrate_tool(args, session, game, session_run):
-    from dndnd.config import get_settings
-    from dndnd.intelligence.client import OllamaClient
-    from dndnd.intelligence.game_chat import PromptStage, build_normal_narration, strip_preamble
-
-    settings = get_settings()
-    client = OllamaClient(settings)
-    model_name = settings.ollama_model
-
-    prompt = build_normal_narration(
-        game=game,
-        session_run=session_run,
-        voice_key="dm_voice",
-        user_input=args,
-    )
-
-    raw = client.generate(prompt)
-    response, preamble = strip_preamble(raw)
-
-    stages = [
-        PromptStage(
-            name="Narrate",
-            model=model_name,
-            prompt=prompt,
-            raw_response=raw,
-            parsed_response=response,
-            stripped_preamble=preamble,
-        )
-    ]
-
-    return response, stages
-
-===FILE_END===
-
-===FILE_START===
-{"path":"app/intelligence/chat_tools/roll.py","size":130,"sha256":"d5490bf0b1e733c2434b68861f47929649396e598daccb01689b7ef0a278c3de"}
-===CONTENT===
-def run_roll_tool(args, session, game, session_run):
-    # TODO: implement your dice parser
-    return f"Roll result: {args}", []
 
 ===FILE_END===
 
@@ -1247,9 +1183,105 @@ def build_turn_summary(*, game: Any, session_run: Any, max_turns: int = 6) -> Di
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/intelligence/prompts.py","size":208,"sha256":"81dd8e64f4ffb812137f3f9c2427c65384d8ffd83cc512a01bca9ff017bc789d"}
+{"path":"app/intelligence/prompting.py","size":3318,"sha256":"c0d66d0b9c2b0e51f38580b9f82fc19b5836d3e7af727858205d5073782fc597"}
 ===CONTENT===
-from dndnd.prompting import (
+from dataclasses import dataclass, field
+
+WORLD_GUIDANCE_MODES = ("Clarify", "Expand", "Connect", "Challenge")
+
+
+@dataclass(frozen=True)
+class CampaignContext:
+    campaign_name: str
+    campaign_summary: str = ""
+    characters: list[str] = field(default_factory=list)
+    locations: list[str] = field(default_factory=list)
+    active_quests: list[str] = field(default_factory=list)
+    recent_events: list[str] = field(default_factory=list)
+
+
+def build_session_prompt(
+    context: CampaignContext,
+    *,
+    objective: str,
+    tone: str,
+    pacing: str,
+    length: str,
+    extra_direction: str = "",
+) -> str:
+    def section(title: str, items: list[str]) -> str:
+        body = "\n".join(f"- {item}" for item in items) or "- None recorded"
+        return f"{title}:\n{body}"
+
+    return "\n\n".join(
+        [
+            "You are assisting a dungeon master running D&D 5e (2024).",
+            (
+                f"Campaign: {context.campaign_name}\n"
+                f"Premise: {context.campaign_summary or 'Not recorded'}"
+            ),
+            section("Characters", context.characters),
+            section("Locations", context.locations),
+            section("Active quests", context.active_quests),
+            section("Recent events", context.recent_events),
+            (
+                "Write a table-ready session script with scene headings, boxed narration, "
+                "NPC motivations, likely player branches, checks with suggested DCs, and "
+                "concise DM notes."
+            ),
+            f"Session objective: {objective}",
+            f"Tone: {tone}\nPacing: {pacing}\nLength: {length}",
+            f"Additional direction: {extra_direction or 'None'}",
+            "Do not decide player actions. Clearly mark secrets that should not be read aloud.",
+        ]
+    )
+
+
+def build_world_guidance_prompt(
+    *,
+    mode: str,
+    step_name: str,
+    answers: dict[str, str],
+    existing_world: str = "",
+) -> str:
+    mode_instructions = {
+        "Clarify": (
+            "Ask exactly one focused follow-up question that makes the answer more concrete."
+        ),
+        "Expand": (
+            "Offer exactly three distinct possibilities with different tones or consequences."
+        ),
+        "Connect": (
+            "Identify one useful connection or dependency with the existing world context."
+        ),
+        "Challenge": (
+            "Identify one contradiction, missing consequence, or unresolved tradeoff as a question."
+        ),
+    }
+    answer_lines = "\n".join(
+        f"- {key}: {value or 'Not answered'}" for key, value in answers.items()
+    ) or "- No answers recorded yet"
+    return "\n\n".join(
+        [
+            "You are a bounded world-building guide for a D&D campaign tool.",
+            f"Current fixed step: {step_name}",
+            f"Guidance mode: {mode}",
+            mode_instructions.get(mode, mode_instructions["Clarify"]),
+            "Current answers:",
+            answer_lines,
+            f"Existing world context: {existing_world or 'None recorded'}",
+            "Do not write canonical records. Do not invent facts as settled truth. "
+            "Label every idea as a suggestion for the DM to accept, edit, or reject.",
+            "Keep the response concise and usable in a questionnaire.",
+        ]
+    )
+
+===FILE_END===
+
+===FILE_START===
+{"path":"app/intelligence/prompts.py","size":202,"sha256":"147b14b8509fed7350b0bb179b8b9a3b04bae4e8fbab779ef386686cf463a280"}
+===CONTENT===
+from prompting import (
     WORLD_GUIDANCE_MODES,
     build_session_prompt,
     build_world_guidance_prompt,
@@ -1274,7 +1306,7 @@ class QuestGuide:
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/intelligence/tool_handler.py","size":2849,"sha256":"4878fc048c69f6881d8835c750b26fcf9e1991ac62245898990ed7aade2f86fe"}
+{"path":"app/intelligence/tool_handler.py","size":2865,"sha256":"15b1c4b0c7052b29289de7590cffb6462ef5852cc18ac8eba9a239f95cdf106e"}
 ===CONTENT===
 # intelligence/tool_handler.py
 """
@@ -1295,7 +1327,7 @@ import logging
 import re
 from typing import Any, Callable, Dict, Optional, Tuple
 
-from .tools import discover_tools
+from app.intelligence.tools import discover_tools
 
 logger = logging.getLogger(__name__)
 
@@ -1358,6 +1390,70 @@ def run_tool(payload: str, context: Optional[Dict[str, Any]] = None, registry: O
     except Exception as e:
         logger.exception("Tool /%s raised exception", name)
         return f"Tool /{name} error: {e}", {"tool": name, "args": args, "error": str(e)}
+
+===FILE_END===
+
+===FILE_START===
+{"path":"app/intelligence/tools/clear.py","size":154,"sha256":"db77679e6f5b94c9ce3ee56a31b4136a5a94e24634fe5bf6538235947e1d7f33"}
+===CONTENT===
+def run_clear_tool(args, session, game, session_run):
+    session_run.entries.clear()
+    session.commit()
+    return "Conversation history cleared.", []
+
+===FILE_END===
+
+===FILE_START===
+{"path":"app/intelligence/tools/narrate.py","size":965,"sha256":"dce85bfc0df2a54d5016e7a8ae7b0b0f65acdaa327f4a74519f849c8f4cda0d5"}
+===CONTENT===
+# app/intelligence/tools/narrate.py
+
+NAME = "narrate"
+
+def run(args: dict, context: dict):
+    """
+    Modern narration tool.
+    Uses the unified inference service and prompt builders.
+    """
+
+    # Extract context
+    game = context.get("game")
+    session_run = context.get("session_run")
+    inference = context.get("inference")
+
+    # Extract user input
+    user_text = args.get("text") or args.get("input") or ""
+
+    # Build narration prompt using your unified prompt builder
+    from app.intelligence.prompt_builders import build_narrator_prompt
+
+    prompt = build_narrator_prompt(
+        game=game,
+        session_run=session_run,
+        user_input=user_text,
+        voice_key="dm_voice",
+    )
+
+    # Generate text using the central inference service
+    raw = inference.generate(prompt)
+
+    # Return normalized tool output
+    return {
+        "text": raw,
+        "meta": {
+            "prompt": prompt,
+            "tool": NAME,
+        }
+    }
+
+===FILE_END===
+
+===FILE_START===
+{"path":"app/intelligence/tools/roll.py","size":130,"sha256":"d5490bf0b1e733c2434b68861f47929649396e598daccb01689b7ef0a278c3de"}
+===CONTENT===
+def run_roll_tool(args, session, game, session_run):
+    # TODO: implement your dice parser
+    return f"Roll result: {args}", []
 
 ===FILE_END===
 
@@ -1494,12 +1590,12 @@ if __name__ == "__main__":
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/schemas/v1.py","size":7574,"sha256":"1298aa8125447d1acf6445fe0abd380c5a44e68b1c6e668a6105b136d89b4479"}
+{"path":"app/schemas/v1.py","size":7552,"sha256":"2a997e1263c904d63b814e0226c884930d5c377fca11f0bbd5a0d5785f9d5008"}
 ===CONTENT===
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, constr
 
@@ -1718,23 +1814,21 @@ class SessionSnapshotResp(BaseModel):
 ===FILE_END===
 
 ===FILE_START===
-{"path":"app/services/__init__.py","size":359,"sha256":"890dc53078420a49b7e34aa1efccecc29e07af1bf8973a07c420b544e8c49019"}
+{"path":"app/services/__init__.py","size":293,"sha256":"510f15e4ac86e384e2071b873ad93f354a6878e4ba99bcdb42761ffb0e16e8a2"}
 ===CONTENT===
 # services/__init__.py
-"""
-Services package exports.
 
-Expose service constructors for app wiring:
-    from services import game_service, session_service, tool_service
-"""
-
-__all__ = ["game_service", "session_service", "tool_service"]
-
-from app.services import game_service, logger, session_service
 from app.services import (
-    tool_service,  # noqa: F401
+    game_service,
+    logger,
+    session_service,
+    tool_service,
+    build_service,
+    repos,
+    inference_service
 )
 
+__all__ = ["game_service", "session_service", "tool_service", "build_service", "repos", "inference_service", "logger"]
 ===FILE_END===
 
 ===FILE_START===

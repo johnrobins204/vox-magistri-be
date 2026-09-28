@@ -19,7 +19,7 @@ import types
 from typing import Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
-TOOLS_PACKAGE = "intelligence.tools"
+TOOLS_PACKAGE = "app.intelligence.tools"
 
 
 def discover_tools(package: Optional[str] = None) -> Dict[str, Callable]:
