@@ -2,7 +2,7 @@
   "ollama": {
     "base_url": "http://127.0.0.1:11434",
     "model": "llama3.1:8b",           
-    "timeout_seconds": 30.0,
+    "timeout_seconds": 120,
     "stream": false                    
   },
 
