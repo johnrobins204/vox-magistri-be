@@ -15,11 +15,12 @@ import logging
 import logging.handlers
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 # ---------------------------------------------------------------------------
 # JSON Formatter
 # ---------------------------------------------------------------------------
+
 
 class JsonFormatter(logging.Formatter):
     """
@@ -47,6 +48,7 @@ class JsonFormatter(logging.Formatter):
 # ---------------------------------------------------------------------------
 # Handler Builder
 # ---------------------------------------------------------------------------
+
 
 def _build_handler(
     *,
@@ -84,6 +86,7 @@ def _build_handler(
 # ---------------------------------------------------------------------------
 # Initialization
 # ---------------------------------------------------------------------------
+
 
 def init_logging(
     *,
@@ -135,6 +138,7 @@ def init_logging(
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def get_logger(name: str) -> logging.Logger:
     """

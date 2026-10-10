@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, constr
 # Existing Models (Preserved Exactly As-Is)
 # ============================================================
 
+
 class SessionCreateResp(BaseModel):
     session_id: str = Field(..., description="Server-generated session identifier")
     capabilities: dict[str, Any] = Field(
@@ -30,8 +31,7 @@ class MessageCreateReq(BaseModel):
     )
     role: str | None = Field("user", description="Role of the author (user/system/assistant)")
     content: str = Field(
-        ..., min_length=1, max_length=16384,
-        description="Message text/prompt to be processed"
+        ..., min_length=1, max_length=16384, description="Message text/prompt to be processed"
     )
     meta: dict[str, Any] | None = Field(None, description="Optional structured metadata")
 
@@ -121,14 +121,17 @@ class MessageListResp(BaseModel):
 # Additive Models for MVP Intelligence Layer Exposure
 # ============================================================
 
+
 class ToolInfo(BaseModel):
     """Metadata for a discovered tool."""
+
     name: str = Field(..., description="Tool name")
     module: str | None = Field(None, description="Module path where the tool is defined")
 
 
 class ToolListResp(BaseModel):
     """List of available tools."""
+
     tools: list[ToolInfo]
 
     class Config:
@@ -144,12 +147,14 @@ class ToolListResp(BaseModel):
 
 class ToolInvokeReq(BaseModel):
     """Request to invoke a tool."""
+
     args: str = Field(..., description="Arguments passed to the tool")
     context: dict[str, Any] | None = Field(None, description="Optional context for the tool")
 
 
 class ToolInvokeResp(BaseModel):
     """Response from a tool invocation."""
+
     text: str | None = Field(None, description="Tool output text")
     meta: dict[str, Any] | None = Field(None, description="Optional metadata")
     error: str | None = Field(None, description="Error message if invocation failed")
@@ -166,6 +171,7 @@ class ToolInvokeResp(BaseModel):
 
 class IntelligenceStatusResp(BaseModel):
     """Status of inference/model layer."""
+
     model_loaded: bool = Field(..., description="Whether the model is loaded")
     queue_position: int | None = Field(None, description="Current queue position")
     estimated_wait_seconds: float | None = Field(None, description="Estimated wait time")
@@ -182,6 +188,7 @@ class IntelligenceStatusResp(BaseModel):
 
 class SessionEntry(BaseModel):
     """Typed representation of a session entry for React visualization."""
+
     id: int
     run_id: int
     timestamp: float
@@ -204,6 +211,7 @@ class SessionEntry(BaseModel):
 
 class SessionSnapshotResp(BaseModel):
     """Snapshot of a session run."""
+
     run_id: int
     entries: list[SessionEntry]
     snapshot_at: float

@@ -1,13 +1,14 @@
 # app/api/v1/session.py (top imports)
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 from uuid import uuid4
 
-from app.deps import get_inference_service, get_session_store, require_local_token
-from app.services.logger import get_logger
-from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
-from app.type_defs import InferenceService, SessionStore
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, WebSocket, status
 from fastapi.responses import JSONResponse
+
+from app.deps import get_inference_service, get_session_store, require_local_token
+from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
+from app.services.logger import get_logger
+from app.type_defs import InferenceService, SessionStore
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
 logger = get_logger(__name__)
@@ -32,11 +33,11 @@ async def create_session(
     return SessionCreateResp(session_id=session_id, capabilities={"streaming": True})
 
 
-
-@router.get("/sessions/{session_id}/messages", 
-            response_model=list[MessageResp], 
-            dependencies=[Depends(require_local_token)]
-            )
+@router.get(
+    "/sessions/{session_id}/messages",
+    response_model=list[MessageResp],
+    dependencies=[Depends(require_local_token)],
+)
 async def list_messages(
     session_id: str,
     store: Annotated[Any, Depends(get_session_store)],
@@ -45,6 +46,7 @@ async def list_messages(
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
+
 
 @router.get(
     "/sessions/{session_id}/messages/{message_id}",
@@ -150,10 +152,11 @@ async def get_message_status(
     return resp
 
 
-@router.post("/sessions/{session_id}/messages", 
-             status_code=status.HTTP_202_ACCEPTED, 
-             dependencies=[Depends(require_local_token)]
-             )
+@router.post(
+    "/sessions/{session_id}/messages",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_local_token)],
+)
 async def post_message(
     session_id: str,
     payload: MessageCreateReq,
@@ -167,27 +170,38 @@ async def post_message(
 
     # Prompt length validation (simple heuristic)
     if len(payload.content) > MAX_INPUT_TOKENS * 4:  # rough char->token heuristic
-        raise HTTPException(status_code=400, detail=f"Prompt too long (max ~{MAX_INPUT_TOKENS} tokens)")
+        raise HTTPException(
+            status_code=400, detail=f"Prompt too long (max ~{MAX_INPUT_TOKENS} tokens)"
+        )
 
     # Idempotency by client_message_id
     if payload.client_message_id:
         existing = store.get_by_client_id(session_id, payload.client_message_id)
         if existing:
             # Return existing message metadata
-            return JSONResponse(status_code=200, content={"message_id": existing["id"], "status": existing["status"]})
+            return JSONResponse(
+                status_code=200,
+                content={"message_id": existing["id"], "status": existing["status"]},
+            )
 
     # Create message record
     message_id = str(uuid4())
     msg = store.create_message(session_id, message_id, payload.dict())
 
     # Enqueue; inference.enqueue should return True if queued, False if queue full.
-    queued = inference.enqueue(session_id=session_id, message_id=message_id, prompt=payload.content, store=store)
+    queued = inference.enqueue(
+        session_id=session_id, message_id=message_id, prompt=payload.content, store=store
+    )
     if not queued:
         # Queue full: inform client to retry later
         return JSONResponse(
             status_code=429,
-            content={"status": "queued_full", "retry_after": MAX_QUEUE_RETRY_AFTER, "message_id": message_id},
-            headers={"Retry-After": str(MAX_QUEUE_RETRY_AFTER)}
+            content={
+                "status": "queued_full",
+                "retry_after": MAX_QUEUE_RETRY_AFTER,
+                "message_id": message_id,
+            },
+            headers={"Retry-After": str(MAX_QUEUE_RETRY_AFTER)},
         )
 
     # Optionally compute queue position if inference exposes it (best-effort)
@@ -199,10 +213,10 @@ async def post_message(
 @router.websocket("/stream")
 async def stream_ws(
     ws: WebSocket,
-    authorization: Optional[str] = Header(None),
-    session_id: Optional[str] = None,
-    store = Depends(get_session_store),
-    inference = Depends(get_inference_service),
+    authorization: str | None = Header(None),
+    session_id: str | None = None,
+    store=Depends(get_session_store),
+    inference=Depends(get_inference_service),
 ):
     """
     WebSocket streaming with Authorization header (Bearer token).
@@ -236,11 +250,17 @@ async def stream_ws(
                     await ws.close()
                     return
                 # create message record if not present
-                if not store.get_by_client_id(session_id, message_id) and not any(m["id"] == message_id for m in store.list_messages(session_id)):
-                    store.create_message(session_id, message_id, {"content": "", "role": "assistant"})
+                if not store.get_by_client_id(session_id, message_id) and not any(
+                    m["id"] == message_id for m in store.list_messages(session_id)
+                ):
+                    store.create_message(
+                        session_id, message_id, {"content": "", "role": "assistant"}
+                    )
 
             # Stream tokens from inference.generate_tokens
-            async for tk in inference.generate_tokens(prompt=prompt, session_id=session_id, message_id=message_id):
+            async for tk in inference.generate_tokens(
+                prompt=prompt, session_id=session_id, message_id=message_id
+            ):
                 await ws.send_json({"type": "token", "token": tk, "message_id": message_id})
             await ws.send_json({"type": "done", "message_id": message_id})
 

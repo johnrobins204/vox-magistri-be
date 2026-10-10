@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from queue import Queue, Empty
-from typing import Any, Optional
+from queue import Empty, Queue
+from typing import Any
 
 from app.intelligence.client import OllamaClient
 from app.services.logger import get_logger
@@ -94,7 +93,7 @@ class OllamaInferenceService:
             logger.exception("enqueue failed", extra={"error": str(exc)})
             return False
 
-    def queue_position(self, message_id: Optional[str]) -> int:
+    def queue_position(self, message_id: str | None) -> int:
         """
         Return approximate queue position for a given message_id.
         If message_id is None, return total queue size.
@@ -112,7 +111,7 @@ class OllamaInferenceService:
                 return idx
         return 0
 
-    def estimate_wait(self, message_id: Optional[str]) -> float:
+    def estimate_wait(self, message_id: str | None) -> float:
         """
         Rough ETA based on queue position and average job time.
         """
@@ -223,7 +222,9 @@ class OllamaInferenceService:
                 extra={"session_id": session_id, "message_id": message_id, "status": status},
             )
 
-    def _update_message_content(self, store, session_id: str, message_id: str, content: str) -> None:
+    def _update_message_content(
+        self, store, session_id: str, message_id: str, content: str
+    ) -> None:
         try:
             session = store.get_session(session_id)
             if not session:

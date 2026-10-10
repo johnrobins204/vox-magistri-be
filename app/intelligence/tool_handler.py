@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Callable, Dict, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 from app.intelligence.tools import discover_tools
 
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 TOOL_RE = re.compile(r"^/([^\s/]+)(?:\s+(.*))?$")
 
 
-def detect_tool(payload: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+def detect_tool(payload: str | None) -> tuple[str | None, str | None]:
     if not payload:
         return None, None
     m = TOOL_RE.match(payload.strip())
@@ -36,17 +37,19 @@ def detect_tool(payload: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
 
 
 # cached registry
-_TOOL_REGISTRY_CACHE: Optional[Dict[str, Callable[[str, Dict[str, Any]], Any]]] = None
+_TOOL_REGISTRY_CACHE: dict[str, Callable[[str, dict[str, Any]], Any]] | None = None
 
 
-def get_registry(refresh: bool = False, package: Optional[str] = None) -> Dict[str, Callable]:
+def get_registry(refresh: bool = False, package: str | None = None) -> dict[str, Callable]:
     global _TOOL_REGISTRY_CACHE
     if _TOOL_REGISTRY_CACHE is None or refresh:
         _TOOL_REGISTRY_CACHE = discover_tools(package)
     return _TOOL_REGISTRY_CACHE or {}
 
 
-def run_tool(payload: str, context: Optional[Dict[str, Any]] = None, registry: Optional[Dict[str, Callable]] = None) -> Tuple[Any, Dict[str, Any]]:
+def run_tool(
+    payload: str, context: dict[str, Any] | None = None, registry: dict[str, Callable] | None = None
+) -> tuple[Any, dict[str, Any]]:
     """
     Run a tool call like '/narrate look around'.
 
@@ -54,7 +57,7 @@ def run_tool(payload: str, context: Optional[Dict[str, Any]] = None, registry: O
     metadata is a dict with keys like 'tool', 'args', 'error'.
     """
     name, args = detect_tool(payload)
-    meta: Dict[str, Any] = {"tool": name, "args": args}
+    meta: dict[str, Any] = {"tool": name, "args": args}
     if not name:
         return "Tool calls must start with '/' followed immediately by the tool name.", meta
 

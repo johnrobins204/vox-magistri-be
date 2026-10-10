@@ -16,15 +16,16 @@ import importlib
 import logging
 import pkgutil
 import types
-from typing import Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 TOOLS_PACKAGE = "app.intelligence.tools"
 
 
-def discover_tools(package: Optional[str] = None) -> Dict[str, Callable]:
+def discover_tools(package: str | None = None) -> dict[str, Callable]:
     pkg_name = package or TOOLS_PACKAGE
-    registry: Dict[str, Callable] = {}
+    registry: dict[str, Callable] = {}
     try:
         pkg = importlib.import_module(pkg_name)
     except Exception:
@@ -44,7 +45,7 @@ def discover_tools(package: Optional[str] = None) -> Dict[str, Callable]:
     return registry
 
 
-def load_tool_module(module_name: str) -> Optional[types.ModuleType]:
+def load_tool_module(module_name: str) -> types.ModuleType | None:
     try:
         return importlib.import_module(module_name)
     except Exception:

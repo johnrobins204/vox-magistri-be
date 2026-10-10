@@ -2,6 +2,7 @@
 
 NAME = "narrate"
 
+
 def run(args: dict, context: dict):
     """
     Modern narration tool.
@@ -35,5 +36,5 @@ def run(args: dict, context: dict):
         "meta": {
             "prompt": prompt,
             "tool": NAME,
-        }
+        },
     }

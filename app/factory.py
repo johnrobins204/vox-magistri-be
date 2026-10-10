@@ -1,11 +1,13 @@
 # app/factory.py
-from app.api.v1 import intelligence, ws, session
-from app.deps import set_services
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1 import intelligence, session, ws
+from app.deps import set_services
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
     """
@@ -29,9 +31,9 @@ def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
     # ------------------------------------------------------------
     # Include Routers (v1 API)
     # ------------------------------------------------------------
-    app.include_router(session.router)        # /api/v1/sessions/...
-    app.include_router(intelligence.router)   # /api/v1/intel/...
-    app.include_router(ws.router)             # /api/v1/ws/...
+    app.include_router(session.router)  # /api/v1/sessions/...
+    app.include_router(intelligence.router)  # /api/v1/intel/...
+    app.include_router(ws.router)  # /api/v1/ws/...
 
     # ------------------------------------------------------------
     # Startup hook: optional warmup

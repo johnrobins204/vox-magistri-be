@@ -17,14 +17,14 @@ from __future__ import annotations
 import json
 import os
 from functools import lru_cache
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ------------------------------------------------------------
 # Namespace Models
 # ------------------------------------------------------------
+
 
 class OllamaSettings(BaseModel):
     base_url: str = Field(default="http://127.0.0.1:11434")
@@ -43,10 +43,9 @@ class AppSettings(BaseModel):
 class ServerSettings(BaseModel):
     host: str = Field(default="127.0.0.1")
     port: int = Field(default=5000)
-    allowed_origins: list[str] = Field(default_factory=lambda: [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ])
+    allowed_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"]
+    )
 
 
 class ToolSettings(BaseModel):
@@ -70,7 +69,9 @@ class PromptSettings(BaseModel):
 
 class WorldSettings(BaseModel):
     enable_world_guidance: bool = Field(default=True)
-    default_modes: list[str] = Field(default_factory=lambda: ["Clarify", "Expand", "Connect", "Challenge"])
+    default_modes: list[str] = Field(
+        default_factory=lambda: ["Clarify", "Expand", "Connect", "Challenge"]
+    )
 
 
 class DatabaseSettings(BaseModel):
@@ -92,6 +93,7 @@ class LoggingSettings(BaseModel):
 # Root Settings Model
 # ------------------------------------------------------------
 
+
 class Settings(BaseModel):
     ollama: OllamaSettings = Field(default_factory=OllamaSettings)
     app: AppSettings = Field(default_factory=AppSettings)
@@ -108,11 +110,12 @@ class Settings(BaseModel):
 # File Loader
 # ------------------------------------------------------------
 
+
 def _load_json(path: str) -> dict:
     """Load JSON file if present; return {} if missing or invalid."""
     if os.path.exists(path):
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return {}
@@ -123,7 +126,8 @@ def _load_json(path: str) -> dict:
 # Settings Accessors
 # ------------------------------------------------------------
 
-@lru_cache()
+
+@lru_cache
 def get_settings() -> Settings:
     """
     Load settings.json once and cache it.
@@ -158,7 +162,7 @@ def get_settings() -> Settings:
     return Settings(**merged)
 
 
-def get_namespace(name: str) -> Dict[str, Any]:
+def get_namespace(name: str) -> dict[str, Any]:
     """
     Return a namespace as a plain dictionary.
     Example: get_namespace("ollama")

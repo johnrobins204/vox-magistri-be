@@ -2,20 +2,21 @@ import argparse
 import asyncio
 import os
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 from uvicorn import Config, Server
 
-from app.factory import create_app
 from app.deps import get_inference_service
-from app.services.logger import init_logging, get_logger
+from app.factory import create_app
 from app.services.build_services import build_services
+from app.services.logger import get_logger, init_logging
 from app.services.repos import DEFAULT_REPOS, make_default_repos, seed_sample_data
 
 logger = get_logger("dnd_app")
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5000
+
 
 def parse_args(argv: Sequence[str] | None = None):
     p = argparse.ArgumentParser(prog="dnd-server")
@@ -26,10 +27,12 @@ def parse_args(argv: Sequence[str] | None = None):
     p.add_argument("--debug", action="store_true")
     return p.parse_args(argv)
 
+
 async def _run_uvicorn(app, host: str, port: int, reload: bool = False):
     config = Config(app=app, host=host, port=port, reload=reload)
     server = Server(config=config)
     await server.serve()
+
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
@@ -79,6 +82,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     asyncio.run(_shutdown_services())
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))

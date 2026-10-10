@@ -1,10 +1,11 @@
 # app/deps.py
 from typing import Any
 
-from fastapi import Depends, Header, HTTPException
+from fastapi import Header, HTTPException
 
 # Module-level container for services. create_app() will call set_services().
 _services: Any | None = None
+
 
 def set_services(services: Any) -> None:
     """
@@ -14,28 +15,32 @@ def set_services(services: Any) -> None:
     global _services
     _services = services
 
+
 # Dependency getters used by routers
 def get_services():
     if _services is None:
         raise RuntimeError("Services not configured. Call create_app(services=...) first.")
     return _services
 
+
 def get_inference_service():
     s = get_services()
     # support both dict and attribute access
     return s.get("inference") if isinstance(s, dict) else getattr(s, "inference", None)
 
+
 def get_session_store():
     s = get_services()
     return s.get("session") if isinstance(s, dict) else getattr(s, "session", None)
+
 
 def get_tool_service():
     s = get_services()
     return s.get("tool") if isinstance(s, dict) else getattr(s, "tool", None)
 
 
-
 # existing set_services/get_* functions...
+
 
 def require_local_token(authorization: str | None = Header(None)):
     # simple example: expect "Bearer <token>"

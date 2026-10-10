@@ -7,6 +7,6 @@ Routers exposed here:
 - ws: WebSocket endpoints
 """
 
-from app.api.v1 import session, intelligence, ws
+from app.api.v1 import intelligence, session, ws
 
 __all__ = ["session", "intelligence", "ws"]

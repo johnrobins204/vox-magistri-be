@@ -1,14 +1,14 @@
 # services/build_services.py
 
-from typing import Any, Dict
+from typing import Any
 
-from app.services.session_service import SessionService
-from app.services.tool_service import ToolService
+from app.config import get_settings
 from app.services.game_service import GameService
 from app.services.inference_service import OllamaInferenceService
-from app.config import get_settings
+from app.services.tool_service import ToolService
 
-def build_services(repos: Dict[str, Any], enable_tool_discovery: bool = True) -> Dict[str, Any]:
+
+def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) -> dict[str, Any]:
     """
     Construct all runtime services used by the API layer.
     """
@@ -16,8 +16,7 @@ def build_services(repos: Dict[str, Any], enable_tool_discovery: bool = True) ->
     session_store = repos.get("session")
 
     tool_service = ToolService(
-        default_context={"repos": repos},
-        discover_on_init=enable_tool_discovery
+        default_context={"repos": repos}, discover_on_init=enable_tool_discovery
     )
 
     game_service = GameService()

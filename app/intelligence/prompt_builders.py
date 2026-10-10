@@ -15,13 +15,13 @@ import json
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 # --- small helpers ---------------------------------------------------------
-def _truncate(s: Optional[str], n: int) -> str:
+def _truncate(s: str | None, n: int) -> str:
     if s is None:
         return ""
     s = str(s)
@@ -48,7 +48,7 @@ class NarratorVoiceParams:
 
 
 # --- prompt builders ------------------------------------------------------
-def build_adjudicator_prompt(game_state: Dict[str, Any]) -> str:
+def build_adjudicator_prompt(game_state: dict[str, Any]) -> str:
     """
     Build a compact adjudicator prompt that expects a strict JSON outcome.
     Caller must ensure game_state is already truncated/compact.
@@ -89,7 +89,9 @@ def build_adjudicator_prompt(game_state: Dict[str, Any]) -> str:
     return "\n\n".join(parts)
 
 
-def build_narrator_prompt(adjudicator_output: str, params: NarratorVoiceParams, player_intent: Optional[str] = None) -> str:
+def build_narrator_prompt(
+    adjudicator_output: str, params: NarratorVoiceParams, player_intent: str | None = None
+) -> str:
     """
     Build a compact narrator prompt that translates adjudicator output into second-person narration.
     """
@@ -137,7 +139,9 @@ def build_game_chat_prompt(
     - included_characters: iterable of Character-like objects to include
     """
     # voice
-    voice = getattr(voice_label, "label", voice_label) if hasattr(voice_label, "label") else voice_label
+    voice = (
+        getattr(voice_label, "label", voice_label) if hasattr(voice_label, "label") else voice_label
+    )
     current = getattr(game, "character", None) or {}
 
     # minimal character data
@@ -148,16 +152,29 @@ def build_game_chat_prompt(
                 "name": _truncate(getattr(c, "name", ""), max_field_len),
                 "class": getattr(c, "class_name", ""),
                 "level": getattr(c, "level", 0),
-                "hp": {"current": int(getattr(c, "current_hp", 0)), "max": int(getattr(c, "max_hp", 1))},
+                "hp": {
+                    "current": int(getattr(c, "current_hp", 0)),
+                    "max": int(getattr(c, "max_hp", 1)),
+                },
             }
         except Exception:
             return {"name": str(c)}
 
     included_data = [minimal_character(c) for c in included_characters]
-    included_json = _compact_json({"active": minimal_character(current), "included": included_data} if included_data else minimal_character(current))
+    included_json = _compact_json(
+        {"active": minimal_character(current), "included": included_data}
+        if included_data
+        else minimal_character(current)
+    )
 
     recent_entries = getattr(session_run, "entries", [])[-max_turns:]
-    recent_turns = "\n".join(f"{getattr(e, 'kind', 'entry')}:{_truncate(getattr(e, 'content', str(e)), max_field_len)}" for e in recent_entries) or "None"
+    recent_turns = (
+        "\n".join(
+            f"{getattr(e, 'kind', 'entry')}:{_truncate(getattr(e, 'content', str(e)), max_field_len)}"
+            for e in recent_entries
+        )
+        or "None"
+    )
 
     meta = (
         f"GAME:{_truncate(getattr(game, 'name', ''), 64)}|CAMPAIGN:{_truncate(getattr(game.campaign, 'name', ''), 64) if getattr(game, 'campaign', None) else 'None'}|"
@@ -183,21 +200,44 @@ def build_game_state_payload(
     user_input: str,
     included_characters: Iterable[Any],
     max_turns: int = 6,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Compact payload for adjudication: returns a dict suitable for JSON serialization.
     """
-    game_chars = [link.character for link in getattr(game, "character_links", [])] or [getattr(game, "character", None)]
-    char_map = {c.id: {"id": c.id, "name": c.name, "class": c.class_name, "level": c.level, "hp": {"current": c.current_hp, "max": c.max_hp}} for c in game_chars if c is not None}
+    game_chars = [link.character for link in getattr(game, "character_links", [])] or [
+        getattr(game, "character", None)
+    ]
+    char_map = {
+        c.id: {
+            "id": c.id,
+            "name": c.name,
+            "class": c.class_name,
+            "level": c.level,
+            "hp": {"current": c.current_hp, "max": c.max_hp},
+        }
+        for c in game_chars
+        if c is not None
+    }
 
     included = []
     for c in included_characters:
-        included.append(char_map.get(getattr(c, "id", None)) or {"id": getattr(c, "id", None), "name": getattr(c, "name", "")})
+        included.append(
+            char_map.get(getattr(c, "id", None))
+            or {"id": getattr(c, "id", None), "name": getattr(c, "name", "")}
+        )
 
-    recent = [{"kind": str(getattr(e, "kind", "")), "content": _truncate(getattr(e, "content", ""), 200)} for e in getattr(session_run, "entries", [])[-max_turns:]]
+    recent = [
+        {"kind": str(getattr(e, "kind", "")), "content": _truncate(getattr(e, "content", ""), 200)}
+        for e in getattr(session_run, "entries", [])[-max_turns:]
+    ]
 
     payload = {
-        "game": {"name": getattr(game, "name", ""), "campaign": getattr(game.campaign, "name", "") if getattr(game, "campaign", None) else ""},
+        "game": {
+            "name": getattr(game, "name", ""),
+            "campaign": (
+                getattr(game.campaign, "name", "") if getattr(game, "campaign", None) else ""
+            ),
+        },
         "characters": list(char_map.values()),
         "included_characters": included,
         "recent_turns": recent,
@@ -206,7 +246,7 @@ def build_game_state_payload(
     return payload
 
 
-def build_turn_summary(*, game: Any, session_run: Any, max_turns: int = 6) -> Dict[str, Any]:
+def build_turn_summary(*, game: Any, session_run: Any, max_turns: int = 6) -> dict[str, Any]:
     """
     Compact turn summary used by UI or voice systems.
     Returns a simple dict (serializable).
@@ -215,13 +255,17 @@ def build_turn_summary(*, game: Any, session_run: Any, max_turns: int = 6) -> Di
     quest_title = getattr(quest, "title", None) if quest else None
     quest_goal = "No active quest"
     if quest:
-        open_objectives = [o for o in getattr(quest, "objectives", []) if getattr(o, "status", "") == "Open"]
+        open_objectives = [
+            o for o in getattr(quest, "objectives", []) if getattr(o, "status", "") == "Open"
+        ]
         if open_objectives:
             quest_goal = getattr(open_objectives[0], "title", quest_goal)
         elif getattr(quest, "objective", None):
-            quest_goal = getattr(quest, "objective")
+            quest_goal = quest.objective
 
-    game_chars = [link.character for link in getattr(game, "character_links", [])] or [getattr(game, "character", None)]
+    game_chars = [link.character for link in getattr(game, "character_links", [])] or [
+        getattr(game, "character", None)
+    ]
     party = []
     for c in game_chars:
         if c is None:
@@ -235,9 +279,33 @@ def build_turn_summary(*, game: Any, session_run: Any, max_turns: int = 6) -> Di
             condition = "Bloodied"
         else:
             condition = "Healthy"
-        party.append({"name": c.name, "class": c.class_name, "level": c.level, "current_hp": current_hp, "max_hp": max_hp, "condition": condition})
+        party.append(
+            {
+                "name": c.name,
+                "class": c.class_name,
+                "level": c.level,
+                "current_hp": current_hp,
+                "max_hp": max_hp,
+                "condition": condition,
+            }
+        )
 
-    turn_number = sum(1 for e in getattr(session_run, "entries", []) if getattr(e, "kind", "") == "Chat input") + 1
-    scene = (getattr(session_run, "current_scene", "") or getattr(session_run, "title", "") or "No scene set").strip()
+    turn_number = (
+        sum(
+            1 for e in getattr(session_run, "entries", []) if getattr(e, "kind", "") == "Chat input"
+        )
+        + 1
+    )
+    scene = (
+        getattr(session_run, "current_scene", "")
+        or getattr(session_run, "title", "")
+        or "No scene set"
+    ).strip()
 
-    return {"turn_number": turn_number, "scene": scene, "quest_title": quest_title, "quest_goal": quest_goal, "party": party}
+    return {
+        "turn_number": turn_number,
+        "scene": scene,
+        "quest_title": quest_title,
+        "quest_goal": quest_goal,
+        "party": party,
+    }

@@ -71,9 +71,10 @@ def build_world_guidance_prompt(
             "Identify one contradiction, missing consequence, or unresolved tradeoff as a question."
         ),
     }
-    answer_lines = "\n".join(
-        f"- {key}: {value or 'Not answered'}" for key, value in answers.items()
-    ) or "- No answers recorded yet"
+    answer_lines = (
+        "\n".join(f"- {key}: {value or 'Not answered'}" for key, value in answers.items())
+        or "- No answers recorded yet"
+    )
     return "\n\n".join(
         [
             "You are a bounded world-building guide for a D&D campaign tool.",

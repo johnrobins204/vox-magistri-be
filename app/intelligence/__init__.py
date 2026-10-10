@@ -16,8 +16,12 @@ for voice configs and tool modules.
 
 __all__ = ["client", "prompt_builders", "tools", "tool_handler", "world_guide", "writer"]
 
-from app.intelligence import client, prompt_builders, tool_handler, world_guide
 from app.intelligence import (
+    client,
+    prompt_builders,
+    tool_handler,
+    world_guide,
     writer,  # noqa: F401
 )
+
 from . import tools

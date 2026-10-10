@@ -2,22 +2,20 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
-from typing import Any
 
-from app.schemas.v1 import (
-    ToolListResp,
-    ToolInvokeReq,
-    ToolInvokeResp,
-    IntelligenceStatusResp,
-    SessionSnapshotResp,
-)
 from app.deps import (
-    get_tool_service,
     get_inference_service,
     get_session_store,
+    get_tool_service,
+)
+from app.schemas.v1 import (
+    IntelligenceStatusResp,
+    SessionSnapshotResp,
+    ToolInvokeReq,
+    ToolInvokeResp,
+    ToolListResp,
 )
 from app.services.session_service import SessionService
-
 
 router = APIRouter(prefix="/api/v1/intel", tags=["intelligence"])
 
@@ -28,10 +26,7 @@ router = APIRouter(prefix="/api/v1/intel", tags=["intelligence"])
 @router.get("/tools", response_model=ToolListResp)
 def list_tools(tool_service=Depends(get_tool_service)):
     registry = tool_service.list_tools()
-    tools = [
-        {"name": name, "module": module}
-        for name, module in registry.items()
-    ]
+    tools = [{"name": name, "module": module} for name, module in registry.items()]
     return ToolListResp(tools=tools)
 
 

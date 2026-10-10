@@ -34,7 +34,7 @@ from typing import Any
 
 # Attempt to import the intelligence.tools package; discovery will fail gracefully if missing.
 try:
-    import intelligence.tools as _tools_pkg  # type: ignore
+    import app.S.tools as _tools_pkg  # type: ignore
 except Exception:
     _tools_pkg = None  # discovery will be a no-op
 

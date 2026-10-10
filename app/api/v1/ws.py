@@ -1,15 +1,15 @@
 # api/v1/ws.py
 from __future__ import annotations
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from typing import Any
+
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from app.deps import (
     get_inference_service,
     get_session_store,
 )
 from app.services.session_service import SessionService
-
 
 router = APIRouter(prefix="/api/v1/ws", tags=["websocket"])
 
@@ -42,12 +42,15 @@ async def ws_session(
 
     # Send initial snapshot
     snapshot = svc.snapshot_run(run_id)
-    await ws_send(ws, {
-        "type": "snapshot",
-        "run_id": snapshot["run_id"],
-        "entries": snapshot["entries"],
-        "snapshot_at": snapshot["snapshot_at"],
-    })
+    await ws_send(
+        ws,
+        {
+            "type": "snapshot",
+            "run_id": snapshot["run_id"],
+            "entries": snapshot["entries"],
+            "snapshot_at": snapshot["snapshot_at"],
+        },
+    )
 
     try:
         while True:
@@ -71,16 +74,22 @@ async def ws_session(
                         session_id=None,
                         message_id=str(entry["id"]),
                     ):
-                        await ws_send(ws, {
-                            "type": "token",
-                            "token": tk,
-                            "message_id": entry["id"],
-                        })
+                        await ws_send(
+                            ws,
+                            {
+                                "type": "token",
+                                "token": tk,
+                                "message_id": entry["id"],
+                            },
+                        )
 
-                    await ws_send(ws, {
-                        "type": "done",
-                        "message_id": entry["id"],
-                    })
+                    await ws_send(
+                        ws,
+                        {
+                            "type": "done",
+                            "message_id": entry["id"],
+                        },
+                    )
 
             # ------------------------------------------------------------
             # Client requests: fetch queue status
@@ -88,20 +97,26 @@ async def ws_session(
             elif action == "status":
                 pos = inference.queue_position(None) if inference else None
                 eta = inference.estimate_wait(None) if inference else None
-                await ws_send(ws, {
-                    "type": "status",
-                    "queue_position": pos,
-                    "estimated_wait_seconds": eta,
-                })
+                await ws_send(
+                    ws,
+                    {
+                        "type": "status",
+                        "queue_position": pos,
+                        "estimated_wait_seconds": eta,
+                    },
+                )
 
             # ------------------------------------------------------------
             # Unknown action
             # ------------------------------------------------------------
             else:
-                await ws_send(ws, {
-                    "type": "error",
-                    "message": f"Unknown action: {action}",
-                })
+                await ws_send(
+                    ws,
+                    {
+                        "type": "error",
+                        "message": f"Unknown action: {action}",
+                    },
+                )
 
     except WebSocketDisconnect:
         # Client disconnected gracefully
