@@ -33,7 +33,7 @@ narration/adjudication; the client is a separate React app (not in this repo).
 - Tests: `pytest` (config in `pyproject.toml`, tests live in `tests/`). Use the `app`/`client` fixtures in `tests/conftest.py` (builds a real app with `:memory:` SQLite repos, no network/Ollama required).
 - Lint/format: `ruff check app tests` and `black app tests`.
 - CI (`.github/workflows/ci.yml`) runs `ruff check`, `black --check` and `pytest`; run the same locally before declaring work done.
-- `dupe-scan.sh` detects accidentally duplicated files with the same basename under different folders — a recurring issue in this repo's history; run it after large refactors.
+- `dupe-scan.sh` was retired; after large refactors, eyeball `git ls-files` for accidentally duplicated basenames under different folders (a recurring issue in this repo's history).
 
 ## Coworking workflow (requirements → architecture → spec → implement → wrap-up)
 For any non-trivial requirement, need, or desired outcome, use the **Coworking
