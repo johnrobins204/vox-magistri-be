@@ -32,6 +32,228 @@
         "[COMPLETE] Implementation"
       ],
       "follow_ups": []
+    },
+    {
+      "id": "REQ-0003",
+      "title": "Store assistant replies as separate messages (stop overwriting the user message)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P0 MVP blocker. Evidence: inference_service._update_message_content flips the user message to role=assistant and replaces content, so history is lost.",
+        "Depends on: none. ADR likely: no (single-module bug fix)."
+      ]
+    },
+    {
+      "id": "REQ-0004",
+      "title": "Unify session identity across REST, WebSocket and /intel (one session model)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P0. Evidence: REST uses uuid sessions + InMemorySessionStore; ws.py and /intel/sessions/{run_id}/snapshot use int run_id via SessionService, whose repo calls silently no-op against InMemorySessionStore (snapshot always empty, WS entries never persisted). /api/v1/stream duplicates ws.py. GameService is built but referenced by no router.",
+        "Scope: one id type, one store API, one WS endpoint; decide fate of SessionService, GameService and the duplicate in-memory repos.",
+        "Depends on: REQ-0003. ADR likely: yes (cross-cutting convention, two viable approaches)."
+      ]
+    },
+    {
+      "id": "REQ-0005",
+      "title": "Persistence decision and wiring (sessions survive restart; resolve the unimportable data/ layer)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P0. Evidence: all state is in memory; data/__init__.py has a broken relative import (import data fails); sqlalchemy is not in requirements.txt; data/models.py is ~30 tables far beyond MVP.",
+        "Options to score: stdlib sqlite3 behind the SessionStore Protocol; slimmed SQLAlchemy; wire data/ as-is; status quo.",
+        "Depends on: REQ-0004. ADR likely: yes (new dependency, hard to reverse)."
+      ]
+    },
+    {
+      "id": "REQ-0006",
+      "title": "Wire the prompt pipeline into inference (DM system prompt, recent-turn history, voice settings)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P0. Evidence: the worker and WS send only the raw user text to Ollama (OllamaClient.generate wraps it as one user message). prompt_builders.py reads legacy ORM objects (game.campaign, session_run.entries) and its callers are unreachable; settings.prompts.*, app.max_turns, max_field_len and voice_configs/voice_congfigs.json are never read.",
+        "Scope: adapt builders to dict-based messages, add a system message and max_turns history window, load voice config, fix the filename typo, and fix prompts.py (from prompting import ...).",
+        "Depends on: REQ-0003, REQ-0004. ADR likely: no (existing builders; record a pattern)."
+      ]
+    },
+    {
+      "id": "REQ-0007",
+      "title": "Real, non-blocking streaming and honest inference health",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P1, needed by the frontend. Evidence: generate_tokens calls sync httpx inside an async generator (blocks the event loop) and emits one 'token'; settings.ollama.stream is unused; the WS path bypasses the FIFO queue so REST and WS can hit Ollama concurrently; cancel cannot stop a running job; model_loaded is hard-coded True.",
+        "Scope: Ollama NDJSON streaming via httpx.AsyncClient, one serialized path for REST and WS, cancel mid-stream, real health probe, and a documented WS event protocol (token/done/error/status).",
+        "Depends on: REQ-0004, REQ-0006. ADR likely: yes (streaming protocol is a cross-cutting contract with the frontend)."
+      ]
+    },
+    {
+      "id": "REQ-0008",
+      "title": "Make tools actually work: fix narrate, implement roll, port clear, slash-command dispatch",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P1. Evidence (probed): POST /intel/tools/narrate/invoke returns 'Tool narrate error: str object has no attribute get' (args is str, narrate treats it as dict; build_narrator_prompt is called with kwargs it does not accept; inference.generate does not exist on OllamaInferenceService). roll.py is a stub; clear.py uses the legacy (args, session, game, session_run) signature; tool_handler.run_tool/detect_tool are not called from the message flow.",
+        "Also: ToolService.invoke holds a global RLock for the whole call (a slow LLM tool blocks all tools); errors come back as 200 text with error always null; /intel/tools/invoke lets the client override service objects through context.",
+        "Note: REQ-0002 excluded the roll parser and narrate body; this requirement lifts that exclusion. Depends on: REQ-0004, REQ-0006. ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0009",
+      "title": "Make the existing dev token real and browser-compatible (auth, WebSocket auth, CORS from settings)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P1, frontend blocker. Evidence (probed): any ****** is accepted (wrong token returned 202); auth.local_dev_token and auth.enable_auth are unused; POST /sessions and all /intel/* are unauthenticated; ws.py has no auth; /api/v1/stream requires an Authorization header, which browsers cannot send on a WebSocket; CORS origins are hard-coded and ignore settings.server.allowed_origins (Origin :3000 gets 400).",
+        "Charter guard: dev-level only. No hardening beyond making the existing token and settings honest and usable from a browser.",
+        "Depends on: REQ-0004. ADR likely: yes (WS auth approach is a cross-cutting convention)."
+      ]
+    },
+    {
+      "id": "REQ-0010",
+      "title": "Frontend-ready API contract (pydantic v2 schemas, one status vocabulary, session CRUD, error shape)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P1. Evidence: schemas use pydantic v1 Config/orm_mode/schema_extra and .dict() under pydantic 2.13 (deprecation warnings); schema docs say queued|in_progress|done but the service emits running|completed; MessageListResp is unused; two entry shapes (MessageResp vs SessionEntry); no list/get/delete session endpoints; the 429 queue-full path is dead because the Queue is unbounded; naive datetime.utcnow().",
+        "Scope: enum for message statu",
+
+        "Depends on: REQ-0004. ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0011",
+      "title": "Startup and config correctness (main.py honors settings, lifespan, loud config errors)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P2. Evidence: main.py hard-codes host/port/log_dir and ignores settings.server/logging/app.seed_sample_data; reload=True is passed with an app object (uvicorn needs an import string, so reload does not work); inference shutdown runs twice (uvicorn lifespan plus manual); @app.on_event is deprecated; get_settings swallows invalid JSON and returns defaults, reads settings.json relative to CWD, and treats every env var as a possible override; get_namespace uses deprecated .dict(); restart.sh uses a bare 'python' and pkill -f uvicorn.",
+        "Depends on: none. ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0012",
+      "title": "Repository hygiene and dead-code cleanup",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P2. Evidence: app/tst.py is an import-time smoke script inside the package (convert to a test or move to scripts/); corpus.txt (152K) is tracked despite being in .gitignore; untracked keys.txt/all_files.txt/dupes.txt; duplicate pack_py.sh; app/intelligence/prompts.py has a broken import; stub modules quest_guide.py/world_guide.py/writer.py; duplicate 'router =' and unused imports in session.py; four separate in-memory repo implementations.",
+        "Depends on: REQ-0004, REQ-0005 (decides which in-memory repos survive). ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0013",
+      "title": "MVP test coverage with a fake-Ollama fixture (message flow, worker, WS, auth, prompts)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P1, runs alongside the P0/P1 items. Evidence: 15 tests; none cover the message to worker to completion flow, the WebSocket, inference_service, prompt_builders or auth.",
+        "Scope: a shared FakeOllama fixture (no network, per tests.instructions.md), an end-to-end create-session, post-message, poll, read test, and WS tests. Each REQ above still owns its own tests.",
+        "Depends on: REQ-0003. ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0014",
+      "title": "Backfill the pattern library and refresh agent instructions",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P2. Evidence: docs/patterns/INDEX.md holds one code pattern and no architecture or spec patterns, though constraint 4 requires reusable patterns to be recorded. Undocumented but in use: service-locator DI (deps.py), settings namespaces, tool module contract, dict-or-attr service access, store Protocols.",
+        "Scope: author patterns at status proposed only; update .github/copilot-instructions.md 'Known gaps' as items close. Do not change accepted patterns without sign-off.",
+        "Depends on: none (best done after REQ-0004/0005). ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0015",
+      "title": "Minimal campaign domain for the DM (campaign, party characters, active quest, scene) feeding the prompt context",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P2 (needed once chat works end to end). Evidence: a DM server with no campaign, character or quest state. prompting.CampaignContext and the build_*_prompt functions exist but have no data source; data/models.py has the rich schema but is unwired.",
+        "Scope: the smallest slice of campaign/character/quest/scene needed to ground the DM prompt, plus CRUD endpoints. Not the 30-table schema.",
+        "Depends on: REQ-0005, REQ-0006. ADR likely: yes (domain boundary and storage shape)."
+      ]
+    },
+    {
+      "id": "REQ-0016",
+      "title": "Frontend MVP design brief (screens, user flows, message lifecycle states, API gap list)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P1 planning item (documentation only, can start now). Deliverable under docs/: screen inventory (session list/start, chat/DM view with streaming and queue/ETA, dice/tool panel, character and quest views), message state machine, and the endpoints each screen needs. Gaps found feed back into REQ-0007, REQ-0009, REQ-0010 and REQ-0015.",
+        "Charter fit: audience is the author's children, so favor a simple, kid-friendly UX over feature breadth.",
+        "Depends on: none. ADR likely: no."
+      ]
+    },
+    {
+      "id": "REQ-0017",
+      "title": "Frontend stack, repo layout and dev-loop decision (React app, API client generation, WS client)",
+      "status": "backlog",
+      "created_at": "2026-10-11",
+      "updated_at": "2026-10-11",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "follow_ups": [
+        "Tier: P2 planning item. Questions for the ADR: separate repo (current assumption) vs web/ in this repo; Vite on :5173 (matches current CORS); TypeScript or not; data fetching and WS client approach; types generated from the REQ-0010 OpenAPI snapshot; one-command dev startup for backend plus frontend; fun/learning value is a legitimate rubric criterion.",
+        "Depends on: REQ-0016, REQ-0010. ADR likely: yes (new external dependency set, hard to reverse)."
+      ]
     }
   ]
 }
