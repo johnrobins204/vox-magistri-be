@@ -150,17 +150,20 @@
     },
     {
       "id": "REQ-0008",
-      "title": "Make tools actually work: fix narrate, implement roll, port clear, slash-command dispatch",
-      "status": "backlog",
+      "title": "Tool-calling path end to end: fix narrate, implement roll, delete clear tool, slash-command dispatch, ToolService errors/lock/context",
+      "status": "in_progress",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
-      "adr_id": null,
-      "spec_path": null,
-      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "adr_id": "ADR-0004",
+      "spec_path": "docs/specs/SPEC-0007-slash-tools-work.md",
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
       "follow_ups": [
-        "Tier: P1. Evidence (probed): POST /intel/tools/narrate/invoke returns 'Tool narrate error: str object has no attribute get' (args is str, narrate treats it as dict; build_narrator_prompt is called with kwargs it does not accept; inference.generate does not exist on OllamaInferenceService). roll.py is a stub; clear.py uses the legacy (args, session, game, session_run) signature; tool_handler.run_tool/detect_tool are not called from the message flow.",
+        "Tier: P1. Evidence (probed): POST /intel/tools/narrate/invoke returns 'Tool narrate error: str object has no attribute get' (args is str, narrate treats it as dict; build_narrator_prompt is called with kwargs it does not accept; inference.generate does not exist on OllamaInferenceService). roll.py is a stub; clear.py (legacy (args, session, game, session_run) signature, not discoverable) is to be DELETED by human decision 2026-10-11; tool_handler.run_tool/detect_tool are not called from the message flow.",
         "Also: ToolService.invoke holds a global RLock for the whole call (a slow LLM tool blocks all tools); errors come back as 200 text with error always null; /intel/tools/invoke lets the client override service objects through context.",
-        "Note: REQ-0002 excluded the roll parser and narrate body; this requirement lifts that exclusion. Depends on: REQ-0004, REQ-0006. ADR likely: no."
+        "Note: REQ-0002 excluded the roll parser and narrate body; this requirement lifts that exclusion. Depends on: REQ-0004, REQ-0006. ADR-0004 recorded.",
+        "Architecture review revised 2026-10-11 after human scope decision (clear deleted): docs/adr/0004-slash-tools-in-worker.md (D1 dispatch in worker, D2 shared _ollama_lock, D3 ToolService typed errors, D4 clear deleted) and docs/patterns/architecture/PAT-ARCH-004-slash-tools-in-worker.md are status 'proposed' and need human acceptance (G-1). Two PAT-ARCH-003 amendments are flagged, not applied (G-2): slash-command jobs skip the chat builder; worker chat and generate share _ollama_lock. Open gates: enable_narration/enable_adjudication unread; unknown /x is an error not sent to the LLM; tool exchanges stay in LLM history.",
+        "Spec revised 2026-10-11: docs/specs/SPEC-0007-slash-tools-work.md (status proposed; 9 work packages; 45 tests: 41 new, 4 updated). WP-1..WP-5 and WP-9 need only G-1 (ADR-0004/PAT-ARCH-004 acceptance); WP-6..WP-8 also need G-2 (the two PAT-ARCH-003 amendments). Implementation NOT started (no Implementer launched).",
+        "clear tool deleted by human decision 2026-10-11 (debug shorthand); no replacement"
       ]
     },
     {

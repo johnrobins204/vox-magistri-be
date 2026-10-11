@@ -56,10 +56,14 @@ may keep returning a single string.
    job, including its assistant reply, has finished when the next job runs. Transports
    and `app/services/messages.py` keep enqueueing `prompt=content`. The
    `InferenceService` and `SessionStore` Protocols do not change.
+   Slash-command jobs (`/name args`, [PAT-ARCH-004](./PAT-ARCH-004-slash-tools-in-worker.md))
+   skip the chat builder and run the tool instead.
 6. **The client has two entry points and one HTTP path.**
    `OllamaClient.chat(messages, *, model=None) -> str` sends the `/api/chat` request.
    `generate(prompt, *, model=None)` is a one-line wrapper,
    `chat([{"role": "user", "content": prompt}])`, kept for tools.
+   The worker's `chat` call and the inference service's `generate` run under one
+   `_ollama_lock`, so Ollama calls stay serialized (ADR-0004).
 7. **No prompt text in logs.** Log counts only, such as the number of history messages
    and total messages. Message content may be personal (PAT-CODE-001, PAT-ARCH-002).
 

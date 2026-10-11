@@ -12,7 +12,7 @@ narration/adjudication; the client is a separate React app (not in this repo).
 - `app/services/repos.py` — holds `SqliteSessionStore` (stdlib `sqlite3`), the only session store. It implements the `SessionStore` Protocol in `app/type_defs.py`, and every transport (REST, the single WebSocket, `/intel` snapshot) uses it via `get_session_store()`. Sessions and messages persist across restarts. The path comes from `settings.json` `database.url` (default `sqlite:///./dnd.db`; `:memory:` in tests) and is passed to `make_default_repos(database_url)` by `app/main.py`. On open, in-flight `queued`/`running` messages are marked `error`. Session ids are uuid strings.
 - `app/api/v1/*` — Routers: `session.py` (REST session/message CRUD), `ws.py` (the only WebSocket, `/api/v1/ws/sessions/{session_id}`), `intelligence.py` (tool/inference endpoints, plus `/api/v1/intel/sessions/{session_id}/snapshot`). All prefixed `/api/v1/...`. `app/services/messages.py` holds the shared "submit user message" and "snapshot" helpers used by REST and WS.
 - `app/intelligence/` — Prompting, Ollama client (`client.py`, uses `httpx`), and the tool-call pipeline (`tool_handler.py`, `prompting.py`, `prompt_builders.py`).
-- `app/intelligence/tools/` — Pluggable tools (`roll.py`, `narrate.py`, `clear.py`); contract in `.github/instructions/tools.instructions.md`.
+- `app/intelligence/tools/` — Pluggable tools (`roll.py`, `narrate.py`); contract in `.github/instructions/tools.instructions.md`.
 
 ## Known gaps / traps (verified, not guesses)
 - Tool discovery goes through `app.intelligence.tools.discover_tool_modules`, called by `ToolService.reload_tools()`; `tool_handler.get_registry()` shares it. Import failures are logged, not swallowed.
