@@ -1,0 +1,59 @@
+{
+  "project_name": "DND Auto-DM",
+  "tech_stack": {
+    "frontend": "React",
+    "intelligence_layer": "Local LLM (Target: llama3:8b 4-bit quantization) + Python processing scripts"
+  },
+  "core_philosophy": "Bridge literary traditions with developer tools. Separate the 'creator' mindset from the 'player' mindset.",
+  "components": {
+    "component_1_world_building": {
+      "inspiration": "VS Code, Wikis, Graph Databases (Practicum-inspired)",
+      "data_model": {
+        "structure": "Graph-related data assets operating as a dictionary of dictionaries and lists.",
+        "schema_inheritance": "Strict. All schemas (stencils) must declare a parent schema, culminating at 'world_tree'.",
+        "stencils": "Act as both schemas (data structure definitions) and containers. Extensible taxonomy.",
+        "instances": "Specific entities adhering to a stencil's classification criteria (Person, Place, Kingdom, etc.)."
+      },
+      "layout": {
+        "left_panel": "World-root tree view (repo=world) displaying schemas, objects, and free-form pages.",
+        "center_panel": "Main editor canvas supporting wiki-style rich text writing."
+      },
+      "workflows": {
+        "writing_and_assignment": "User writes in standard wiki interface. Pages attach to permanent system schemas (notebooks) or custom stencils. Post-writing, users can select text to manually assign as instances or invoke AI scanning.",
+        "ai_interview_extraction": "LLM leads user through interview path. Screen displays 'bounding boxes searching' animations indicating background LLM/Python processing.",
+        "candidate_queue": {
+          "trigger": "Background processing identifies entity candidates.",
+          "ui": "Alerts collapse into a tab with an (N) counter indicating pending reviews. Grouped in a per-stencil view expanding on click.",
+          "state_machine": {
+            "Reject": "Dropped from memory completely.",
+            "Edit": "Opens editor. Cancel with no edits = Discard. Save (with or without edits) = Commit to world tree.",
+            "Accept": "Commit to world tree immediately."
+          }
+        }
+      }
+    },
+    "component_2_dm_mode": {
+      "inspiration": "Discord (Optimized for eventual multiplayer)",
+      "layout": {
+        "left_sidebar": "Channels (e.g., main story, side-conversations, rules-consult, brainstorming).",
+        "center_panel": "Main chat feed (The Game Chronicle) OR Map View.",
+        "right_sidebar": "Roster displaying active Characters and available DM Agents."
+      },
+      "interaction_mechanics": {
+        "agents": {
+          "trigger": "'@' mentions.",
+          "function": "Retrieve rules, describe gameplay elements from the world-graph, or assume specific personas. Users can define custom agents."
+        },
+        "tools": {
+          "trigger": "'/' commands (e.g., /roll, /inventory).",
+          "function": "Results inject permanently into the main chat feed to form a persistent game chronicle."
+        },
+        "voice_layer": "Configuration setting allowing the user to dictate the tone/style of the DM's chronicle output."
+      },
+      "visual_rendering": {
+        "chat_ui": "Primarily text-based to accommodate lightweight LLM constraints (llama3:8b). Dynamic React component emission deferred pending further testing.",
+        "map_view": "Available as a tab alternative to the main chat. Displays user-generated maps taking up the primary viewport, with the last chat entry and a small chat input box docked at the bottom."
+      }
+    }
+  }
+}
