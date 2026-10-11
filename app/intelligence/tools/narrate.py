@@ -1,40 +1,36 @@
 # app/intelligence/tools/narrate.py
+"""
+`/narrate` tool (REQ-0008, SPEC-0007 WP-4).
+
+Builds the DM narrator prompt from the user's text and the `dm_voice` / verbosity
+settings, then produces the reply through the injected `inference` service
+(`context["inference"].generate(prompt)`). The prompt is not put in `meta` and not logged.
+"""
+
+from typing import Any
+
+from app.config import get_settings
+from app.intelligence.prompt_builders import NarratorVoiceParams, build_narrator_prompt
+from app.intelligence.tools import ToolError
 
 NAME = "narrate"
 
+_USAGE = "Usage: /narrate <what happens>"
 
-def run(args: dict, context: dict):
-    """
-    Modern narration tool.
-    Uses the unified inference service and prompt builders.
-    """
 
-    # Extract context
-    game = context.get("game")
-    session_run = context.get("session_run")
-    inference = context.get("inference")
+def run(args: str, context: dict) -> dict[str, Any]:
+    text = (args or "").strip()
+    if not text:
+        raise ToolError(_USAGE)
 
-    # Extract user input
-    user_text = args.get("text") or args.get("input") or ""
-
-    # Build narration prompt using your unified prompt builder
-    from app.intelligence.prompt_builders import build_narrator_prompt
-
-    prompt = build_narrator_prompt(
-        game=game,
-        session_run=session_run,
-        user_input=user_text,
-        voice_key="dm_voice",
+    p = get_settings().prompts
+    params = NarratorVoiceParams(
+        tone=p.dm_voice.tone,
+        dm_persona=p.dm_voice.persona,
+        verbosity=p.verbosity_default,
+        sensory_focus=p.dm_voice.sensory_focus,
+        consequence_level=p.dm_voice.consequence_level,
     )
-
-    # Generate text using the central inference service
-    raw = inference.generate(prompt)
-
-    # Return normalized tool output
-    return {
-        "text": raw,
-        "meta": {
-            "prompt": prompt,
-            "tool": NAME,
-        },
-    }
+    prompt = build_narrator_prompt(text, params, None)
+    reply = context["inference"].generate(prompt)
+    return {"text": reply, "meta": {"tool": NAME}}

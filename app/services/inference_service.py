@@ -15,6 +15,7 @@ from app.intelligence.prompt_builders import (
     build_system_prompt,
     load_voice_configs,
 )
+from app.intelligence.tool_handler import detect_tool
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
@@ -42,7 +43,7 @@ class OllamaInferenceService:
     - WebSocket: direct streaming via generate_tokens
     """
 
-    def __init__(self, settings):
+    def __init__(self, settings, tool_service=None):
         # settings must provide ollama.base_url and ollama.model
         self.client = OllamaClient(
             base_url=settings.ollama.base_url,
@@ -50,6 +51,8 @@ class OllamaInferenceService:
             timeout_seconds=settings.ollama.timeout_seconds,
         )
         self.model_loaded: bool = True
+        # Slash dispatch (SPEC-0007 WP-7); None disables it and every message uses the chat path.
+        self._tool_service = tool_service
 
         # Prompt pipeline (SPEC-0006): voice configs and prompt limits are read once, here.
         self._system_prompt = build_system_prompt(settings.prompts, load_voice_configs())
@@ -59,6 +62,9 @@ class OllamaInferenceService:
         # Job queue and worker control
         self._queue: Queue[InferenceJob] = Queue()
         self._shutdown_flag = threading.Event()
+        # Serializes every Ollama chat call: the worker's chat and generate (ADR-0004).
+        # Non-reentrant; never held around store writes or status updates.
+        self._ollama_lock = threading.Lock()
         self._avg_job_seconds: float = 5.0  # simple ETA heuristic
 
         # Cancellation tracking
@@ -169,28 +175,60 @@ class OllamaInferenceService:
                         "message_id": job.message_id,
                     },
                 )
-                history = job.store.list_messages(job.session_id)
-                messages = build_chat_messages(
-                    self._system_prompt,
-                    history,
-                    job.message_id,
-                    job.prompt,
-                    max_turns=self._max_turns,
-                    max_field_len=self._max_field_len,
+                name, args = (
+                    detect_tool(job.prompt) if self._tool_service is not None else (None, None)
                 )
-                logger.info(
-                    "prompt.built",
-                    extra={
-                        "session_id": job.session_id,
-                        "message_id": job.message_id,
-                        "history_count": len(messages) - 2,
-                        "message_count": len(messages),
-                    },
-                )
-                text = self.client.chat(messages)
+                if name is not None:
+                    # Slash job (PAT-ARCH-004): run the tool here, outside _ollama_lock (narrate
+                    # calls generate, which takes it). No chat builder and no client.chat.
+                    logger.info(
+                        "tool.dispatch",
+                        extra={
+                            "session_id": job.session_id,
+                            "message_id": job.message_id,
+                            "tool": name,
+                        },
+                    )
+                    result = self._tool_service.invoke(
+                        name,
+                        args or "",
+                        {
+                            "store": job.store,
+                            "session_id": job.session_id,
+                            "message_id": job.message_id,
+                        },
+                    )
+                    self._append_reply(
+                        job.store,
+                        job.session_id,
+                        job.message_id,
+                        result["text"],
+                        meta={**result["meta"], "tool": name},
+                    )
+                else:
+                    history = job.store.list_messages(job.session_id)
+                    messages = build_chat_messages(
+                        self._system_prompt,
+                        history,
+                        job.message_id,
+                        job.prompt,
+                        max_turns=self._max_turns,
+                        max_field_len=self._max_field_len,
+                    )
+                    logger.info(
+                        "prompt.built",
+                        extra={
+                            "session_id": job.session_id,
+                            "message_id": job.message_id,
+                            "history_count": len(messages) - 2,
+                            "message_count": len(messages),
+                        },
+                    )
+                    with self._ollama_lock:
+                        text = self.client.chat(messages)
 
-                # Append the reply as a new assistant message; the user message is untouched
-                self._append_reply(job.store, job.session_id, job.message_id, text)
+                    # Append the reply as a new assistant message; the user message is untouched
+                    self._append_reply(job.store, job.session_id, job.message_id, text)
                 self._update_message_status(job.store, job.session_id, job.message_id, "completed")
 
                 duration = time.time() - start
@@ -245,13 +283,24 @@ class OllamaInferenceService:
                 extra={"session_id": session_id, "message_id": message_id, "status": status},
             )
 
-    def _append_reply(self, store, session_id: str, user_message_id: str, text: str) -> str:
+    def _append_reply(
+        self,
+        store,
+        session_id: str,
+        user_message_id: str,
+        text: str,
+        meta: dict | None = None,
+    ) -> str:
         """Append the reply as a new assistant message linked by meta.reply_to; exceptions propagate so the worker marks the job as error."""
         reply_id = str(uuid4())
         store.create_message(
             session_id,
             reply_id,
-            {"role": "assistant", "content": text, "meta": {"reply_to": user_message_id}},
+            {
+                "role": "assistant",
+                "content": text,
+                "meta": {**(meta or {}), "reply_to": user_message_id},
+            },
         )
         store.update_message_status(session_id, reply_id, "completed")
         logger.info(
@@ -259,6 +308,14 @@ class OllamaInferenceService:
             extra={"session_id": session_id, "message_id": user_message_id, "reply_id": reply_id},
         )
         return reply_id
+
+    # ------------------------------------------------------------
+    # Single-prompt generation (tools, e.g. narrate)
+    # ------------------------------------------------------------
+    def generate(self, prompt: str) -> str:
+        """Run one prompt through Ollama under the shared lock and return the reply text."""
+        with self._ollama_lock:
+            return self.client.generate(prompt)
 
     # ------------------------------------------------------------
     # Token generation (WebSocket path)

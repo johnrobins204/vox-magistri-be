@@ -151,19 +151,30 @@
     {
       "id": "REQ-0008",
       "title": "Tool-calling path end to end: fix narrate, implement roll, delete clear tool, slash-command dispatch, ToolService errors/lock/context",
-      "status": "in_progress",
+      "status": "completed",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
       "adr_id": "ADR-0004",
       "spec_path": "docs/specs/SPEC-0007-slash-tools-work.md",
-      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[COMPLETE] Implementation"],
       "follow_ups": [
-        "Tier: P1. Evidence (probed): POST /intel/tools/narrate/invoke returns 'Tool narrate error: str object has no attribute get' (args is str, narrate treats it as dict; build_narrator_prompt is called with kwargs it does not accept; inference.generate does not exist on OllamaInferenceService). roll.py is a stub; clear.py (legacy (args, session, game, session_run) signature, not discoverable) is to be DELETED by human decision 2026-10-11; tool_handler.run_tool/detect_tool are not called from the message flow.",
+        "RESOLVED 2026-10-11: Tier: P1. Evidence (probed): POST /intel/tools/narrate/invoke returns 'Tool narrate error: str object has no attribute get' (args is str, narrate treats it as dict; build_narrator_prompt is called with kwargs it does not accept; inference.generate does not exist on OllamaInferenceService). roll.py is a stub; clear.py (legacy (args, session, game, session_run) signature, not discoverable) is to be DELETED by human decision 2026-10-11; tool_handler.run_tool/detect_tool are not called from the message flow.",
         "Also: ToolService.invoke holds a global RLock for the whole call (a slow LLM tool blocks all tools); errors come back as 200 text with error always null; /intel/tools/invoke lets the client override service objects through context.",
         "Note: REQ-0002 excluded the roll parser and narrate body; this requirement lifts that exclusion. Depends on: REQ-0004, REQ-0006. ADR-0004 recorded.",
-        "Architecture review revised 2026-10-11 after human scope decision (clear deleted): docs/adr/0004-slash-tools-in-worker.md (D1 dispatch in worker, D2 shared _ollama_lock, D3 ToolService typed errors, D4 clear deleted) and docs/patterns/architecture/PAT-ARCH-004-slash-tools-in-worker.md are status 'proposed' and need human acceptance (G-1). Two PAT-ARCH-003 amendments are flagged, not applied (G-2): slash-command jobs skip the chat builder; worker chat and generate share _ollama_lock. Open gates: enable_narration/enable_adjudication unread; unknown /x is an error not sent to the LLM; tool exchanges stay in LLM history.",
-        "Spec revised 2026-10-11: docs/specs/SPEC-0007-slash-tools-work.md (status proposed; 9 work packages; 45 tests: 41 new, 4 updated). WP-1..WP-5 and WP-9 need only G-1 (ADR-0004/PAT-ARCH-004 acceptance); WP-6..WP-8 also need G-2 (the two PAT-ARCH-003 amendments). Implementation NOT started (no Implementer launched).",
-        "clear tool deleted by human decision 2026-10-11 (debug shorthand); no replacement"
+        "ADR-0004, PAT-ARCH-004 and the two PAT-ARCH-003 amendments accepted by the human 2026-10-11; implementation complete (WP-1..WP-9)",
+        "RESOLVED 2026-10-11: Spec revised 2026-10-11: docs/specs/SPEC-0007-slash-tools-work.md (status proposed; 9 work packages; 45 tests: 41 new, 4 updated). WP-1..WP-5 and WP-9 need only G-1 (ADR-0004/PAT-ARCH-004 acceptance); WP-6..WP-8 also need G-2 (the two PAT-ARCH-003 amendments). Implementation NOT started (no Implementer launched).",
+        "clear tool deleted by human decision 2026-10-11 (debug shorthand); no replacement",
+        "Multi-line slash messages: detect_tool regex uses . so /roll 2d6 plus newline goes to the chat path, not an error; decide behaviour",
+        "Expected tool errors (ToolError/UnknownToolError) are logged by the worker as job.failed with full tracebacks via logger.exception; downgrade to a one-line WARNING for expected errors",
+        "generate_tokens (WS streaming stub) still calls client.generate without _ollama_lock (REQ-0007)",
+        "Lock acquisition for generate has no timeout; a hung Ollama blocks /narrate callers up to ollama.timeout_seconds",
+        "ToolService._normalize_result: non-dict meta raises a raw TypeError/ValueError instead of a clear message",
+        "app/intelligence/tool_handler.py run_tool/get_registry is a second invoke path unused by the message flow; remove or fold into ToolService (REQ-0012)",
+        "Settings silently ignores unknown kwargs (pydantic extra=ignore); consider extra=forbid",
+        "/roll waits behind queued LLM jobs (FIFO worker); accepted per ADR-0004",
+        "SPEC-0007 WP-8 red coverage was narrower than specified; production-graph WS tests added",
+        "tools.instructions.md/copilot-instructions.md updated; backlog evidence text for REQ-0008 is historical",
+        "Minor REQ-0008 cleanups from stage-1 review: stale ToolService.__init__ docstring lists ai_client/prompt_builder; roll.evaluate has no None guard on expr (narrate uses args or \"\"); no slash-level tests for bare /roll or /narrate; no WS test for a ToolError path; OllamaInferenceService.__init__ tool_service param unannotated; default logger injection in ToolService not asserted"
       ]
     },
     {

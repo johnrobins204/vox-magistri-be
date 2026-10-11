@@ -17,7 +17,6 @@ narration/adjudication; the client is a separate React app (not in this repo).
 ## Known gaps / traps (verified, not guesses)
 - Tool discovery goes through `app.intelligence.tools.discover_tool_modules`, called by `ToolService.reload_tools()`; `tool_handler.get_registry()` shares it. Import failures are logged, not swallowed.
 - `data/` (the unused SQLAlchemy layer) was deleted under REQ-0005; recover its models for REQ-0015 with `git show 0365f2bf23789f85fef4b89595abd6056b35a1a5:data/models.py`.
-- `app/intelligence/tools/roll.py` is a stub (`# TODO: implement your dice parser`).
 - `app/factory.py` uses deprecated FastAPI `@app.on_event` hooks (works today, but expect a future migration to lifespan handlers).
 
 ## Conventions

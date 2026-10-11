@@ -4,28 +4,35 @@ ToolService: discover, register, and invoke tool modules under intelligence.tool
 
 Responsibilities:
 - Discover tool modules in the intelligence.tools package and register callable tool entrypoints.
-- Provide a stable `invoke(name, args, context)` API for UI and services to call tools.
+- Provide a stable `invoke(name, args, context, *, client_context)` API for UI and services.
 - Allow reloading tools during development.
-- Supply a minimal, safe execution environment (catch exceptions, return error messages).
 
 Tool contract (expected in each tool module):
 - NAME: str
-- run(args: str, context: dict) -> Any
+- run(args: str, context: dict) -> str | {"text": str, "meta": dict}
 
-Context provided to tools:
-- The service will merge `self.default_context` with the caller-provided `context`.
-- Common keys in default_context: "ai_client", "prompt_builder", "repos", "session", "logger"
+Context built for each tool, lowest to highest precedence:
+1. `client_context` (untrusted). Keys in SERVER_CONTEXT_KEYS, and keys present in
+   `default_context`, are dropped; their names (never values) are logged once at WARNING.
+2. `self.default_context` (server objects, e.g. "repos", "inference").
+3. `context` (server-supplied by the caller; may carry protected keys).
+A "logger" is supplied if none of the above provides one.
+
+Error behaviour (ADR-0004 D3):
+- `invoke` raises `UnknownToolError("Unknown tool: <name>")` for an unregistered name.
+- Exceptions raised by a tool propagate unchanged (`ToolError` is for user-facing input errors).
+- The registry lock is held only while the tool is looked up, never while it runs.
+- Results are normalized to `{"text": str, "meta": dict}`; any other result type raises TypeError.
 
 Usage:
-    svc = ToolService(default_context={"ai_client": ai, "prompt_builder": pb, "repos": repos})
+    svc = ToolService(default_context={"repos": repos, "inference": inference})
     svc.reload_tools()
-    svc.invoke("narrate", "describe the tavern", {})
+    svc.invoke("narrate", "describe the tavern")
 """
 
 from __future__ import annotations
 
 import threading
-import traceback
 import types
 from collections.abc import Callable
 from typing import Any
@@ -34,6 +41,15 @@ from app.intelligence.tools import discover_tool_modules
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Keys a client may never supply through `client_context` (ADR-0004 D3).
+SERVER_CONTEXT_KEYS = frozenset(
+    {"inference", "repos", "store", "session_id", "message_id", "logger", "rng"}
+)
+
+
+class UnknownToolError(LookupError):
+    """Raised by ToolService.invoke when no tool is registered under the given name."""
 
 
 class ToolService:
@@ -86,51 +102,49 @@ class ToolService:
         name: str,
         args: str = "",
         context: dict[str, Any] | None = None,
-        timeout_seconds: float | None = None,
-    ) -> Any:
+        *,
+        client_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Invoke a registered tool by name.
 
         name: tool name (as defined by tool module's NAME)
         args: freeform string passed to the tool
-        context: additional context merged with default_context for this invocation
-        timeout_seconds: reserved for future use (no-op in MVP)
+        context: server-supplied context, merged over default_context (highest precedence)
+        client_context: untrusted context from the client; protected keys are dropped (see module docstring)
 
-        Returns:
-            - The tool's return value on success
-            - A string describing the error on failure
+        Returns: {"text": str, "meta": dict}
+
+        Raises:
+            UnknownToolError: no tool is registered under `name`
+            TypeError: the tool returned an unsupported result type
+            Any exception raised by the tool, unchanged
         """
         with self._lock:
             tool = self._registry.get(name)
-            if not tool:
-                return f"Unknown tool: {name}"
+            defaults = dict(self.default_context)
+        if tool is None:
+            raise UnknownToolError(f"Unknown tool: {name}")
 
-            # Build invocation context
-            ctx = {}
-            ctx.update(self.default_context or {})
-            if context:
-                # shallow merge; caller context overrides defaults
-                ctx.update(context)
+        ctx: dict[str, Any] = {}
+        dropped: list[str] = []
+        for key, value in (client_context or {}).items():
+            if key in SERVER_CONTEXT_KEYS or key in defaults:
+                dropped.append(key)
+            else:
+                ctx[key] = value
+        ctx.update(defaults)
+        if context:
+            ctx.update(context)
+        if dropped:
+            logger.warning(
+                "Dropped client context keys for tool %s: %s", name, ", ".join(sorted(dropped))
+            )
+        if "logger" not in ctx:
+            ctx["logger"] = _SimpleLogger()
 
-            # Provide a minimal logger in context if none provided
-            if "logger" not in ctx:
-                ctx["logger"] = _SimpleLogger()
-
-            try:
-                # Call the tool. Tools are expected to be synchronous and quick.
-                result = tool(args, ctx)
-                return result
-            except Exception as e:
-                # Capture traceback for debugging but return a safe message
-                tb = traceback.format_exc()
-                # If a logger exists, log the exception
-                try:
-                    logger = ctx.get("logger")
-                    if logger and hasattr(logger, "error"):
-                        logger.error(f"Tool {name} raised exception: {e}\n{tb}")
-                except Exception:
-                    pass
-                return f"Tool {name} error: {e}"
+        result = tool(args, ctx)
+        return _normalize_result(name, result)
 
     # -------------------------
     # Helpers
@@ -175,6 +189,15 @@ class _SimpleLogger:
             logger.error(msg)
         except Exception:
             pass
+
+
+def _normalize_result(name: str, result: Any) -> dict[str, Any]:
+    """Return a tool result as {"text": str, "meta": dict}; reject any other type."""
+    if isinstance(result, str):
+        return {"text": result, "meta": {}}
+    if isinstance(result, dict) and isinstance(result.get("text"), str):
+        return {"text": result["text"], "meta": dict(result.get("meta") or {})}
+    raise TypeError(f"Tool {name} returned an unsupported result type")
 
 
 # -------------------------

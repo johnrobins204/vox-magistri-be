@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 
 from app.deps import (
     get_inference_service,
     get_session_store,
     get_tool_service,
 )
+from app.intelligence.client import IntelligenceError
+from app.intelligence.tools import ToolError
 from app.schemas.v1 import (
     IntelligenceStatusResp,
     SessionSnapshotResp,
@@ -15,9 +18,20 @@ from app.schemas.v1 import (
     ToolInvokeResp,
     ToolListResp,
 )
+from app.services.logger import get_logger
 from app.services.messages import build_snapshot
+from app.services.tool_service import UnknownToolError
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1/intel", tags=["intelligence"])
+
+
+def _tool_error(status_code: int, message: str, *, detail: str | None = None) -> JSONResponse:
+    body = {"text": None, "meta": None, "error": message}
+    if detail is not None:
+        body["detail"] = detail
+    return JSONResponse(status_code=status_code, content=body)
 
 
 # ------------------------------------------------------------
@@ -40,19 +54,18 @@ def invoke_tool(
     tool_service=Depends(get_tool_service),
 ):
     try:
-        result = tool_service.invoke(tool_name, req.args, req.context or {})
-    except Exception as e:
-        return ToolInvokeResp(text=None, meta=None, error=str(e))
+        result = tool_service.invoke(tool_name, req.args, client_context=req.context or {})
+    except UnknownToolError as exc:
+        return _tool_error(404, str(exc), detail=str(exc))
+    except ToolError as exc:
+        return _tool_error(400, str(exc))
+    except IntelligenceError as exc:
+        return _tool_error(502, str(exc))
+    except Exception as exc:
+        logger.exception("Tool %s failed", tool_name)
+        return _tool_error(500, str(exc))
 
-    # Normalize result
-    if isinstance(result, dict):
-        return ToolInvokeResp(
-            text=result.get("text"),
-            meta=result.get("meta"),
-            error=result.get("error"),
-        )
-
-    return ToolInvokeResp(text=str(result), meta=None, error=None)
+    return ToolInvokeResp(text=result["text"], meta=result["meta"], error=None)
 
 
 # ------------------------------------------------------------

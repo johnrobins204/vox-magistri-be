@@ -12,13 +12,13 @@ from app.services.inference_service import OllamaInferenceService
 AUTH = {"Authorization": "Bearer test-token"}
 
 
-def make_stub_service(**settings_kwargs) -> OllamaInferenceService:
+def make_stub_service(tool_service=None, **settings_kwargs) -> OllamaInferenceService:
     """Real OllamaInferenceService built from a real Settings; constructing it connects to nothing."""
     settings = Settings(
         ollama=OllamaSettings(base_url="http://127.0.0.1:1", model="stub", timeout_seconds=1.0),
         **settings_kwargs,
     )
-    return OllamaInferenceService(settings)
+    return OllamaInferenceService(settings, tool_service=tool_service)
 
 
 def wait_idle(svc, timeout: float = 5.0) -> None:

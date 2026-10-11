@@ -4,13 +4,13 @@ Tool discovery helpers.
 
 Tools are expected to live under intelligence.tools (a package) and expose:
 - NAME: str
-- run(args: str, context: dict) -> Any
+- run(args: str, context: dict) -> str | {"text": str, "meta": dict}
 
 ToolService (in services) will import and register tools dynamically. This module
 keeps discovery logic minimal and testable.
 """
 
-__all__ = ["discover_tool_modules", "discover_tools", "load_tool_module"]
+__all__ = ["ToolError", "discover_tool_modules", "discover_tools", "load_tool_module"]
 
 import importlib
 import pkgutil
@@ -21,6 +21,10 @@ from app.services.logger import get_logger
 
 logger = get_logger(__name__)
 TOOLS_PACKAGE = "app.intelligence.tools"
+
+
+class ToolError(ValueError):
+    """Raised by a tool for bad user input. Its message is shown to the user."""
 
 
 def discover_tool_modules(package: str | None = None) -> dict[str, types.ModuleType]:
