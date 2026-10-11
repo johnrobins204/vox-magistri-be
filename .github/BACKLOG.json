@@ -77,16 +77,19 @@
     {
       "id": "REQ-0005",
       "title": "Persistence decision and wiring (sessions survive restart; resolve the unimportable data/ layer)",
-      "status": "backlog",
+      "status": "in_progress",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
-      "adr_id": null,
-      "spec_path": null,
-      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "adr_id": "ADR-0003",
+      "spec_path": "docs/specs/SPEC-0005-persistence-sqlite-session-store.md",
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
       "follow_ups": [
         "Tier: P0. Evidence: all state is in memory; data/__init__.py has a broken relative import (import data fails); sqlalchemy is not in requirements.txt; data/models.py is ~30 tables far beyond MVP.",
         "Options to score: stdlib sqlite3 behind the SessionStore Protocol; slimmed SQLAlchemy; wire data/ as-is; status quo.",
-        "Depends on: REQ-0004. ADR likely: yes (new dependency, hard to reverse)."
+        "Depends on: REQ-0004. ADR likely: yes (new dependency, hard to reverse).",
+        "Architecture review 2026-10-11: ADR-0003 (docs/adr/0003-sqlite-session-persistence.md, status proposed) chose Option A: stdlib sqlite3 SqliteSessionStore behind the SessionStore Protocol (no new runtime dependency); data/ deleted; database.url honoured in app/main.py. New proposed pattern PAT-ARCH-002. Proposed wording changes to accepted PAT-ARCH-001 and PAT-CODE-001 flagged for human sign-off (not applied). Awaiting human acceptance of ADR-0003, PAT-ARCH-002 and the PAT-ARCH-001/PAT-CODE-001 wording changes.",
+        "Spec drafted 2026-10-11: docs/specs/SPEC-0005-persistence-sqlite-session-store.md (status draft; 6 work packages WP-1..WP-6; 28 tests T-01..T-29). Implementation is BLOCKED until the human accepts open gates G-1..G-12 listed in section 4.4 of the spec (ADR-0003 and Option A; delete all of data/; widen update_message_status with optional meta; restart recovery rule; rename InMemorySessionStore to SqliteSessionStore and remove DEFAULT_REPOS; leave database.echo unwired; accept PAT-ARCH-002; PAT-ARCH-001/PAT-CODE-001 wording changes; create_session-on-existing-id raises IntegrityError; close() on SqliteSessionStore; enqueue writes queued before queueing; remove main.py try/except fallback).",
+        "Unverified: the spec quotes recovery SHA 0365f2bf23789f85fef4b89595abd6056b35a1a5 for the last commit containing data/. It was read from .git/refs/heads/main without running git and is NOT confirmed to contain data/. Verify with git (by the human or at WP-6) before deleting data/ or recording the SHA."
       ]
     },
     {

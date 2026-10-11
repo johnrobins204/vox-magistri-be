@@ -16,8 +16,9 @@ were never persisted and snapshots were always empty, with no error anywhere.
 
 ## Context
 Applies to every transport (REST, WebSocket, `/intel`) and every service that reads or
-writes conversation state. Does not cover the choice of persistence backend (that is a
-separate decision, REQ-0005) or the WS streaming protocol (REQ-0007).
+writes conversation state. Does not cover the WS streaming protocol (REQ-0007). The
+persistence backend is decided in [ADR-0003](../../adr/0003-sqlite-session-persistence.md)
+and [PAT-ARCH-002](./PAT-ARCH-002-stdlib-sqlite-store.md).
 
 ## Solution
 1. A session id is a uuid string everywhere (`str(uuid4())`, created via
@@ -44,12 +45,13 @@ separate decision, REQ-0005) or the WS streaming protocol (REQ-0007).
 - One place to change when persistence arrives (the Protocol implementation).
 - Adding capability means extending the one Protocol, not adding a parallel API; keep it
   small because every future backend must implement it.
-- The in-memory store hands out live message dicts and the inference worker mutates
-  them in place; backends that return copies must also provide update methods.
-- Not thread-safe beyond what CPython guarantees.
+- Store reads return fresh dicts; callers MUST NOT mutate returned dicts to change
+  state. Every write goes through a Protocol method; status and meta changes go through
+  `update_message_status(..., meta=None)` in one transaction.
+- The store serializes all access with one lock (PAT-ARCH-002).
 
 ## Examples
 - `app/api/v1/session.py` (REST, the reference adapter) and `app/services/repos.py`
-  (`InMemorySessionStore`).
-- To be applied by REQ-0004 to `app/api/v1/ws.py` and `app/api/v1/intelligence.py`
+  (`SqliteSessionStore`).
+- Applied by REQ-0004 to `app/api/v1/ws.py` and `app/api/v1/intelligence.py`
   (see [ADR-0002](../../adr/0002-single-session-model.md)).

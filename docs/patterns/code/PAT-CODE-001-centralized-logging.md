@@ -13,8 +13,7 @@ Modules need ERROR/DEBUG/operational logging without each one configuring its
 own handlers, formats, or rotation — and without secrets/PII leaking into logs.
 
 ## Context
-Applies to every module in `app/` (and eventually `data/` once it's wired up)
-that needs to log anything. Does not apply to one-off scratch scripts that
+Applies to every module in `app/` that needs to log anything. Does not apply to one-off scratch scripts that
 aren't part of the running app (e.g. `app/tst.py`).
 
 ## Solution
