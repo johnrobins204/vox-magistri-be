@@ -36,15 +36,16 @@
     {
       "id": "REQ-0003",
       "title": "Store assistant replies as separate messages (stop overwriting the user message)",
-      "status": "backlog",
+      "status": "completed",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
       "adr_id": null,
-      "spec_path": null,
-      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "spec_path": "docs/specs/SPEC-0003-assistant-reply-as-new-message.md",
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[COMPLETE] Implementation"],
       "follow_ups": [
         "Tier: P0 MVP blocker. Evidence: inference_service._update_message_content flips the user message to role=assistant and replaces content, so history is lost.",
-        "Depends on: none. ADR likely: no (single-module bug fix)."
+        "Depends on: none. ADR likely: no (single-module bug fix).",
+        "Architecture review: no ADR required (single-module, reversible, no new dependency, no convention change); no pattern changes."
       ]
     },
     {

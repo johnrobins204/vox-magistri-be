@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass, field
 from queue import Empty, Queue
 from typing import Any
+from uuid import uuid4
 
 from app.intelligence.client import OllamaClient
 from app.services.logger import get_logger
@@ -124,7 +125,7 @@ class OllamaInferenceService:
     def _worker_loop(self) -> None:
         """
         Background loop that consumes jobs from the queue and calls Ollama.
-        Updates message status and content in the session store.
+        Updates message status and appends the reply as a new assistant message.
         """
         logger.info("Inference worker loop started")
         while not self._shutdown_flag.is_set():
@@ -160,13 +161,8 @@ class OllamaInferenceService:
                 )
                 text = self.client.generate(job.prompt)
 
-                # Write assistant response back into the session store
-                self._update_message_content(
-                    job.store,
-                    job.session_id,
-                    job.message_id,
-                    text,
-                )
+                # Append the reply as a new assistant message; the user message is untouched
+                self._append_reply(job.store, job.session_id, job.message_id, text)
                 self._update_message_status(job.store, job.session_id, job.message_id, "completed")
 
                 duration = time.time() - start
@@ -222,24 +218,20 @@ class OllamaInferenceService:
                 extra={"session_id": session_id, "message_id": message_id, "status": status},
             )
 
-    def _update_message_content(
-        self, store, session_id: str, message_id: str, content: str
-    ) -> None:
-        try:
-            session = store.get_session(session_id)
-            if not session:
-                return
-            for m in session:
-                if m.get("id") == message_id:
-                    # Convert user message into assistant response or attach content
-                    m["role"] = "assistant"
-                    m["content"] = content
-                    break
-        except Exception:
-            logger.exception(
-                "update_message_content failed",
-                extra={"session_id": session_id, "message_id": message_id},
-            )
+    def _append_reply(self, store, session_id: str, user_message_id: str, text: str) -> str:
+        """Append the reply as a new assistant message linked by meta.reply_to; exceptions propagate so the worker marks the job as error."""
+        reply_id = str(uuid4())
+        store.create_message(
+            session_id,
+            reply_id,
+            {"role": "assistant", "content": text, "meta": {"reply_to": user_message_id}},
+        )
+        store.update_message_status(session_id, reply_id, "completed")
+        logger.info(
+            "reply.appended",
+            extra={"session_id": session_id, "message_id": user_message_id, "reply_id": reply_id},
+        )
+        return reply_id
 
     def _update_message_meta(self, store, session_id: str, message_id: str, meta: dict) -> None:
         try:
