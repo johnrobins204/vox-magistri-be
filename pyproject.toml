@@ -6,6 +6,9 @@ target-version = "py313"
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501", "B008"]
 
+[tool.ruff.lint.per-file-ignores]
+"app/tst.py" = ["E402"]
+
 
 [tool.black]
 line-length = 100

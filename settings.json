@@ -24,7 +24,7 @@
 
   "tools": {
     "enable_discovery": true,         
-    "tool_packages": ["intelligence.tools"] 
+    "tool_packages": ["app.intelligence.tools"] 
   },
 
   "prompts": {

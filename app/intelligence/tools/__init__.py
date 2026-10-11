@@ -10,29 +10,29 @@ ToolService (in services) will import and register tools dynamically. This modul
 keeps discovery logic minimal and testable.
 """
 
-__all__ = ["discover_tools", "load_tool_module"]
+__all__ = ["discover_tool_modules", "discover_tools", "load_tool_module"]
 
 import importlib
-import logging
 import pkgutil
 import types
 from collections.abc import Callable
-from typing import Dict, Optional
 
-logger = logging.getLogger(__name__)
+from app.services.logger import get_logger
+
+logger = get_logger(__name__)
 TOOLS_PACKAGE = "app.intelligence.tools"
 
 
-def discover_tools(package: str | None = None) -> dict[str, Callable]:
+def discover_tool_modules(package: str | None = None) -> dict[str, types.ModuleType]:
     pkg_name = package or TOOLS_PACKAGE
-    registry: dict[str, Callable] = {}
+    result: dict[str, types.ModuleType] = {}
     try:
         pkg = importlib.import_module(pkg_name)
     except Exception:
-        logger.debug("No tools package found: %s", pkg_name)
-        return registry
+        logger.exception("Failed to import tool package %s", pkg_name)
+        return result
 
-    for finder, modname, ispkg in pkgutil.iter_modules(pkg.__path__, pkg.__name__ + "."):
+    for _finder, modname, _ispkg in pkgutil.iter_modules(pkg.__path__, pkg.__name__ + "."):
         try:
             mod = importlib.import_module(modname)
         except Exception:
@@ -41,8 +41,14 @@ def discover_tools(package: str | None = None) -> dict[str, Callable]:
         name = getattr(mod, "NAME", None)
         run_fn = getattr(mod, "run", None)
         if isinstance(name, str) and callable(run_fn):
-            registry[name] = run_fn
-    return registry
+            result[name] = mod
+        else:
+            logger.debug("Skipping %s: no NAME/run contract", modname)
+    return result
+
+
+def discover_tools(package: str | None = None) -> dict[str, Callable]:
+    return {name: mod.run for name, mod in discover_tool_modules(package).items()}
 
 
 def load_tool_module(module_name: str) -> types.ModuleType | None:

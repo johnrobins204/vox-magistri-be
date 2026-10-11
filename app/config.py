@@ -50,7 +50,7 @@ class ServerSettings(BaseModel):
 
 class ToolSettings(BaseModel):
     enable_discovery: bool = Field(default=True)
-    tool_packages: list[str] = Field(default_factory=lambda: ["intelligence.tools"])
+    tool_packages: list[str] = Field(default_factory=lambda: ["app.intelligence.tools"])
 
 
 class PromptVoiceSettings(BaseModel):

@@ -1,0 +1,4 @@
+| REQ-ID | Date | Restatement (one line) | ADR | Spec | Status |
+|---|---|---|---|---|---|
+| REQ-0001 | 2026-10-10 | App MUST have one centralized logger capturing ERROR/DEBUG/application logs per established best practice; all modules MUST use it | | SPEC-0001 | done |
+| REQ-0002 | 2026-10-10 | The tool-calling path MUST use one discovery path: `ToolService` MUST register every `app.intelligence.tools` module exposing `NAME: str` and callable `run(args: str, context: dict)` via the shared discovery function; discovery failures MUST be logged via `get_logger`, not swallowed; invocation MUST pass the `inference` service in context; `/api/v1/intel/tools` endpoints MUST reflect that registry; a test MUST exercise discovery and invocation without network or Ollama. The roll dice parser and the narrate body MUST NOT be changed under this requirement. | ADR-0001 | SPEC-0002 | done |

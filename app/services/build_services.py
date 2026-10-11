@@ -15,15 +15,16 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
 
     session_store = repos.get("session")
 
-    tool_service = ToolService(
-        default_context={"repos": repos}, discover_on_init=enable_tool_discovery
-    )
-
-    game_service = GameService()
-
     settings = get_settings()
 
     inference = OllamaInferenceService(settings)
+
+    tool_service = ToolService(
+        default_context={"repos": repos, "inference": inference},
+        discover_on_init=enable_tool_discovery,
+    )
+
+    game_service = GameService()
 
     return {
         "session": session_store,

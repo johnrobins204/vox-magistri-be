@@ -186,7 +186,7 @@ async def post_message(
 
     # Create message record
     message_id = str(uuid4())
-    msg = store.create_message(session_id, message_id, payload.dict())
+    store.create_message(session_id, message_id, payload.dict())
 
     # Enqueue; inference.enqueue should return True if queued, False if queue full.
     queued = inference.enqueue(

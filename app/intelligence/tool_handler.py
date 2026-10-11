@@ -13,14 +13,14 @@ as safe error strings so the UI/services can display them without crashing.
 
 from __future__ import annotations
 
-import logging
 import re
 from collections.abc import Callable
 from typing import Any
 
 from app.intelligence.tools import discover_tools
+from app.services.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 TOOL_RE = re.compile(r"^/([^\s/]+)(?:\s+(.*))?$")
 

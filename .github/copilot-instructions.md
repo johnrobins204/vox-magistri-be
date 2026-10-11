@@ -12,11 +12,11 @@ narration/adjudication; the client is a separate React app (not in this repo).
 - `app/services/repos.py` — **Active** in-memory repo layer (`InMemorySessionStore`, `DEFAULT_REPOS`). This is what's actually wired up today.
 - `app/api/v1/*` — Routers: `session.py` (REST session/message CRUD), `ws.py` (live session WebSocket), `intelligence.py` (tool/inference endpoints). All prefixed `/api/v1/...`.
 - `app/intelligence/` — Prompting, Ollama client (`client.py`, uses `httpx`), and the tool-call pipeline (`tool_handler.py`, `prompting.py`, `prompt_builders.py`).
-- `app/intelligence/tools/` — Pluggable tools (`roll.py`, `narrate.py`, `clear.py`). Contract: module exposes `NAME: str` and `run(args: str, context: dict) -> Any`.
+- `app/intelligence/tools/` — Pluggable tools (`roll.py`, `narrate.py`, `clear.py`); contract in `.github/instructions/tools.instructions.md`.
 
 ## Known gaps / traps (verified, not guesses)
-- **Tool discovery is currently broken.** `app/services/tool_service.py` does `import intelligence.tools` (not `app.intelligence.tools`), which raises `ModuleNotFoundError` and is silently swallowed — `ToolService` ends up with an empty registry. Fix by importing `app.intelligence.tools` or adjusting `sys.path`/package layout before relying on tool discovery.
-- `data/` (`models.py`, `migrations.py`, `repos.py`) is a **separate, not-yet-wired SQLAlchemy layer** — it uses `sqlalchemy`, which isn't installed and isn't in `requirements.txt`. Don't assume it's live; `app/services/repos.py`'s in-memory store is what's actually used by `build_services()`. Treat `data/` as WIP until it's connected.
+- Tool discovery goes through `app.intelligence.tools.discover_tool_modules`, called by `ToolService.reload_tools()`; `tool_handler.get_registry()` shares it. Import failures are logged, not swallowed.
+- `data/` (`models.py`, `migrations.py`, `repos.py`) is a **separate, not-yet-wired SQLAlchemy layer** — it uses `sqlalchemy`, don't assume it's live; `app/services/repos.py`'s in-memory store is what's actually used by `build_services()`. Treat `data/` as WIP until it's connected.
 - `app/intelligence/tools/roll.py` is a stub (`# TODO: implement your dice parser`).
 - `app/factory.py` uses deprecated FastAPI `@app.on_event` hooks (works today, but expect a future migration to lifespan handlers).
 
@@ -32,4 +32,28 @@ narration/adjudication; the client is a separate React app (not in this repo).
 - Runtime deps: `requirements.txt`. Dev deps (pytest, ruff, black): `requirements-dev.txt` — install with `pip install -r requirements-dev.txt`.
 - Tests: `pytest` (config in `pyproject.toml`, tests live in `tests/`). Use the `app`/`client` fixtures in `tests/conftest.py` (builds a real app with in-memory repos, no network/Ollama required).
 - Lint/format: `ruff check app tests` and `black app tests`. `data/` is intentionally excluded from the default lint scope until it's integrated (it has real undefined-name errors from in-progress model relationships).
+- CI (`.github/workflows/ci.yml`) runs `ruff check`, `black --check` and `pytest`; run the same locally before declaring work done.
 - `dupe-scan.sh` detects accidentally duplicated files with the same basename under different folders — a recurring issue in this repo's history; run it after large refactors.
+
+## Coworking workflow (requirements → architecture → spec → implement → wrap-up)
+For any non-trivial requirement, need, or desired outcome, use the **Coworking
+Orchestrator** custom agent instead of free-form changes. It runs four stages:
+restate the requirement in RFC 2119 language (logged in
+`docs/requirements/LOG.md`) → backlog entry in `.github/BACKLOG.json` (written
+only by the **Backlog Manager Subagent**) → architecture review via the **Senior Architect**
+agent (decides if an ADR is needed, writes it under `docs/adr/` with a weighted
+rubric from `docs/constraints.md`) → spec via the **Spec Writer** agent
+(test-spec-first, then self-contained work packages, under `docs/specs/`).
+Every stage MUST consult `docs/patterns/INDEX.md` before producing new
+architecture, specs, or code — new patterns can be authored freely at
+`status: proposed`, but changing an `accepted` pattern requires the architect
+plus explicit human sign-off. `docs/constraints.md` is the standing charter:
+this is a solo, part-time hobby project — prefer the smallest edit, avoid
+speculative abstraction, and don't scope-creep toward production hardening.
+
+After the spec: the **Implementer** agent executes one work package at a time,
+test-first, then the **Session Cleanup Agent** runs the gate (pytest/ruff/black),
+verifies against the spec, updates the backlog and stages changes with a drafted
+commit message — you review and commit. Orchestrators offer these as handoff
+buttons; `/new-req` and `/wrap-up` prompts start the first and last stage.
+

@@ -24,19 +24,16 @@ Usage:
 
 from __future__ import annotations
 
-import importlib
-import pkgutil
 import threading
 import traceback
 import types
 from collections.abc import Callable
 from typing import Any
 
-# Attempt to import the intelligence.tools package; discovery will fail gracefully if missing.
-try:
-    import app.S.tools as _tools_pkg  # type: ignore
-except Exception:
-    _tools_pkg = None  # discovery will be a no-op
+from app.intelligence.tools import discover_tool_modules
+from app.services.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ToolService:
@@ -59,7 +56,7 @@ class ToolService:
     # -------------------------
     def reload_tools(self) -> None:
         """
-        Discover and (re)load tool modules under intelligence.tools.
+        Discover and (re)load tool modules under app.intelligence.tools.
         This will import modules and register any module that exposes:
             NAME: str
             run: callable(args: str, context: dict) -> Any
@@ -67,24 +64,9 @@ class ToolService:
         with self._lock:
             self._registry.clear()
             self._modules.clear()
-            if _tools_pkg is None:
-                return
-            try:
-                prefix = _tools_pkg.__name__ + "."
-                for finder, modname, ispkg in pkgutil.iter_modules(_tools_pkg.__path__, prefix):
-                    try:
-                        mod = importlib.import_module(modname)
-                        name = getattr(mod, "NAME", None)
-                        run = getattr(mod, "run", None)
-                        if isinstance(name, str) and callable(run):
-                            self._registry[name] = run
-                            self._modules[name] = mod
-                    except Exception:
-                        # swallow individual module import errors but keep going
-                        continue
-            except Exception:
-                # If package introspection fails, leave registry empty
-                pass
+            for name, mod in discover_tool_modules().items():
+                self._registry[name] = mod.run
+                self._modules[name] = mod
 
     def list_tools(self) -> dict[str, str]:
         """
@@ -178,19 +160,19 @@ class _SimpleLogger:
 
     def info(self, msg: str) -> None:
         try:
-            print(f"[ToolService] INFO: {msg}")
+            logger.info(msg)
         except Exception:
             pass
 
     def warn(self, msg: str) -> None:
         try:
-            print(f"[ToolService] WARN: {msg}")
+            logger.warning(msg)
         except Exception:
             pass
 
     def error(self, msg: str) -> None:
         try:
-            print(f"[ToolService] ERROR: {msg}")
+            logger.error(msg)
         except Exception:
             pass
 
@@ -200,4 +182,4 @@ class _SimpleLogger:
 # -------------------------
 if __name__ == "__main__":
     svc = ToolService(default_context={})
-    print("Discovered tools:", svc.list_tools())
+    logger.info("Discovered tools: %s", svc.list_tools())

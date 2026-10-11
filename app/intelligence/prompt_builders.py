@@ -12,12 +12,13 @@ They intentionally return plain strings; callers decide which model and client t
 from __future__ import annotations
 
 import json
-import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from app.services.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 # --- small helpers ---------------------------------------------------------
