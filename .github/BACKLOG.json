@@ -106,16 +106,23 @@
     {
       "id": "REQ-0006",
       "title": "Wire the prompt pipeline into inference (DM system prompt, recent-turn history, voice settings)",
-      "status": "backlog",
+      "status": "in_progress",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
       "adr_id": null,
-      "spec_path": null,
-      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "spec_path": "docs/specs/SPEC-0006-prompt-pipeline-into-inference.md",
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
       "follow_ups": [
         "Tier: P0. Evidence: the worker and WS send only the raw user text to Ollama (OllamaClient.generate wraps it as one user message). prompt_builders.py reads legacy ORM objects (game.campaign, session_run.entries) and its callers are unreachable; settings.prompts.*, app.max_turns, max_field_len and voice_configs/voice_congfigs.json are never read.",
         "Scope: adapt builders to dict-based messages, add a system message and max_turns history window, load voice config, fix the filename typo, and fix prompts.py (from prompting import ...).",
-        "Depends on: REQ-0003, REQ-0004. ADR likely: no (existing builders; record a pattern)."
+        "Depends on: REQ-0003, REQ-0004. ADR likely: no (existing builders; record a pattern).",
+        "Workflow 2026-10-11: restatement logged in docs/requirements/LOG.md (REQ-0006 row); architecture review in progress.",
+        "Architecture review 2026-10-11: no ADR (no docs/adr/README.md trigger fires; small, reversible, no new dependency or convention change, no settings key added). Pattern PAT-ARCH-003 (docs/patterns/architecture/PAT-ARCH-003-prompt-pipeline-in-worker.md) created at status proposed; awaiting human acceptance.",
+        "Architecture decisions: chat request built by the worker at run time (not at enqueue); new OllamaClient.chat(messages) with generate(prompt) wrapping it; delete ORM-based build_game_chat_prompt/build_game_state_payload/build_turn_summary and app/intelligence/writer.py; keep world_guide.py and quest_guide.py; keep narrator/adjudicator builders untouched (REQ-0008); rename voice_congfigs.json to voice_configs.json; fix prompts.py import.",
+        "Open questions for human before/at implementation: (1) accept PAT-ARCH-003 proposed->accepted; (2) settings.prompts.enable_narration/enable_adjudication intentionally left unread (REQ-0008 owns the two-step flow); (3) only prior messages truncated to max_field_len, current user message not truncated; (4) max_turns counts messages not exchanges; (5) no campaign parameter until REQ-0015.",
+        "Spec drafted 2026-10-11: docs/specs/SPEC-0006-prompt-pipeline-into-inference.md (status draft; 34 tests T-01..T-34; WP-1..WP-11). Implementation NOT started; awaiting human gates G-1..G-7 (PAT-ARCH-003 acceptance; confirm enable_narration/enable_adjudication stay unread; confirm only prior messages truncated; confirm max_turns counts messages; confirm no campaign parameter until REQ-0015; confirm spec-level choices; do-not-change list).",
+        "Spec-writer notes for implementation: WP order differs from architect order (helper updates WP-6 before worker wiring WP-7, else make_stub_service breaks); WP-3 and WP-4 must land together or WP-4 first (writer.py imports build_game_chat_prompt); prompt_builders.py docstring names the deleted builder; _truncate with n<=0 mangles content (only reachable via bad settings, no guard added).",
+        "Out of scope confirmed: streaming generate_tokens still sends raw prompt (REQ-0007); narrate.py calls build_narrator_prompt with wrong kwargs and inference.generate which does not exist (REQ-0008); errored/cancelled turns excluded from history by design."
       ]
     },
     {
