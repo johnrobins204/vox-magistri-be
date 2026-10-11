@@ -2,6 +2,7 @@
 description: "Implements exactly one work package from a spec in docs/specs/, test-first, for vox-magistri-be. Use after a spec exists and the human has accepted any ADR/patterns. Triggers: 'implement work package', 'implement SPEC-'."
 name: "Implementer"
 tools: [read, search, edit, execute, todo]
+model: Claude Haiku 5.5 (copilot)
 handoffs:
   - label: "Wrap up session"
     agent: "Session Cleanup Agent"

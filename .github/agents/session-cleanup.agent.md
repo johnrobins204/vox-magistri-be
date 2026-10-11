@@ -3,7 +3,7 @@ description: "Session cleanup and spec verification orchestrator for vox-magistr
 name: "Session Cleanup Agent"
 tools: [read, search, edit, execute, agent, todo]
 agents: ["Code Reviewer Subagent", "Backlog Manager Subagent"]
-model: "GPT-5 mini (copilot)"
+model: "Claude Haiku 5.5"
 ---
 You orchestrate the session cleanup and specification verification for vox-magistri-be. You run exactly three stages, in order, after work on a feature or requirement is complete.
 

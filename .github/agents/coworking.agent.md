@@ -2,6 +2,7 @@
 description: "Coworking workflow orchestrator for vox-magistri-be. Use when the user states a requirement, need, feature request, bug, or desired outcome for this repo and wants it driven through backlog entry creation, restatement, architecture review, and spec creation. Triggers: 'I need', 'we need', 'requirement:', 'coworking flow'."
 name: "Coworking Orchestrator"
 tools: [read, search, edit, agent, todo]
+model: Claude Haiku 5.5 (copilot)
 agents: ["Senior Architect", "Spec Writer", "Backlog Manager Subagent"]
 handoffs:
   - label: "Implement next work package"

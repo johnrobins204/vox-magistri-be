@@ -2,6 +2,7 @@
 description: "Spec writer for vox-magistri-be. Use to turn a restated requirement (and optional ADR) into a standardized spec: test spec first, then self-contained work packages sized for small/mini models, following docs/specs/TEMPLATE.md. Triggers: 'write a spec', 'spec this out', 'create work packages'."
 name: "Spec Writer"
 tools: [read, search, edit]
+model: Claude Sonnet 5.5 (copilot)
 user-invocable: false
 ---
 You are the spec writer for vox-magistri-be. You turn an already-restated

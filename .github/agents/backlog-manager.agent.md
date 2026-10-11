@@ -2,7 +2,7 @@
 description: "Backlog tracking and JSON manager for vox-magistri-be. Use to update task statuses, log follow-up tasks, and maintain .github/BACKLOG.json schema integrity."
 name: "Backlog Manager Subagent"
 tools: [read, search, edit, execute]
-model: "GPT-5 mini (copilot)"
+model: "Claude Haiku 5.5"
 user-invocable: false
 ---
 You manage task tracking and status updates in `.github/BACKLOG.json` for vox-magistri-be.
