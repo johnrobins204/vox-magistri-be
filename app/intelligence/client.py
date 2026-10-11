@@ -3,7 +3,8 @@
 Intelligence client protocol and a small Ollama-backed implementation.
 
 Design goals:
-- Keep a simple sync interface `generate(prompt, model=None) -> str`.
+- Keep a simple sync interface: `chat(messages, model=None) -> str` for a full message list
+  and `generate(prompt, model=None) -> str` as a one-user-message shortcut.
 - Raise IntelligenceError for any transport or response issues.
 - Avoid side effects at import time.
 """
@@ -24,6 +25,8 @@ class IntelligenceError(RuntimeError):
 
 
 class IntelligenceClient(Protocol):
+    def chat(self, messages: list[dict[str, str]], *, model: str | None = None) -> str: ...
+
     def generate(self, prompt: str, *, model: str | None = None) -> str: ...
 
 
@@ -50,14 +53,14 @@ class OllamaClient:
         except Exception:
             return "unknown"
 
-    def generate(self, prompt: str, *, model: str | None = None) -> str:
+    def chat(self, messages: list[dict[str, str]], *, model: str | None = None) -> str:
         model_name = model or self._default_model
         try:
             resp = httpx.post(
                 f"{self._base_url}/api/chat",
                 json={
                     "model": model_name,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": messages,
                     "stream": False,
                 },
                 timeout=self._timeout,
@@ -78,3 +81,6 @@ class OllamaClient:
         if not content:
             raise IntelligenceError("Intelligence endpoint returned an empty response.")
         return str(content)
+
+    def generate(self, prompt: str, *, model: str | None = None) -> str:
+        return self.chat([{"role": "user", "content": prompt}], model=model)

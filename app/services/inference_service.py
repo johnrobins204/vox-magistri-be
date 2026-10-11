@@ -10,6 +10,11 @@ from typing import Any
 from uuid import uuid4
 
 from app.intelligence.client import OllamaClient
+from app.intelligence.prompt_builders import (
+    build_chat_messages,
+    build_system_prompt,
+    load_voice_configs,
+)
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
@@ -45,6 +50,11 @@ class OllamaInferenceService:
             timeout_seconds=settings.ollama.timeout_seconds,
         )
         self.model_loaded: bool = True
+
+        # Prompt pipeline (SPEC-0006): voice configs and prompt limits are read once, here.
+        self._system_prompt = build_system_prompt(settings.prompts, load_voice_configs())
+        self._max_turns = settings.app.max_turns
+        self._max_field_len = settings.app.max_field_len
 
         # Job queue and worker control
         self._queue: Queue[InferenceJob] = Queue()
@@ -159,7 +169,25 @@ class OllamaInferenceService:
                         "message_id": job.message_id,
                     },
                 )
-                text = self.client.generate(job.prompt)
+                history = job.store.list_messages(job.session_id)
+                messages = build_chat_messages(
+                    self._system_prompt,
+                    history,
+                    job.message_id,
+                    job.prompt,
+                    max_turns=self._max_turns,
+                    max_field_len=self._max_field_len,
+                )
+                logger.info(
+                    "prompt.built",
+                    extra={
+                        "session_id": job.session_id,
+                        "message_id": job.message_id,
+                        "history_count": len(messages) - 2,
+                        "message_count": len(messages),
+                    },
+                )
+                text = self.client.chat(messages)
 
                 # Append the reply as a new assistant message; the user message is untouched
                 self._append_reply(job.store, job.session_id, job.message_id, text)

@@ -1,4 +1,4 @@
-from prompting import (
+from app.intelligence.prompting import (
     WORLD_GUIDANCE_MODES,
     build_session_prompt,
     build_world_guidance_prompt,

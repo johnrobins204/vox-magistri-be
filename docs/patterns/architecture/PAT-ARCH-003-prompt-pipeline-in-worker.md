@@ -74,9 +74,10 @@ may keep returning a single string.
 - Worker tests must stub `client.chat` rather than `client.generate`.
 
 ## Examples
-None yet. The first use is planned under REQ-0006:
-`build_system_prompt` / `build_chat_messages` / `load_voice_configs` in
-`app/intelligence/prompt_builders.py`, `OllamaClient.chat` in
-`app/intelligence/client.py`, and the call site in
-`OllamaInferenceService._worker_loop` in `app/services/inference_service.py`.
-Update this section with line references once implemented.
+- `app/intelligence/prompt_builders.py`: `load_voice_configs` (line 39), `build_system_prompt`
+  (line 170), `build_chat_messages` (line 187).
+- `app/intelligence/client.py`: `OllamaClient.chat` (line 56); `generate` delegates to it (line 85).
+- `app/services/inference_service.py`: the system prompt is built once in `__init__` (line 55)
+  and the request is assembled per job in `_worker_loop` (`build_chat_messages`, line 173).
+- Tests: `tests/test_prompt_pipeline.py` (worker path), `tests/test_prompt_builders.py`,
+  `tests/test_ollama_client.py`.

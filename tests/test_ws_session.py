@@ -93,13 +93,13 @@ def test_ws_sees_messages_created_via_rest(stub_client, stub_svc):
 
 # 20
 def test_ws_client_message_id_is_idempotent(stub_client, stub_svc, session_store, monkeypatch):
-    calls: list[str] = []
+    calls: list[list[dict]] = []
 
-    def counting_generate(prompt, **kw):
-        calls.append(prompt)
+    def counting_chat(messages, **kw):
+        calls.append(messages)
         return "stub reply"
 
-    monkeypatch.setattr(stub_svc.client, "generate", counting_generate)
+    monkeypatch.setattr(stub_svc.client, "chat", counting_chat)
     sid = _new_session(stub_client)
     payload = {"action": "user_message", "text": "hello", "client_message_id": "c1"}
 
@@ -123,10 +123,10 @@ def test_ws_client_message_id_is_idempotent(stub_client, stub_svc, session_store
 
 # 21
 def test_ws_inference_error_sends_error_event(stub_client, stub_svc, session_store, monkeypatch):
-    def failing_generate(prompt, **kw):
+    def failing_chat(messages, **kw):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(stub_svc.client, "generate", failing_generate)
+    monkeypatch.setattr(stub_svc.client, "chat", failing_chat)
     sid = _new_session(stub_client)
 
     with stub_client.websocket_connect(_ws_url(sid)) as ws:
@@ -244,13 +244,13 @@ def test_ws_queue_full_sends_error_event(session_store):
 
 # 26
 def test_ws_cancelled_job_sends_error_event(stub_client, stub_svc, session_store, monkeypatch):
-    generate_calls: list[str] = []
+    chat_calls: list[list[dict]] = []
 
-    def must_not_generate(prompt, **kw):
-        generate_calls.append(prompt)
-        raise AssertionError("generate must not be called for a cancelled job")
+    def must_not_chat(messages, **kw):
+        chat_calls.append(messages)
+        raise AssertionError("chat must not be called for a cancelled job")
 
-    monkeypatch.setattr(stub_svc.client, "generate", must_not_generate)
+    monkeypatch.setattr(stub_svc.client, "chat", must_not_chat)
 
     orig_enqueue = stub_svc.enqueue
 
@@ -275,7 +275,7 @@ def test_ws_cancelled_job_sends_error_event(stub_client, stub_svc, session_store
     stored = session_store.list_messages(sid)
     assert len(stored) == 1
     assert stored[0]["status"] == "cancelled"
-    assert generate_calls == []
+    assert chat_calls == []
 
 
 def _leaf_routes(routes):

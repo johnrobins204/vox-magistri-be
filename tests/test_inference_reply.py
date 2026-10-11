@@ -38,7 +38,7 @@ def store():
 
 
 def test_reply_is_new_assistant_message(svc, store, monkeypatch):
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
 
@@ -52,7 +52,7 @@ def test_reply_is_new_assistant_message(svc, store, monkeypatch):
 
 
 def test_user_message_not_modified(svc, store, monkeypatch):
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
 
@@ -63,7 +63,7 @@ def test_user_message_not_modified(svc, store, monkeypatch):
 
 
 def test_reply_message_is_completed_and_unlinked(svc, store, monkeypatch):
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
 
@@ -74,10 +74,10 @@ def test_reply_message_is_completed_and_unlinked(svc, store, monkeypatch):
 
 
 def test_error_path_preserves_user_message(svc, store, monkeypatch):
-    def boom(prompt, **kw):
+    def boom(messages, **kw):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(svc.client, "generate", boom)
+    monkeypatch.setattr(svc.client, "chat", boom)
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
 
@@ -90,10 +90,10 @@ def test_error_path_preserves_user_message(svc, store, monkeypatch):
 
 
 def test_cancel_before_start_preserved(svc, store, monkeypatch):
-    def fail_if_called(prompt, **kw):
-        raise AssertionError("generate must not be called for a cancelled job")
+    def fail_if_called(messages, **kw):
+        raise AssertionError("chat must not be called for a cancelled job")
 
-    monkeypatch.setattr(svc.client, "generate", fail_if_called)
+    monkeypatch.setattr(svc.client, "chat", fail_if_called)
     svc.cancel("u1")
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
@@ -106,7 +106,7 @@ def test_cancel_before_start_preserved(svc, store, monkeypatch):
 
 
 def test_status_and_messages_endpoints_after_reply(svc, store, monkeypatch):
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     app = create_app(services={"inference": svc, "session": store})
     headers = AUTH
 
@@ -129,7 +129,7 @@ def test_status_and_messages_endpoints_after_reply(svc, store, monkeypatch):
 
 
 def test_worker_writes_status_via_update_message_status(svc, store, monkeypatch):
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
 
@@ -149,10 +149,10 @@ def test_worker_writes_status_via_update_message_status(svc, store, monkeypatch)
 
 
 def test_error_status_and_meta_written_in_one_call(svc, store, monkeypatch):
-    def boom(prompt, **kw):
+    def boom(messages, **kw):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(svc.client, "generate", boom)
+    monkeypatch.setattr(svc.client, "chat", boom)
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
 
@@ -174,7 +174,7 @@ def test_store_write_failure_is_reported_as_error(svc, store, monkeypatch):
     def boom(*args, **kwargs):
         raise RuntimeError("store down")
 
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     monkeypatch.setattr(store, "create_message", boom)
     svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=store)
     wait_idle(svc)
@@ -217,7 +217,7 @@ def test_append_reply_propagates_store_errors(svc, store, monkeypatch):
 
 
 def test_unknown_message_write_is_logged_and_worker_survives(svc, store, monkeypatch, caplog):
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
 
     with caplog.at_level(logging.ERROR):
         svc.enqueue(session_id="s1", message_id="ghost", prompt="hi", store=store)

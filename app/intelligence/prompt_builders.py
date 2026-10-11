@@ -1,24 +1,68 @@
 # intelligence/prompt_builders.py
 """
-Prompt builders for narration, adjudication, and compact game/chat payloads.
+Prompt builders for narration, adjudication, and the chat pipeline.
 
 This module centralizes prompt construction so the rest of the app can call:
-    from intelligence.prompt_builders import build_narrator_prompt, build_adjudicator_prompt, build_game_chat_prompt
+    from intelligence.prompt_builders import build_narrator_prompt, build_adjudicator_prompt
+
+Chat pipeline (SPEC-0006): build_system_prompt builds the DM system message from the DM role
+sentence, the dm_voice config text (loaded by load_voice_configs) and the prompt settings;
+build_chat_messages assembles [system, capped completed prior messages, current user message]
+from plain message dicts. No I/O, no store access.
 
 The functions are deterministic, compact, and optimized for small LLMs (token-sparing).
-They intentionally return plain strings; callers decide which model and client to use.
+They intentionally return plain strings or plain message dicts; callers decide which model
+and client to use.
 """
 
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
+from app.config import PromptSettings
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
+
+VOICE_CONFIGS_PATH = Path(__file__).resolve().parent / "voice_configs" / "voice_configs.json"
+
+DM_ROLE_PROMPT = (
+    "You are the Dungeon Master of a D&D 5e game. Narrate the world, play its characters, "
+    "and respond to the player's actions without deciding what the player does."
+)
+
+
+# --- voice configs ---------------------------------------------------------
+def load_voice_configs(path: Path | str = VOICE_CONFIGS_PATH) -> dict[str, str]:
+    """
+    Load the voice config strings (dm_voice, dm_analysis, ...) from a JSON object file.
+    Never raises: a missing, unreadable, invalid or non-object file logs one WARNING and
+    returns {}; entries whose key or value is not a str are dropped with one WARNING each.
+    File contents are never logged.
+    """
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        reason = "missing"
+    except (OSError, UnicodeDecodeError):
+        reason = "unreadable"
+    except ValueError:
+        reason = "invalid_json"
+    else:
+        if isinstance(data, dict):
+            configs: dict[str, str] = {}
+            for key, value in data.items():
+                if isinstance(key, str) and isinstance(value, str):
+                    configs[key] = value
+                else:
+                    logger.warning("voice_configs.entry_dropped", extra={"key": str(key)})
+            return configs
+        reason = "not_object"
+    logger.warning("voice_configs.unavailable", extra={"path": str(path), "reason": reason})
+    return {}
 
 
 # --- small helpers ---------------------------------------------------------
@@ -123,190 +167,48 @@ def build_narrator_prompt(
     return "\n\n".join(parts)
 
 
-def build_game_chat_prompt(
+def build_system_prompt(prompts: PromptSettings, voice_configs: dict[str, str]) -> str:
+    """
+    DM system message: the role sentence, then the dm_voice config text (only when it is a
+    non-empty str), then the voice settings line. Parts are joined with a blank line.
+    """
+    parts = [DM_ROLE_PROMPT]
+    dm_voice = voice_configs.get("dm_voice")
+    if isinstance(dm_voice, str) and dm_voice:
+        parts.append(dm_voice)
+    voice = prompts.dm_voice
+    parts.append(
+        f"VOICE: TONE:{voice.tone}|PERSONA:{voice.persona}|VERBOSITY:{prompts.verbosity_default}|"
+        f"SENSE:{voice.sensory_focus}|CONSEQ:{voice.consequence_level}"
+    )
+    return "\n\n".join(parts)
+
+
+def build_chat_messages(
+    system: str,
+    history: list[dict[str, Any]],
+    current_message_id: str,
+    current_text: str,
     *,
-    game: Any,
-    session_run: Any,
-    voice_label: str,
-    user_input: str,
-    included_characters: Iterable[Any] = (),
-    max_turns: int = 6,
-    max_field_len: int = 240,
-) -> str:
+    max_turns: int,
+    max_field_len: int,
+) -> list[dict[str, str]]:
     """
-    Compact prompt for general game chat / DM responses.
-    - game: object with name, campaign.name, quest.title (optional), character, character_links
-    - session_run: object with entries (list-like)
-    - included_characters: iterable of Character-like objects to include
+    Chat messages for one turn: [system, prior, current user]. Prior messages are the completed
+    user/assistant messages before the current one in history (all of them if the current id is
+    not found), keeping the last max_turns (none when max_turns <= 0), oldest first, with contents
+    truncated to max_field_len. The current text is not truncated. Reads plain dicts only: no
+    mutation, no I/O.
     """
-    # voice
-    voice = (
-        getattr(voice_label, "label", voice_label) if hasattr(voice_label, "label") else voice_label
-    )
-    current = getattr(game, "character", None) or {}
-
-    # minimal character data
-    def minimal_character(c):
-        try:
-            return {
-                "id": getattr(c, "id", None),
-                "name": _truncate(getattr(c, "name", ""), max_field_len),
-                "class": getattr(c, "class_name", ""),
-                "level": getattr(c, "level", 0),
-                "hp": {
-                    "current": int(getattr(c, "current_hp", 0)),
-                    "max": int(getattr(c, "max_hp", 1)),
-                },
-            }
-        except Exception:
-            return {"name": str(c)}
-
-    included_data = [minimal_character(c) for c in included_characters]
-    included_json = _compact_json(
-        {"active": minimal_character(current), "included": included_data}
-        if included_data
-        else minimal_character(current)
-    )
-
-    recent_entries = getattr(session_run, "entries", [])[-max_turns:]
-    recent_turns = (
-        "\n".join(
-            f"{getattr(e, 'kind', 'entry')}:{_truncate(getattr(e, 'content', str(e)), max_field_len)}"
-            for e in recent_entries
-        )
-        or "None"
-    )
-
-    meta = (
-        f"GAME:{_truncate(getattr(game, 'name', ''), 64)}|CAMPAIGN:{_truncate(getattr(game.campaign, 'name', ''), 64) if getattr(game, 'campaign', None) else 'None'}|"
-        f"QUEST:{(_truncate(getattr(game.quest, 'title', ''), 64) if getattr(game, 'quest', None) else 'None')}|CHAR:{_truncate(getattr(current, 'name', ''), 64)}"
-    )
-
-    parts = [
-        "SYS:DND5e",
-        f"VOICE:{voice}",
-        meta,
-        f"CHAR_JSON:{included_json}",
-        f"RECENT:{recent_turns}",
-        f"INPUT:{_truncate(user_input, max_field_len)}",
-        "INSTR:Use CHAR_JSON as authoritative source; do not invent missing sheet data.",
+    prior: list[dict[str, Any]] = []
+    for message in history:
+        if message.get("id") == current_message_id:
+            break
+        if message.get("status") == "completed" and message.get("role") in ("user", "assistant"):
+            prior.append(message)
+    kept = prior[-max_turns:] if max_turns > 0 else []
+    return [
+        {"role": "system", "content": system},
+        *({"role": m["role"], "content": _truncate(m.get("content"), max_field_len)} for m in kept),
+        {"role": "user", "content": current_text},
     ]
-    return "\n".join(parts)
-
-
-def build_game_state_payload(
-    *,
-    game: Any,
-    session_run: Any,
-    user_input: str,
-    included_characters: Iterable[Any],
-    max_turns: int = 6,
-) -> dict[str, Any]:
-    """
-    Compact payload for adjudication: returns a dict suitable for JSON serialization.
-    """
-    game_chars = [link.character for link in getattr(game, "character_links", [])] or [
-        getattr(game, "character", None)
-    ]
-    char_map = {
-        c.id: {
-            "id": c.id,
-            "name": c.name,
-            "class": c.class_name,
-            "level": c.level,
-            "hp": {"current": c.current_hp, "max": c.max_hp},
-        }
-        for c in game_chars
-        if c is not None
-    }
-
-    included = []
-    for c in included_characters:
-        included.append(
-            char_map.get(getattr(c, "id", None))
-            or {"id": getattr(c, "id", None), "name": getattr(c, "name", "")}
-        )
-
-    recent = [
-        {"kind": str(getattr(e, "kind", "")), "content": _truncate(getattr(e, "content", ""), 200)}
-        for e in getattr(session_run, "entries", [])[-max_turns:]
-    ]
-
-    payload = {
-        "game": {
-            "name": getattr(game, "name", ""),
-            "campaign": (
-                getattr(game.campaign, "name", "") if getattr(game, "campaign", None) else ""
-            ),
-        },
-        "characters": list(char_map.values()),
-        "included_characters": included,
-        "recent_turns": recent,
-        "last_action": _truncate(user_input, 300),
-    }
-    return payload
-
-
-def build_turn_summary(*, game: Any, session_run: Any, max_turns: int = 6) -> dict[str, Any]:
-    """
-    Compact turn summary used by UI or voice systems.
-    Returns a simple dict (serializable).
-    """
-    quest = getattr(game, "quest", None)
-    quest_title = getattr(quest, "title", None) if quest else None
-    quest_goal = "No active quest"
-    if quest:
-        open_objectives = [
-            o for o in getattr(quest, "objectives", []) if getattr(o, "status", "") == "Open"
-        ]
-        if open_objectives:
-            quest_goal = getattr(open_objectives[0], "title", quest_goal)
-        elif getattr(quest, "objective", None):
-            quest_goal = quest.objective
-
-    game_chars = [link.character for link in getattr(game, "character_links", [])] or [
-        getattr(game, "character", None)
-    ]
-    party = []
-    for c in game_chars:
-        if c is None:
-            continue
-        max_hp = max(1, int(getattr(c, "max_hp", 1) or 1))
-        current_hp = int(getattr(c, "current_hp", 0) or 0)
-        ratio = current_hp / max_hp
-        if current_hp <= 0:
-            condition = "Down"
-        elif ratio <= 0.5:
-            condition = "Bloodied"
-        else:
-            condition = "Healthy"
-        party.append(
-            {
-                "name": c.name,
-                "class": c.class_name,
-                "level": c.level,
-                "current_hp": current_hp,
-                "max_hp": max_hp,
-                "condition": condition,
-            }
-        )
-
-    turn_number = (
-        sum(
-            1 for e in getattr(session_run, "entries", []) if getattr(e, "kind", "") == "Chat input"
-        )
-        + 1
-    )
-    scene = (
-        getattr(session_run, "current_scene", "")
-        or getattr(session_run, "title", "")
-        or "No scene set"
-    ).strip()
-
-    return {
-        "turn_number": turn_number,
-        "scene": scene,
-        "quest_title": quest_title,
-        "quest_goal": quest_goal,
-        "party": party,
-    }

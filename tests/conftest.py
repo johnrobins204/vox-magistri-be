@@ -25,7 +25,7 @@ def client(app):
 @pytest.fixture
 def stub_svc(monkeypatch):
     svc = make_stub_service()
-    monkeypatch.setattr(svc.client, "generate", lambda prompt, **kw: "stub reply")
+    monkeypatch.setattr(svc.client, "chat", lambda messages, **kw: "stub reply")
     yield svc
     asyncio.run(svc.shutdown())
 

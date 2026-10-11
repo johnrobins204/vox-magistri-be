@@ -1,23 +1,22 @@
 """Shared helpers for the session tests (SPEC-0004). Plain module; no fixtures."""
 
 import time
-import types
 from typing import Any
 
 import pytest
 
+from app.config import OllamaSettings, Settings
 from app.services.inference_service import OllamaInferenceService
 
 # require_local_token only accepts a "Bearer " prefix; the value is a test placeholder.
 AUTH = {"Authorization": "Bearer test-token"}
 
 
-def make_stub_service() -> OllamaInferenceService:
-    """Real OllamaInferenceService; constructing it connects to nothing."""
-    settings = types.SimpleNamespace(
-        ollama=types.SimpleNamespace(
-            base_url="http://127.0.0.1:1", model="stub", timeout_seconds=1.0
-        )
+def make_stub_service(**settings_kwargs) -> OllamaInferenceService:
+    """Real OllamaInferenceService built from a real Settings; constructing it connects to nothing."""
+    settings = Settings(
+        ollama=OllamaSettings(base_url="http://127.0.0.1:1", model="stub", timeout_seconds=1.0),
+        **settings_kwargs,
     )
     return OllamaInferenceService(settings)
 
