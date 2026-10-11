@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.factory import create_app
 from app.services.build_services import build_services
-from app.services.repos import InMemorySessionStore, make_default_repos
+from app.services.repos import SqliteSessionStore, make_default_repos
 from tests.session_helpers import make_stub_service
 
 
@@ -32,7 +32,9 @@ def stub_svc(monkeypatch):
 
 @pytest.fixture
 def session_store():
-    return InMemorySessionStore()
+    store = SqliteSessionStore(":memory:")
+    yield store
+    store.close()
 
 
 @pytest.fixture

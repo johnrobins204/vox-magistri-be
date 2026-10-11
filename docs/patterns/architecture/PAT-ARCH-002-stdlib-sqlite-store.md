@@ -55,5 +55,7 @@ exists (constraints.md, constraint 2).
 - Copies-out costs a little allocation per read; irrelevant next to LLM latency.
 
 ## Examples
-- Planned first use: `SqliteSessionStore` in `app/services/repos.py` (ADR-0003, REQ-0005).
-  Add file/line references once implemented.
+- `SqliteSessionStore` in `app/services/repos.py:33` (ADR-0003, REQ-0005): schema and
+  `PRAGMA user_version = 1` in `__init__` (line 71); restart recovery in
+  `_recover_interrupted` (line 74); `make_default_repos(database_url)` at
+  `app/services/repos.py:209`, called with `database.url` from `app/main.py:44`.

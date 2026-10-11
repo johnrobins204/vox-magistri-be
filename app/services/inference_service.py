@@ -78,6 +78,8 @@ class OllamaInferenceService:
                 prompt=prompt,
                 store=store,
             )
+            # Mark message as queued before the job is visible to the worker (no race with running)
+            self._update_message_status(store, session_id, message_id, "queued")
             self._queue.put_nowait(job)
             logger.info(
                 "enqueue",
@@ -87,8 +89,6 @@ class OllamaInferenceService:
                     "prompt_len": len(prompt),
                 },
             )
-            # Mark message as queued in the store (best-effort)
-            self._update_message_status(store, session_id, message_id, "queued")
             return True
         except Exception as exc:
             logger.exception("enqueue failed", extra={"error": str(exc)})
@@ -186,11 +186,11 @@ class OllamaInferenceService:
                         "error": str(exc),
                     },
                 )
-                self._update_message_status(job.store, job.session_id, job.message_id, "error")
-                self._update_message_meta(
+                self._update_message_status(
                     job.store,
                     job.session_id,
                     job.message_id,
+                    "error",
                     {"error": str(exc)},
                 )
             finally:
@@ -201,17 +201,16 @@ class OllamaInferenceService:
     # ------------------------------------------------------------
     # Store helpers (best-effort, no strict schema assumptions)
     # ------------------------------------------------------------
-    def _update_message_status(self, store, session_id: str, message_id: str, status: str) -> None:
+    def _update_message_status(
+        self, store, session_id: str, message_id: str, status: str, meta: dict | None = None
+    ) -> None:
         try:
-            session = store.get_session(session_id)
-            if not session:
-                return
-            for m in session:
-                if m.get("id") == message_id:
-                    m["status"] = status
-                    m.setdefault("meta", {})
-                    m["meta"]["updated_by"] = "inference_worker"
-                    break
+            store.update_message_status(
+                session_id,
+                message_id,
+                status,
+                meta={"updated_by": "inference_worker", **(meta or {})},
+            )
         except Exception:
             logger.exception(
                 "update_message_status failed",
@@ -232,22 +231,6 @@ class OllamaInferenceService:
             extra={"session_id": session_id, "message_id": user_message_id, "reply_id": reply_id},
         )
         return reply_id
-
-    def _update_message_meta(self, store, session_id: str, message_id: str, meta: dict) -> None:
-        try:
-            session = store.get_session(session_id)
-            if not session:
-                return
-            for m in session:
-                if m.get("id") == message_id:
-                    m.setdefault("meta", {})
-                    m["meta"].update(meta)
-                    break
-        except Exception:
-            logger.exception(
-                "update_message_meta failed",
-                extra={"session_id": session_id, "message_id": message_id},
-            )
 
     # ------------------------------------------------------------
     # Token generation (WebSocket path)

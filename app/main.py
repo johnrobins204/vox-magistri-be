@@ -6,11 +6,12 @@ from collections.abc import Sequence
 
 from uvicorn import Config, Server
 
+from app.config import get_settings
 from app.deps import get_inference_service
 from app.factory import create_app
 from app.services.build_services import build_services
 from app.services.logger import get_logger, init_logging
-from app.services.repos import DEFAULT_REPOS, make_default_repos, seed_sample_data
+from app.services.repos import make_default_repos, seed_sample_data
 
 logger = get_logger("dnd_app")
 
@@ -40,11 +41,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     init_logging(log_dir=os.getenv("DND_LOG_DIR", "logs"), debug_enabled=args.debug)
     logger.info("Starting DnD server", extra={"debug": args.debug})
 
-    try:
-        repos = DEFAULT_REPOS if DEFAULT_REPOS else make_default_repos()
-    except Exception:
-        logger.exception("Failed to load DEFAULT_REPOS")
-        repos = make_default_repos()
+    repos = make_default_repos(get_settings().database.url)
 
     if args.seed:
         try:

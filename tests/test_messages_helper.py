@@ -1,12 +1,12 @@
 import uuid
 
 from app.services.messages import build_snapshot, submit_user_message
-from app.services.repos import InMemorySessionStore
+from app.services.repos import SqliteSessionStore
 from tests.session_helpers import FakeInference
 
 
-def _store_with_session(session_id: str = "s1") -> InMemorySessionStore:
-    store = InMemorySessionStore()
+def _store_with_session(session_id: str = "s1") -> SqliteSessionStore:
+    store = SqliteSessionStore(":memory:")
     store.create_session(session_id)
     return store
 

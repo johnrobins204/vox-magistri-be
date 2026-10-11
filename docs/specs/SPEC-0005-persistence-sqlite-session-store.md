@@ -635,6 +635,9 @@ Formatting: black, line length 100; use `get_logger(__name__)` from
   run). Recover with `git show 0365f2bf23789f85fef4b89595abd6056b35a1a5:data/models.py`.
   WP-6 must confirm this SHA still contains `data/` (nothing else changes `data/` in
   WP-1..WP-5) or replace it with the parent of the deletion commit.
+  **Confirmed by WP-6 (2026-10-11, read-only `git ls-tree`/`git show`):** `0365f2bf…` contains
+  all four files, byte-identical to the deleted working-tree copies. HEAD `fa30591e` also
+  contains them unchanged, so either SHA recovers the files.
 
 ### 4.3 Patterns applied/created
 | Pattern | Status | Use |

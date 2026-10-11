@@ -2,12 +2,14 @@
 
 import asyncio
 import importlib
+import inspect
+import re
 from pathlib import Path
 
+from app.services import repos as repos_module
 from app.services.build_services import build_services
 from app.services.repos import (
-    DEFAULT_REPOS,
-    InMemorySessionStore,
+    SqliteSessionStore,
     make_default_repos,
     seed_sample_data,
 )
@@ -67,14 +69,34 @@ def test_no_references_to_removed_symbols():
         ), f"{path.relative_to(REPO_ROOT)} uses hasattr("
 
 
-def test_default_repos_names_stable():
-    assert isinstance(DEFAULT_REPOS, dict)
-
+def test_make_default_repos_returns_sqlite_store():
     repos = make_default_repos()
-    assert isinstance(repos["session"], InMemorySessionStore)
+    try:
+        assert isinstance(repos["session"], SqliteSessionStore)
 
-    seed_sample_data(repos)
-    assert len(repos["session"].list_messages("demo")) == 1
+        seed_sample_data(repos)
+        assert len(repos["session"].list_messages("demo")) == 1
+    finally:
+        repos["session"].close()
+
+
+def test_in_memory_store_and_default_repos_removed():
+    assert not hasattr(repos_module, "InMemorySessionStore")
+    assert not hasattr(repos_module, "DEFAULT_REPOS")
+
+    main_text = (APP_DIR / "main.py").read_text(encoding="utf-8")
+    assert "InMemorySessionStore" not in main_text
+    assert "DEFAULT_REPOS" not in main_text
+    assert "database.url" in main_text
+
+
+def test_protocol_update_message_status_has_optional_meta():
+    from app.services.repos import SqliteSessionStore
+
+    for owner in (SessionStore, SqliteSessionStore):
+        sig = inspect.signature(owner.update_message_status)
+        assert list(sig.parameters) == ["self", "session_id", "message_id", "status", "meta"]
+        assert sig.parameters["meta"].default is None
 
 
 def test_session_store_protocol_unchanged():
@@ -87,3 +109,19 @@ def test_session_store_protocol_unchanged():
         "list_messages",
         "update_message_status",
     }
+
+
+def test_data_layer_removed():
+    for name in ("__init__.py", "models.py", "repos.py", "migrations.py"):
+        assert not (REPO_ROOT / "data" / name).exists(), f"data/{name} still exists"
+    assert not (REPO_ROOT / "data").exists(), "data/ directory still exists"
+
+    import_of_data = re.compile(r"^\s*(from|import)\s+data\b", re.MULTILINE)
+    for path in APP_DIR.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert not import_of_data.search(text), f"{path.relative_to(REPO_ROOT)} imports data"
+
+
+def test_no_new_runtime_dependency():
+    requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8").lower()
+    assert "sqlalchemy" not in requirements

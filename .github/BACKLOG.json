@@ -77,19 +77,30 @@
     {
       "id": "REQ-0005",
       "title": "Persistence decision and wiring (sessions survive restart; resolve the unimportable data/ layer)",
-      "status": "in_progress",
+      "status": "completed",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
       "adr_id": "ADR-0003",
       "spec_path": "docs/specs/SPEC-0005-persistence-sqlite-session-store.md",
-      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[COMPLETE] Implementation"],
       "follow_ups": [
         "Tier: P0. Evidence: all state is in memory; data/__init__.py has a broken relative import (import data fails); sqlalchemy is not in requirements.txt; data/models.py is ~30 tables far beyond MVP.",
         "Options to score: stdlib sqlite3 behind the SessionStore Protocol; slimmed SQLAlchemy; wire data/ as-is; status quo.",
         "Depends on: REQ-0004. ADR likely: yes (new dependency, hard to reverse).",
         "Architecture review 2026-10-11: ADR-0003 (docs/adr/0003-sqlite-session-persistence.md, status proposed) chose Option A: stdlib sqlite3 SqliteSessionStore behind the SessionStore Protocol (no new runtime dependency); data/ deleted; database.url honoured in app/main.py. New proposed pattern PAT-ARCH-002. Proposed wording changes to accepted PAT-ARCH-001 and PAT-CODE-001 flagged for human sign-off (not applied). Awaiting human acceptance of ADR-0003, PAT-ARCH-002 and the PAT-ARCH-001/PAT-CODE-001 wording changes.",
-        "Spec drafted 2026-10-11: docs/specs/SPEC-0005-persistence-sqlite-session-store.md (status draft; 6 work packages WP-1..WP-6; 28 tests T-01..T-29). Implementation is BLOCKED until the human accepts open gates G-1..G-12 listed in section 4.4 of the spec (ADR-0003 and Option A; delete all of data/; widen update_message_status with optional meta; restart recovery rule; rename InMemorySessionStore to SqliteSessionStore and remove DEFAULT_REPOS; leave database.echo unwired; accept PAT-ARCH-002; PAT-ARCH-001/PAT-CODE-001 wording changes; create_session-on-existing-id raises IntegrityError; close() on SqliteSessionStore; enqueue writes queued before queueing; remove main.py try/except fallback).",
-        "Unverified: the spec quotes recovery SHA 0365f2bf23789f85fef4b89595abd6056b35a1a5 for the last commit containing data/. It was read from .git/refs/heads/main without running git and is NOT confirmed to contain data/. Verify with git (by the human or at WP-6) before deleting data/ or recording the SHA."
+        "Spec drafted 2026-10-11: docs/specs/SPEC-0005-persistence-sqlite-session-store.md (status draft; 6 work packages WP-1..WP-6; 28 tests T-01..T-29). Gates G-1..G-12 accepted by the human 2026-10-11; recovery SHA 0365f2bf23789f85fef4b89595abd6056b35a1a5 verified to contain data/ (4 files).",
+        "SPEC-0005 T-09/T-10 text inconsistent with G-4 recovery (tests set messages completed before reopen); amend spec wording",
+        "main.py never closes SqliteSessionStore on shutdown (writes are committed per call; add store.close() to shutdown path)",
+        "datetime.utcnow() deprecated: replace in repos.py, inference_service.py, logger.py with tz-aware UTC (naive storage choice kept) (REQ-0012)",
+        "multi-process: recovery runs on every open, so a second process on the same db file would mark in-flight messages interrupted; document or guard if ever needed",
+        "database.echo remains unwired (PII concern) - remove in REQ-0012",
+        "tests/conftest.py app fixture never closes its :memory: store; test_messages_helper._store_with_session unclosed (harmless)",
+        "seed block in main.py wraps seed_sample_data in try/except (logged, not silent) - revisit",
+        "SPEC-0005 section 4.2 wording: HEAD also contains data/ until this change is committed",
+        "WP-5 requires an unopenable database.url path to propagate sqlite3.OperationalError out of main(); no test covers this (add a test in tests/test_main_wiring.py)",
+        "_sqlite_path in app/services/repos.py accepts query/fragment suffixes (e.g. sqlite:///x.db?mode=ro) as literal filename characters silently; reject or document",
+        "corpus.txt and keys.txt (tracked snapshots) still reference removed InMemorySessionStore/DEFAULT_REPOS and data.* names; regenerate in a separate change",
+        "Tracked files dupe-scan.sh, corpus.txt, keys.txt, all_files.txt and dupes.txt were found deleted from the working tree during REQ-0005 session cleanup (cause not identified; unrelated to REQ-0005); restore from HEAD in a separate change and do not stage those deletions with REQ-0005."
       ]
     },
     {
