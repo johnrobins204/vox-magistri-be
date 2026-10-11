@@ -15,7 +15,7 @@ from app.schemas.v1 import (
     ToolInvokeResp,
     ToolListResp,
 )
-from app.services.session_service import SessionService
+from app.services.messages import build_snapshot
 
 router = APIRouter(prefix="/api/v1/intel", tags=["intelligence"])
 
@@ -72,18 +72,14 @@ def intel_status(inference=Depends(get_inference_service)):
 
 # ------------------------------------------------------------
 # Session Snapshot (for React visualization)
+# Reads the shared session store, the same one REST and WebSocket write to.
 # ------------------------------------------------------------
-@router.get("/sessions/{run_id}/snapshot", response_model=SessionSnapshotResp)
+@router.get("/sessions/{session_id}/snapshot", response_model=SessionSnapshotResp)
 def snapshot_session(
-    run_id: int,
+    session_id: str,
     session_store=Depends(get_session_store),
 ):
-    # Wrap your existing SessionService around the repo
-    svc = SessionService(repos={"session": session_store})
-
-    snapshot = svc.snapshot_run(run_id)
-    return SessionSnapshotResp(
-        run_id=snapshot["run_id"],
-        entries=snapshot["entries"],
-        snapshot_at=snapshot["snapshot_at"],
-    )
+    snapshot = build_snapshot(session_store, session_id)
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return SessionSnapshotResp(**snapshot)

@@ -51,18 +51,27 @@
     {
       "id": "REQ-0004",
       "title": "Unify session identity across REST, WebSocket and /intel (one session model)",
-      "status": "in_progress",
+      "status": "completed",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
       "adr_id": "ADR-0002",
       "spec_path": "docs/specs/SPEC-0004-unified-session-model.md",
-      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[COMPLETE] Implementation"],
       "follow_ups": [
         "Tier: P0. Evidence: REST uses uuid sessions + InMemorySessionStore; ws.py and /intel/sessions/{run_id}/snapshot use int run_id via SessionService, whose repo calls silently no-op against InMemorySessionStore (snapshot always empty, WS entries never persisted). /api/v1/stream duplicates ws.py. GameService is built but referenced by no router.",
         "Scope: one id type, one store API, one WS endpoint; decide fate of SessionService, GameService and the duplicate in-memory repos.",
         "Depends on: REQ-0003. ADR likely: yes (cross-cutting convention, two viable approaches).",
         "Architecture review: ADR-0002 (docs/adr/0002-single-session-model.md, status proposed) chose Option A: delete SessionService and GameService, keep app/services/repos.py InMemorySessionStore as the single store, port ws.py and /intel snapshot to uuid session ids via the SessionStore Protocol, remove /api/v1/stream, add shared message-submit helper. data/repos.py deferred to REQ-0005; REQ-0012 may delete it only after REQ-0005. Pattern PAT-ARCH-001 proposed.",
-        "Spec drafted (6 work packages, WP-1 helper first; WP-5 deletions after WP-3/WP-4). Awaiting human acceptance of ADR-0002 and PAT-ARCH-001 (both proposed) before implementation. Open question for human: dropping WS 'token' event and in-WS 'cancel' until REQ-0007."
+        "Spec drafted (6 work packages, WP-1 helper first; WP-5 deletions after WP-3/WP-4). Awaiting human acceptance of ADR-0002 and PAT-ARCH-001 (both proposed) before implementation. Open question for human: dropping WS 'token' event and in-WS 'cancel' until REQ-0007.",
+        "inference_service worker sets status=error before writing meta.error; swap the two calls so a WS poll cannot see error without its text (candidate for REQ-0007)",
+        "inference_service.enqueue writes status=queued after put_nowait; a fast worker terminal status could be overwritten, leaving the WS waiting until the reply timeout; set queued before put_nowait (candidate for REQ-0007)",
+        "ws.py: no prompt length limit on WS (REST has 4096-char cap) (candidate for REQ-0010). Non-JSON frames are now handled (error event, socket stays open) - fixed 2026-10-11.",
+        "cleanup candidates for REQ-0012: duplicate router= line in session.py, stale docstring in data/repos.py (\"Used by GameService\"), repos.py docstring refers to app.types, keys.txt/all_files.txt/corpus.txt are stale snapshots naming removed modules and are tracked",
+        "tests: fastapi 0.141 app.routes only lists _IncludedRouter wrappers; route checks walk original_router (tests 11 and 26a); SPEC-0004 wording for those two items is vacuous as written",
+        "RESOLVED 2026-10-11 (ws.py now catches malformed frames; spec item 8 wording still describes the old behaviour): Stage-1 verification 2026-10-11 (non-blocking): WP-4h partially met; spec item 8 outer handler closes non-JSON frames with 1011 while WP-4h prose says socket stays open. Amend SPEC-0004 WP-4h/item 8 to match the chosen behaviour or send an error event for JSONDecodeError.",
+        "Stage-1 verification 2026-10-11 (non-blocking test gaps): add WS tests for non-dict frame, inference returning None, whitespace-only text, 'Reply not found' path, outer 1011 handler, client_message_id null; add helper test that a falsy client_message_id is not deduped (messages.py:25-29); add route test that exactly 4096 chars is accepted (session.py:173).",
+        "Stage-1 verification 2026-10-11: docs/patterns/architecture/PAT-ARCH-001*.md line ~54 still reads 'To be applied by REQ-0004'; update pattern status once the human accepts the implementation.",
+        "Stage-1 verification 2026-10-11: store/inference parameters in ws.py (_wait_for_terminal, _find_reply, _handle_user_message) and messages.py:15-17 are untyped; type them with the app.type_defs Protocols. Non-blocking."
       ]
     },
     {

@@ -2,12 +2,13 @@
 from typing import Annotated, Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, WebSocket, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 
 from app.deps import get_inference_service, get_session_store, require_local_token
 from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
 from app.services.logger import get_logger
+from app.services.messages import submit_user_message
 from app.type_defs import InferenceService, SessionStore
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
@@ -174,24 +175,17 @@ async def post_message(
             status_code=400, detail=f"Prompt too long (max ~{MAX_INPUT_TOKENS} tokens)"
         )
 
-    # Idempotency by client_message_id
-    if payload.client_message_id:
-        existing = store.get_by_client_id(session_id, payload.client_message_id)
-        if existing:
-            # Return existing message metadata
-            return JSONResponse(
-                status_code=200,
-                content={"message_id": existing["id"], "status": existing["status"]},
-            )
-
-    # Create message record
-    message_id = str(uuid4())
-    store.create_message(session_id, message_id, payload.dict())
-
-    # Enqueue; inference.enqueue should return True if queued, False if queue full.
-    queued = inference.enqueue(
-        session_id=session_id, message_id=message_id, prompt=payload.content, store=store
+    # Idempotency, message creation and enqueue are shared with the WS transport (PAT-ARCH-001).
+    message, created, queued = submit_user_message(
+        store=store, inference=inference, session_id=session_id, payload=payload.dict()
     )
+    if not created:
+        # Idempotent hit on client_message_id: return existing message metadata
+        return JSONResponse(
+            status_code=200,
+            content={"message_id": message["id"], "status": message["status"]},
+        )
+
     if not queued:
         # Queue full: inform client to retry later
         return JSONResponse(
@@ -199,81 +193,12 @@ async def post_message(
             content={
                 "status": "queued_full",
                 "retry_after": MAX_QUEUE_RETRY_AFTER,
-                "message_id": message_id,
+                "message_id": message["id"],
             },
             headers={"Retry-After": str(MAX_QUEUE_RETRY_AFTER)},
         )
 
     # Optionally compute queue position if inference exposes it (best-effort)
-    queue_pos = inference.queue_position(message_id)
-    response.headers["Location"] = f"/api/v1/sessions/{session_id}/messages/{message_id}"
-    return {"message_id": message_id, "status": "queued", "queue_position": queue_pos}
-
-
-@router.websocket("/stream")
-async def stream_ws(
-    ws: WebSocket,
-    authorization: str | None = Header(None),
-    session_id: str | None = None,
-    store=Depends(get_session_store),
-    inference=Depends(get_inference_service),
-):
-    """
-    WebSocket streaming with Authorization header (Bearer token).
-    Handshake: client sends {"action":"start","message_id":"...","prompt":"..."}.
-    """
-    # Validate Authorization header
-    if not authorization or not authorization.startswith("Bearer "):
-        await ws.close(code=1008)
-        return
-    token = authorization.split(" ", 1)[1]
-    if not inference.validate_token(token):
-        await ws.close(code=1008)
-        return
-
-    # Optional session check
-    if session_id and store.get_session(session_id) is None:
-        await ws.close(code=1008)
-        return
-
-    await ws.accept()
-    try:
-        data = await ws.receive_json()
-        action = data.get("action")
-        if action == "start":
-            message_id = data.get("message_id") or str(uuid4())
-            prompt = data.get("prompt", "")
-            # If session provided, ensure message record exists
-            if session_id:
-                if store.get_session(session_id) is None:
-                    await ws.send_json({"type": "error", "message": "session not found"})
-                    await ws.close()
-                    return
-                # create message record if not present
-                if not store.get_by_client_id(session_id, message_id) and not any(
-                    m["id"] == message_id for m in store.list_messages(session_id)
-                ):
-                    store.create_message(
-                        session_id, message_id, {"content": "", "role": "assistant"}
-                    )
-
-            # Stream tokens from inference.generate_tokens
-            async for tk in inference.generate_tokens(
-                prompt=prompt, session_id=session_id, message_id=message_id
-            ):
-                await ws.send_json({"type": "token", "token": tk, "message_id": message_id})
-            await ws.send_json({"type": "done", "message_id": message_id})
-
-        elif action == "cancel":
-            mid = data.get("message_id")
-            inference.cancel(mid)
-            await ws.send_json({"type": "cancelled", "message_id": mid})
-        else:
-            await ws.send_json({"type": "error", "message": f"unknown action {action}"})
-    except Exception as exc:
-        try:
-            await ws.send_json({"type": "error", "message": str(exc)})
-        except Exception:
-            pass
-    finally:
-        await ws.close()
+    queue_pos = inference.queue_position(message["id"])
+    response.headers["Location"] = f"/api/v1/sessions/{session_id}/messages/{message['id']}"
+    return {"message_id": message["id"], "status": "queued", "queue_position": queue_pos}

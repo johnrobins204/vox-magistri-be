@@ -186,40 +186,17 @@ class IntelligenceStatusResp(BaseModel):
         }
 
 
-class SessionEntry(BaseModel):
-    """Typed representation of a session entry for React visualization."""
-
-    id: int
-    run_id: int
-    timestamp: float
-    role: str
-    text: str
-    meta: dict[str, Any] | None = None
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": 1695841234000,
-                "run_id": 7,
-                "timestamp": 1695841234.123,
-                "role": "Assistant",
-                "text": "The goblins leap from the shadows!",
-                "meta": {"tool_call": False},
-            }
-        }
-
-
 class SessionSnapshotResp(BaseModel):
-    """Snapshot of a session run."""
+    """Snapshot of a session (same message shape as the REST list)."""
 
-    run_id: int
-    entries: list[SessionEntry]
+    session_id: str
+    entries: list[MessageResp]
     snapshot_at: float
 
     class Config:
         schema_extra = {
             "example": {
-                "run_id": 7,
+                "session_id": "b3f1c2d4-...",
                 "entries": [],
                 "snapshot_at": 1695841234.567,
             }

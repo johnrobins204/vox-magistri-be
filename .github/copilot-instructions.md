@@ -8,9 +8,9 @@ narration/adjudication; the client is a separate React app (not in this repo).
 - `app/factory.py` — `create_app(services=...)` builds the FastAPI app, registers routers, CORS, startup/shutdown hooks.
 - `app/config.py` — Typed Pydantic `Settings` loaded from root `settings.json` (namespaces: ollama, app, server, tools, prompts, world, database, auth, logging). Use `get_settings()` / `get_namespace()` / `get()`, never read `settings.json` directly elsewhere.
 - `app/deps.py` — Service-locator pattern: `set_services()` is called once by `create_app`; routers pull services via `get_inference_service()`, `get_session_store()`, `get_tool_service()`. There is no per-request DB session dependency yet.
-- `app/services/build_services.py` — Constructs the services dict (`session`, `tool`, `game`, `inference`) from repos + settings.
-- `app/services/repos.py` — **Active** in-memory repo layer (`InMemorySessionStore`, `DEFAULT_REPOS`). This is what's actually wired up today.
-- `app/api/v1/*` — Routers: `session.py` (REST session/message CRUD), `ws.py` (live session WebSocket), `intelligence.py` (tool/inference endpoints). All prefixed `/api/v1/...`.
+- `app/services/build_services.py` — Constructs the services dict (`session`, `tool`, `inference`) from repos + settings.
+- `app/services/repos.py` — **Active** in-memory repo layer (`InMemorySessionStore`, `DEFAULT_REPOS`). This is what's actually wired up today. `InMemorySessionStore` is the only in-memory session store; it implements the `SessionStore` Protocol in `app/type_defs.py`, and every transport (REST, the single WebSocket, `/intel` snapshot) uses it via `get_session_store()`. Session ids are uuid strings.
+- `app/api/v1/*` — Routers: `session.py` (REST session/message CRUD), `ws.py` (the only WebSocket, `/api/v1/ws/sessions/{session_id}`), `intelligence.py` (tool/inference endpoints, plus `/api/v1/intel/sessions/{session_id}/snapshot`). All prefixed `/api/v1/...`. `app/services/messages.py` holds the shared "submit user message" and "snapshot" helpers used by REST and WS.
 - `app/intelligence/` — Prompting, Ollama client (`client.py`, uses `httpx`), and the tool-call pipeline (`tool_handler.py`, `prompting.py`, `prompt_builders.py`).
 - `app/intelligence/tools/` — Pluggable tools (`roll.py`, `narrate.py`, `clear.py`); contract in `.github/instructions/tools.instructions.md`.
 
