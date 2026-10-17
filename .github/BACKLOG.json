@@ -195,12 +195,12 @@
     {
       "id": "REQ-0010",
       "title": "Frontend-ready API contract (pydantic v2 schemas, one status vocabulary, session CRUD, error shape)",
-      "status": "backlog",
+      "status": "in_progress",
       "created_at": "2026-10-11",
       "updated_at": "2026-10-11",
-      "adr_id": null,
-      "spec_path": null,
-      "tasks": ["[PENDING] Restate requirement", "[PENDING] Architecture review", "[PENDING] Spec drafting", "[PENDING] Implementation"],
+      "adr_id": "ADR-0005",
+      "spec_path": "docs/specs/SPEC-0010-frontend-ready-api-contract.md",
+      "tasks": ["[COMPLETE] Restate requirement", "[COMPLETE] Architecture review", "[COMPLETE] Spec drafting", "[PENDING] Implementation"],
       "follow_ups": [
         "Tier: P1. Evidence: schemas use pydantic v1 Config/orm_mode/schema_extra and .dict() under pydantic 2.13 (deprecation warnings); schema docs say queued|in_progress|done but the service emits running|completed; MessageListResp is unused; two entry shapes (MessageResp vs SessionEntry); no list/get/delete session endpoints; the 429 queue-full path is dead because the Queue is unbounded; naive datetime.utcnow().",
         "Scope: enum for message status, session list/get/delete, consistent error body, timezone-aware timestamps, committed OpenAPI snapshot test for frontend codegen.",
