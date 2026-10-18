@@ -1,10 +1,12 @@
+import { Menu, type MenuAction } from './Menu'
+
 interface SceneBarProps {
   sessionId: string
   socketStatus: 'connecting' | 'open' | 'closed'
   modelLoaded: boolean
   queuePosition: number | null
   eta: number | null
-  onNewSession: () => void
+  onMenuAction: (action: MenuAction) => void
   onRefreshStatus: () => void
 }
 
@@ -14,7 +16,7 @@ export function SceneBar({
   modelLoaded,
   queuePosition,
   eta,
-  onNewSession,
+  onMenuAction,
   onRefreshStatus,
 }: SceneBarProps) {
   return (
@@ -33,13 +35,8 @@ export function SceneBar({
         <button type="button" className="ghost" onClick={onRefreshStatus} disabled={socketStatus !== 'open'}>
           Queue {queuePosition ?? '-'} · {eta ?? '-'}s
         </button>
-        <button type="button" className="ghost" onClick={onNewSession} title="Abandon this tale and start anew">
-          New Tale
-        </button>
+        <Menu sessionId={sessionId} onAction={onMenuAction} />
       </div>
-      <span className="scene-session mono" title="Session id">
-        {sessionId ? sessionId.slice(0, 8) : '…'}
-      </span>
     </header>
   )
 }

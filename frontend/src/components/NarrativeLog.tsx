@@ -1,10 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Message } from '../types'
 
 interface NarrativeLogProps {
   messages: Message[]
   isSending: boolean
 }
+
+// Only the most recent turns render on screen; the full chronicle lives in
+// state (and the Game Diary). A "turn" is a player action plus everything the
+// table produced in response (DM narration, roll results).
+const VISIBLE_TURNS = 6
 
 function toClock(value: string): string {
   const date = new Date(value)
@@ -42,17 +47,50 @@ function RollCard({ message }: { message: Message }) {
 
 export function NarrativeLog({ messages, isSending }: NarrativeLogProps) {
   const logRef = useRef<HTMLDivElement | null>(null)
+  const [expanded, setExpanded] = useState(false)
+
+  const { visible, hiddenCount } = useMemo(() => {
+    if (expanded || messages.length === 0) {
+      return { visible: messages, hiddenCount: 0 }
+    }
+    // Walk backwards counting player (non-command) messages as turn starts.
+    let turns = 0
+    let cut = messages.length
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      const isCommand = m.role === 'user' && (m.content ?? '').startsWith('/')
+      if (m.role === 'user' && !isCommand) {
+        turns += 1
+        if (turns > VISIBLE_TURNS) {
+          cut = i + 1
+          break
+        }
+        cut = i
+      }
+    }
+    return { visible: messages.slice(cut), hiddenCount: cut }
+  }, [messages, expanded])
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight })
-  }, [messages, isSending])
+  }, [visible, isSending])
 
   return (
     <div className="thread-log" ref={logRef}>
-      {messages.length === 0 && !isSending ? (
+      {hiddenCount > 0 ? (
+        <button type="button" className="ghost earlier-note" onClick={() => setExpanded(true)}>
+          ⬆ {hiddenCount} earlier {hiddenCount === 1 ? 'entry' : 'entries'} — reveal (full tale in the Game Diary)
+        </button>
+      ) : null}
+      {expanded && messages.length > 0 ? (
+        <button type="button" className="ghost earlier-note" onClick={() => setExpanded(false)}>
+          ⬇ Show only recent turns
+        </button>
+      ) : null}
+      {visible.length === 0 && !isSending ? (
         <p className="empty">The table is quiet. Describe your first move.</p>
       ) : (
-        messages.map((message) => {
+        visible.map((message) => {
           if (message.role === 'assistant' && rollMeta(message)) {
             return <RollCard key={message.id} message={message} />
           }

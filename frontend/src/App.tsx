@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createSession, getIntelStatus, listMessages } from './lib/api'
 import { openSessionSocket, type SessionSocket } from './lib/ws'
+import { CharacterCreator } from './components/CharacterCreator'
 import { CharacterPanel } from './components/CharacterPanel'
 import { Composer } from './components/Composer'
+import { DiaryModal } from './components/DiaryModal'
 import { DiceTray } from './components/DiceTray'
+import { FeatureModal, type FeatureKey } from './components/FeatureModal'
 import { NarrativeLog } from './components/NarrativeLog'
 import { SceneBar } from './components/SceneBar'
+import { loadActiveId, loadRoster, removeCharacter, resolveActive, saveActiveId, saveRoster, upsertCharacter } from './lib/roster'
+import type { Character } from './lib/character'
+import type { MenuAction } from './components/Menu'
 import type { Message, WsEvent } from './types'
 
 const SESSION_STORAGE_KEY = 'vox.session_id'
@@ -34,7 +40,14 @@ function App() {
   const [modelLoaded, setModelLoaded] = useState<boolean>(false)
   const [errorText, setErrorText] = useState<string>('')
   const [isSending, setIsSending] = useState<boolean>(false)
+  const [activeFeature, setActiveFeature] = useState<FeatureKey | null>(null)
+  const [diaryOpen, setDiaryOpen] = useState<boolean>(false)
+  const [creatorOpen, setCreatorOpen] = useState<boolean>(false)
+  const [roster, setRoster] = useState<Character[]>(() => loadRoster())
+  const [activeCharacterId, setActiveCharacterId] = useState<string | null>(() => loadActiveId())
   const socketRef = useRef<SessionSocket | null>(null)
+
+  const character = resolveActive(roster, activeCharacterId)
 
   const canSend = useMemo(
     () => socketStatus === 'open' && draft.trim().length > 0 && !isSending,
@@ -179,6 +192,49 @@ function App() {
     }
   }
 
+  const handleMenuAction = (action: MenuAction) => {
+    if (action === 'new-tale') {
+      void startNewSession()
+      return
+    }
+    if (action === 'copy-session') {
+      return // handled inside the menu itself
+    }
+    if (action === 'game-diary') {
+      setDiaryOpen(true)
+      return
+    }
+    if (action === 'character-builder') {
+      setCreatorOpen(true)
+      return
+    }
+    setActiveFeature(action)
+  }
+
+  const handleSaveCharacter = (next: Character) => {
+    const nextRoster = upsertCharacter(roster, next)
+    saveRoster(nextRoster)
+    setRoster(nextRoster)
+    saveActiveId(next.id)
+    setActiveCharacterId(next.id)
+  }
+
+  const handleSelectCharacter = (id: string) => {
+    saveActiveId(id)
+    setActiveCharacterId(id)
+  }
+
+  const handleDeleteCharacter = (id: string) => {
+    const nextRoster = removeCharacter(roster, id)
+    saveRoster(nextRoster)
+    setRoster(nextRoster)
+    if (activeCharacterId === id) {
+      const fallback = nextRoster[0]?.id ?? null
+      saveActiveId(fallback)
+      setActiveCharacterId(fallback)
+    }
+  }
+
   const askStatus = () => {
     if (socketStatus === 'open') socketRef.current?.sendStatus()
   }
@@ -191,12 +247,12 @@ function App() {
         modelLoaded={modelLoaded}
         queuePosition={queuePosition}
         eta={eta}
-        onNewSession={startNewSession}
+        onMenuAction={handleMenuAction}
         onRefreshStatus={askStatus}
       />
 
       <div className="board-grid">
-        <CharacterPanel />
+        <CharacterPanel character={character} />
 
         <section className="panel thread">
           <NarrativeLog messages={messages} isSending={isSending} />
@@ -208,6 +264,27 @@ function App() {
       {errorText ? <p className="error-banner">{errorText}</p> : null}
 
       <Composer draft={draft} onDraftChange={setDraft} onSubmit={submitDraft} canSend={canSend} />
+
+      <FeatureModal
+        feature={activeFeature}
+        onClose={() => setActiveFeature(null)}
+      />
+
+      <DiaryModal
+        open={diaryOpen}
+        messages={messages}
+        sessionId={sessionId}
+        onClose={() => setDiaryOpen(false)}
+      />
+      <CharacterCreator
+        open={creatorOpen}
+        roster={roster}
+        activeId={activeCharacterId}
+        onSave={handleSaveCharacter}
+        onSelect={handleSelectCharacter}
+        onDelete={handleDeleteCharacter}
+        onClose={() => setCreatorOpen(false)}
+      />
     </main>
   )
 }
