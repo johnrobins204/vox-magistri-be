@@ -1,5 +1,5 @@
 import { getApiBaseUrl, getApiToken } from './config'
-import type { MessageListResp, SessionCreateResp } from '../types'
+import type { MessageListResp, SessionCreateResp, Species, SpeciesListResp } from '../types'
 
 function authHeaders(): HeadersInit {
   return {
@@ -50,4 +50,11 @@ export async function getIntelStatus(): Promise<{
   const url = `${getApiBaseUrl()}/api/v1/intel/status`
   const response = await fetch(url)
   return parseJson(response)
+}
+
+export async function getSpecies(): Promise<Species[]> {
+  const url = `${getApiBaseUrl()}/api/v1/reference/species`
+  const response = await fetch(url)
+  const body = await parseJson<SpeciesListResp>(response)
+  return body.species
 }

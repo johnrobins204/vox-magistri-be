@@ -39,6 +39,11 @@ def get_tool_service():
     return s.get("tool") if isinstance(s, dict) else getattr(s, "tool", None)
 
 
+def get_reference():
+    s = get_services()
+    return s.get("reference") if isinstance(s, dict) else getattr(s, "reference", None)
+
+
 # existing set_services/get_* functions...
 
 

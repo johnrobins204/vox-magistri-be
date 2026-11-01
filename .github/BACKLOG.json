@@ -309,6 +309,39 @@
         "Tier: P2 planning item. Questions for the ADR: separate repo (current assumption) vs web/ in this repo; Vite on :5173 (matches current CORS); TypeScript or not; data fetching and WS client approach; types generated from the REQ-0010 OpenAPI snapshot; one-command dev startup for backend plus frontend; fun/learning value is a legitimate rubric criterion.",
         "Depends on: REQ-0016, REQ-0010. ADR likely: yes (new external dependency set, hard to reverse)."
       ]
+    },
+    {
+      "id": "REQ-0018",
+      "title": "Curated reference data strategy and species catalog (normalized file, startup loader, read-only route, two-tier species picker)",
+      "status": "completed",
+      "created_at": "2026-10-18",
+      "updated_at": "2026-10-18",
+      "adr_id": "ADR-0006",
+      "spec_path": "docs/specs/SPEC-0011-reference-data-species.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review (bypassed by human instruction; ADR-0006 and PAT-ARCH-006 set to accepted 2026-10-18)",
+        "[COMPLETE] Spec drafting (SPEC-0011)",
+        "[COMPLETE] Implementation WP-1 normalized file and ingest script",
+        "[COMPLETE] Implementation WP-2 model and fail-soft loader",
+        "[COMPLETE] Implementation WP-3 wiring into services and tool context",
+        "[COMPLETE] Implementation WP-4 read-only route",
+        "[COMPLETE] Implementation WP-5 frontend types, API call, tier-1 picker (manual checks F-01 to F-04 passed 2026-10-18)",
+        "[COMPLETE] Implementation WP-6 frontend browse-all view (manual checks F-05 to F-07 passed 2026-10-18)"
+      ],
+      "follow_ups": [
+        "Hollow One correction (third_party false, edition 5e, publisher Wizards of the Coast) is a human decision; confirm the edition, which was derived from the book and not from the delivery.",
+        "Nine third-party entries have edition null because the consultant gave no edition. Curator to confirm or fill in.",
+        "Publisher is null unless the delivered source names one. Confirm the no-invented-publisher rule.",
+        "Character creator mount point is CharacterCreator.tsx (lineage datalist is replaced). Confirm.",
+        "ADR-0006 requirement field still reads pending; left unchanged by instruction. Set to REQ-0018 if desired.",
+        "REQ-0015 is already the campaign domain item. This requirement is REQ-0018.",
+        "docs/requirements/LOG.md has no rows for REQ-0011 through REQ-0017 (they exist only in this backlog).",
+        "Route envelope follows PAT-ARCH-005 (still proposed). If REQ-0010 changes it, the route follows.",
+        "Out of scope for this item: LLM-assisted character-creator features and the classes and backgrounds datasets.",
+        "RESOLVED 2026-10-18: Manual frontend checks F-01 to F-07 (SPEC-0011) passed live in the browser, including the backend-down case (F-02). WP-5 and WP-6 flipped to COMPLETE and this item to completed.",
+        "docs/from_consultant/dnd_all_species_full_list.json is staged because the ingest script and T-01 to T-08 read it. The directory may become public with the repo; confirm the delivered text is summary-level."
+      ]
     }
   ]
 }

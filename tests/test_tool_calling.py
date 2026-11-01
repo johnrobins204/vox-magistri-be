@@ -269,7 +269,8 @@ def test_build_services_wires_tool_service_into_inference():
     repos = make_default_repos()
     services = build_services(repos, enable_tool_discovery=False)
 
-    assert set(services) == {"session", "tool", "inference"}
+    # SPEC-0011 T-21 amendment: ADR-0006 adds the reference catalog to the services shape.
+    assert set(services) == {"session", "tool", "inference", "reference"}
     assert services["inference"]._tool_service is services["tool"]
     assert services["tool"].default_context["inference"] is services["inference"]
     assert services["tool"].default_context["repos"] is repos

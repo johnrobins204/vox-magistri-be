@@ -1,0 +1,546 @@
+[
+    {
+        "Name": "Aasimar",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals infused with a spark of the Upper Planes, manifesting divine traits like luminous eyes, glowing halos, or feathery wings.",
+        "Character Creation Implications": "Grants darkvision, celestial resistance (necrotic/radiant), Healing Hands, and a level 3 transformation (Heavenly Wings, Inner Radiance, or Necrotic Shroud)."
+    },
+    {
+        "Name": "Dragonborn",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Proud, powerful humanoids descended from dragons, carrying elemental breath weapons and ancestral scale patterns.",
+        "Character Creation Implications": "Choose a Draconic Ancestry determining breath weapon element and damage resistance. Gain darkvision and draconic flight at level 5."
+    },
+    {
+        "Name": "Dwarf",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Stout, subterranean stone-crafters known for unmatched physical endurance, ancestral pride, and deep forge traditions.",
+        "Character Creation Implications": "Grants darkvision (120 ft), Dwarven Toughness (+1 HP per level), Poison Resistance/Advantage, and Tremorsense via Stonecunning."
+    },
+    {
+        "Name": "Elf",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Long-lived children of the Feywild possessing natural grace, keen sensory perception, and innate magical connections.",
+        "Character Creation Implications": "Choose a Lineage (Drow, High Elf, or Wood Elf) granting specific darkvision ranges, movement speeds, and innate spellcasting. Includes Keen Senses and Trance."
+    },
+    {
+        "Name": "Gnome",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Small, whimsical, and inquisitive folk with boundless intellectual energy and a natural affinity for magic and invention.",
+        "Character Creation Implications": "Choose a Lineage (Forest Gnome or Rock Gnome) granting innate illusion/animal speech or tinker utilities. Grants Gnomish Cunning (advantage on INT/WIS/CHA saves)."
+    },
+    {
+        "Name": "Goliath",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Towering humanoid descendants of giants who thrive in high mountain peaks and value physical achievement.",
+        "Character Creation Implications": "Choose a Giant Ancestry (Cloud, Fire, Frost, Hill, Stone, or Storm) granting supernatural active abilities. Grants Large Form transformation at level 5 and Powerful Build."
+    },
+    {
+        "Name": "Halfling",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Small, cheerful, and extraordinarily lucky folk who value peace, community, hearth, and subtle agility.",
+        "Character Creation Implications": "Grants Lucky (reroll natural 1s on attacks/checks/saves), Brave (advantage vs frightened), Halfling Nimbleness, and Naturally Stealthy."
+    },
+    {
+        "Name": "Human",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Resourceful, adaptable, and ambitious mortals who build expansive cultures and master diverse skills across every corner of the realm.",
+        "Character Creation Implications": "Grants a bonus Origin Feat at level 1, Skill Versatility (extra skill proficiency), and Heroic Inspiration after every long rest."
+    },
+    {
+        "Name": "Orc",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Resilient, action-oriented warriors blessed with physical endurance and relentless vitality.",
+        "Character Creation Implications": "Grants Adrenaline Rush (Dash as bonus action gaining temporary HP), Relentless Endurance (drop to 1 HP instead of 0 once/long rest), and 120 ft Darkvision."
+    },
+    {
+        "Name": "Tiefling",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals bearing fiendish heritage from the Lower Planes, marked by horns, tails, sharp teeth, and unnatural skin tones.",
+        "Character Creation Implications": "Choose a Fiendish Legacy (Abyssal, Chthonic, or Infernal) defining innate spell progression and damage resistance (Poison, Necrotic, or Fire). Grants Thaumaturgy and Darkvision."
+    },
+    {
+        "Name": "Aarakocra",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Avian humanoids hailing from the Elemental Plane of Air, resembling eagles and parrots.",
+        "Character Creation Implications": "Grants natural flight speed equal to walking speed (cannot wear medium/heavy armor), Wind Caller spellcasting (Gust of Wind), and Talon natural weapons."
+    },
+    {
+        "Name": "Astral Elf",
+        "Edition": "5e",
+        "Source": "Spelljammer: Adventures in Space",
+        "Creature Type": "Humanoid",
+        "Description": "Elves who migrated to the Astral Plane eons ago, gaining cosmic longevity and starlight magic.",
+        "Character Creation Implications": "Grants Astral Step (bonus action teleportation), Starlight Step/Radiant Soul abilities, Keen Senses, Trance, and choice of cantrip."
+    },
+    {
+        "Name": "Autognome",
+        "Edition": "5e",
+        "Source": "Spelljammer: Adventures in Space",
+        "Creature Type": "Construct",
+        "Description": "Mechanical gnomish constructs built for exploration, survival, and specialized labor.",
+        "Character Creation Implications": "Creature Type is Construct. Grants Built for Success (add d4 to rolls), Armored Casing (base AC 13 + Dex), Healing Machine (beneficial healing spell rules), and poison immunity."
+    },
+    {
+        "Name": "Bugbear",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Hairy, long-limbed goblinoids known for stealthy ambush tactics and deceptive strength.",
+        "Character Creation Implications": "Grants Long-Limbed (+5 ft melee reach), Surprise Attack (+2d6 damage vs targets that haven't acted), Powerful Build, Sneaky proficiency, and Fey Ancestry."
+    },
+    {
+        "Name": "Centaur",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Fey",
+        "Description": "Upper body of a humanoid and lower body of a horse, embodying wild nature and swift overland travel.",
+        "Character Creation Implications": "Creature Type is Fey. Speed 40 ft. Grants Charge (bonus action Hooves attack after moving 20 ft), Hooves natural weapons, Equine Build (climbing penalties), and Survival skills."
+    },
+    {
+        "Name": "Changeling",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Fey",
+        "Description": "Shapechangers capable of altering their physical appearance to match any humanoid face.",
+        "Character Creation Implications": "Creature Type is Fey. Grants Shapechanger trait (alter appearance/voice at will as an action) and Instincts (choice of 2 face-of-the-party skill proficiencies)."
+    },
+    {
+        "Name": "Deep Gnome (Svirfneblin)",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Subterranean gnomes who guard secret caverns using innate stealth and stone magic.",
+        "Character Creation Implications": "Grants 120 ft Darkvision, Svirfneblin Camouflage (advantage on Stealth in rocky terrain), Gnomish Cunning, and Gift of the Svirfneblin innate spells."
+    },
+    {
+        "Name": "Dhampir",
+        "Edition": "5e",
+        "Source": "Van Richten's Guide to Ravenloft",
+        "Creature Type": "Humanoid",
+        "Description": "Lineage tied to vampires, living between life and undeath with an insatiable hunger.",
+        "Character Creation Implications": "Gains Vampiric Bite (empowers checks or heals), Spider Climb (walk on walls/ceilings equal to walking speed), 60 ft Darkvision, and ancestral skill retention."
+    },
+    {
+        "Name": "Duergar",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Underdark dwarven kin shaped by Psionic energy and generations in deep subterranean realms.",
+        "Character Creation Implications": "Grants 120 ft Darkvision, Duergar Magic (Enlarge/Reduce and Invisibility), Psionic Fortitude (advantage vs illusion/charm/paralysis), and Poison Resistance."
+    },
+    {
+        "Name": "Eladrin",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Feywild elves attuned to the four seasons, whose emotional states mirror seasonal energies.",
+        "Character Creation Implications": "Grants Fey Step (bonus action teleportation with seasonal rider effects: Autumn charm, Winter fear, Spring ally teleport, Summer fire damage), Trance, and Keen Senses."
+    },
+    {
+        "Name": "Fairy",
+        "Edition": "5e",
+        "Source": "The Wild Beyond the Witchlight",
+        "Creature Type": "Fey",
+        "Description": "Tiny or small winged folk infused with the untamed illusion and enchantment of the Feywild.",
+        "Character Creation Implications": "Creature Type is Fey. Grants Flight (equal to walking speed in light armor) and Fey Magic (Druidcraft, Faerie Fire, Enlarge/Reduce)."
+    },
+    {
+        "Name": "Firbolg",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Gentle forest giants who protect woodland habitats with nature magic and subtle camouflage.",
+        "Character Creation Implications": "Grants Firbolg Magic (Detect Magic, Disguise Self), Hidden Step (bonus action invisibility), Speech of Beast and Leaf, and Powerful Build."
+    },
+    {
+        "Name": "Genasi (Air)",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals touched by elemental air, carrying breezy hair, blue skin, or vortex breath.",
+        "Character Creation Implications": "Speed 35 ft. Grants Unending Breath (hold breath indefinitely), Lightning Resistance, and Air Genasi Magic (Shocking Grasp, Feather Fall, Levitate)."
+    },
+    {
+        "Name": "Genasi (Earth)",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals tied to elemental earth, featuring stone-like skin, crystalline eyes, or dust trails.",
+        "Character Creation Implications": "Grants Earth Walk (ignore difficult terrain on stone/earth) and Earth Genasi Magic (Blade Ward as bonus action, Pass Without Trace)."
+    },
+    {
+        "Name": "Genasi (Fire)",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals infused with elemental fire, boasting ember hair, warm touch, and fiery tempers.",
+        "Character Creation Implications": "Grants Darkvision (flame-tinged), Fire Resistance, and Fire Genasi Magic (Produce Flame, Burning Hands, Flame Blade)."
+    },
+    {
+        "Name": "Genasi (Water)",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals connected to elemental water, bearing moisture-kissed skin, hair like waves, or fluid movements.",
+        "Character Creation Implications": "Grants Swim Speed equal to walking speed, Amphibious breathing, Acid Resistance, and Water Genasi Magic (Acid Splash, Create/Destroy Water, Water Walk)."
+    },
+    {
+        "Name": "Githyanki",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Astral warriors who escaped mind flayer bondage, mastering psionic swordplay and planar dragon riding.",
+        "Character Creation Implications": "Grants Astral Knowledge (gain proficiency in one skill and tool per long rest), Psychic Resistance, and Githyanki Psionics (Mage Hand, Jump, Misty Step)."
+    },
+    {
+        "Name": "Githzerai",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Ascetic monks dwelling in Limbo who train their minds to master order amid chaotic planar storms.",
+        "Character Creation Implications": "Grants Mental Discipline (advantage vs charmed/frightened), Psychic Resistance, and Githzerai Psionics (Mage Hand, Shield, Detect Thoughts)."
+    },
+    {
+        "Name": "Goblin",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Small, quick fey-descended scavengers known for guerrilla survival tactics and sneaky reflexes.",
+        "Character Creation Implications": "Grants Nimble Escape (Disengage or Hide as a bonus action), Fury of the Small (bonus damage equal to proficiency bonus), Darkvision, and Fey Ancestry."
+    },
+    {
+        "Name": "Grung",
+        "Edition": "5e",
+        "Source": "One Grung Above",
+        "Creature Type": "Humanoid",
+        "Description": "Small, aggressive amphibious frog-folk from tropical rainforests with poisonous skin.",
+        "Character Creation Implications": "Grants Poisonous Skin (contact damage/condition), Poison Immunity, Standing Leap, Amphibious, and Water Dependency (must immerse in water daily)."
+    },
+    {
+        "Name": "Hadozee",
+        "Edition": "5e",
+        "Source": "Spelljammer: Adventures in Space",
+        "Creature Type": "Humanoid",
+        "Description": "Simian arboreal travelers with winglike membranes used for gliding across Wildspace vessels.",
+        "Character Creation Implications": "Grants Glide (glide horizontally without falling damage), Dexterous Feet (bonus action object interaction), and Hadozee Resilience (reduce damage taken)."
+    },
+    {
+        "Name": "Half-Elf (Legacy 2014)",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Creature Type": "Humanoid",
+        "Description": "Mortals combining human adaptability with elven elegance, often navigating between two worlds.",
+        "Character Creation Implications": "Grants +2 CHA and +1 to two other scores, Fey Ancestry, Darkvision, and Skill Versatility (2 free skill proficiencies)."
+    },
+    {
+        "Name": "Half-Orc (Legacy 2014)",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Creature Type": "Humanoid",
+        "Description": "Powerful, resilient humanoids inheriting the tenacity of humans and ferocity of orcs.",
+        "Character Creation Implications": "Grants Relentless Endurance (survive 0 HP once/long rest), Savage Attacks (extra critical hit weapon die), Menacing (Intimidation proficiency), and Darkvision."
+    },
+    {
+        "Name": "Harengon",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Bipedal rabbit-folk from the Feywild possessing keen reflexes, perception, and explosive leaps.",
+        "Character Creation Implications": "Grants Hare-Trigger (add proficiency bonus to initiative), Rabbit Hop (bonus action jump without triggering opportunity attacks), Lucky Footwork, and Perception skills."
+    },
+    {
+        "Name": "Hexblood",
+        "Edition": "5e",
+        "Source": "Van Richten's Guide to Ravenloft",
+        "Creature Type": "Fey",
+        "Description": "Individuals infused with hag magic through bargains, rituals, or lineage transition.",
+        "Character Creation Implications": "Creature Type is Fey. Grants Eerie Token (detach tooth/hair for remote viewing/telepathy), Hex Magic (Disguise Self, Hex), and 60 ft Darkvision."
+    },
+    {
+        "Name": "Hobgoblin",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Disciplined goblinoids who value social hierarchy, group coordination, and martial solidarity.",
+        "Character Creation Implications": "Grants Fey Gift (Help action as bonus action with temp HP/speed riders), Fortune from the Many (bonus to failed rolls based on nearby allies), and Darkvision."
+    },
+    {
+        "Name": "Kalashtar",
+        "Edition": "5e",
+        "Source": "Eberron: Rising from the Last War",
+        "Creature Type": "Humanoid",
+        "Description": "Compound beings formed by the union of human bloodlines and celestial dream-spirits (Quori).",
+        "Character Creation Implications": "Grants Dual Mind (advantage on WIS saves), Mental Discipline (psychic resistance), Mind Link (telepathy), and Severed from Dreams (immunity to dream-based spells)."
+    },
+    {
+        "Name": "Kenku",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Flightless avian folk cursed without natural voices, using flawless mimicry to communicate.",
+        "Character Creation Implications": "Grants Expert Duplicate (advantage on copying handwriting/crafts), Mimicry (reproduce any heard sounds/voices), and Kenku Recall (gain skill proficiencies and advantage)."
+    },
+    {
+        "Name": "Kobold",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Small reptilian humanoids claiming draconic lineage, utilizing clever traps and pack tactics.",
+        "Character Creation Implications": "Grants Draconic Cry (grant allies advantage on attacks), Kobold Legacy (choice of cantrip, skill, or tail attack), and 60 ft Darkvision."
+    },
+    {
+        "Name": "Leonin",
+        "Edition": "5e",
+        "Source": "Mythic Odysseys of Theros",
+        "Creature Type": "Humanoid",
+        "Description": "Proud, lion-like feline humanoids native to grassy plains who guard their prides fierce independence.",
+        "Character Creation Implications": "Speed 35 ft. Grants Daunting Roar (bonus action roar causing fear), Claws natural weapons, Darkvision, and Hunter's Instincts."
+    },
+    {
+        "Name": "Lizardfolk",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Coldly practical reptilian humanoids who view the world through pure survival and resourcefulness.",
+        "Character Creation Implications": "Grants Natural Armor (13 + Dex), Bite natural weapon, Hungry Jaws (bonus action bite granting temp HP), Hold Breath (15 min), and Nature skills."
+    },
+    {
+        "Name": "Locathah",
+        "Edition": "5e",
+        "Source": "Locathah Rising",
+        "Creature Type": "Humanoid",
+        "Description": "Resilient piscene (fish-folk) ocean dwellers who defend coastal underwater territories.",
+        "Character Creation Implications": "Grants Natural Armor (12 + Dex), Leviathan Will (advantage on saves vs charm/fear/paralysis/poison), Swim speed, and Limited Amphibiousness (requires water every 4 hours)."
+    },
+    {
+        "Name": "Loxodon",
+        "Edition": "5e",
+        "Source": "Guildmasters' Guide to Ravnica",
+        "Creature Type": "Humanoid",
+        "Description": "Elephantine humanoids famed for wisdom, calm demeanor, stonework, and immense strength.",
+        "Character Creation Implications": "Grants Natural Armor (12 + Con), Trunk (prehensile manipulation/grapple), Loxodon Serenity (advantage vs charmed/frightened), and Keen Smell."
+    },
+    {
+        "Name": "Minotaur",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Bovine humanoids possessing formidable horns, labyrinthine navigational sense, and martial zeal.",
+        "Character Creation Implications": "Grants Horns natural weapons, Goring Rush (Dash then attack with horns as bonus action), Hammering Horns (shove as bonus action after attack), and Labyrinthine Recall."
+    },
+    {
+        "Name": "Owlin",
+        "Edition": "5e",
+        "Source": "Strixhaven: A Curriculum of Chaos",
+        "Creature Type": "Humanoid",
+        "Description": "Owl-like humanoids connected to the Feywild, silent flyers with nocturnal vision.",
+        "Character Creation Implications": "Grants Flight speed equal to walking speed (in light armor), 120 ft Darkvision, and Stealth proficiency (silent feathers)."
+    },
+    {
+        "Name": "Plasmoid",
+        "Edition": "5e",
+        "Source": "Spelljammer: Adventures in Space",
+        "Creature Type": "Ooze",
+        "Description": "Amorphous sentient slimes that can mold their bodies into pseudopods or humanoid forms.",
+        "Character Creation Implications": "Creature Type is Ooze. Grants Amorphous (squeeze through 1-inch spaces), Shape Self (extend pseudopods), Hold Breath (1 hr), Acid/Poison resistance, and Darkvision."
+    },
+    {
+        "Name": "Reborn",
+        "Edition": "5e",
+        "Source": "Van Richten's Guide to Ravenloft",
+        "Creature Type": "Humanoid",
+        "Description": "Individuals reanimated through magic, science, or unfinished business, clinging to fractured memories.",
+        "Character Creation Implications": "Grants Deathless Nature (no sleep/food/breath required, advantage vs poison/disease, advantage on death saves) and Knowledge from a Past Life (d6 to checks)."
+    },
+    {
+        "Name": "Satyr",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Fey",
+        "Description": "Caprine fey folk who embody freedom, music, celebration, and hedonistic merriment.",
+        "Character Creation Implications": "Creature Type is Fey. Speed 35 ft. Grants Magic Resistance (advantage on saves vs all spells), Mirthful Leap, Ram natural weapon, and Performance/Persuasion skills."
+    },
+    {
+        "Name": "Shadar-kai",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Elves bound to the Raven Queen in the Shadowfell, gray-skinned and attuned to gloom and decay.",
+        "Character Creation Implications": "Grants Blessing of the Raven Queen (bonus action teleportation with resist-all damage resistance rider), Necrotic Resistance, Trance, and Darkvision."
+    },
+    {
+        "Name": "Shifter",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Humanoids with distant lycanthropic ancestry, capable of briefly tapping into feral traits.",
+        "Character Creation Implications": "Grants Shifting (bonus action transformation gaining temp HP and subclass feature: Beastehide, Longtooth, Swiftstride, or Wildhunt) and Darkvision."
+    },
+    {
+        "Name": "Simic Hybrid",
+        "Edition": "5e",
+        "Source": "Guildmasters' Guide to Ravnica",
+        "Creature Type": "Humanoid",
+        "Description": "Humanoids bio-magically merged with animal traits by the Simic Combine.",
+        "Character Creation Implications": "Choose Animal Enhancements at Level 1 (Manta Glide, Nimble Climber, Underwater Adaptation) and Level 5 (Grappling Appendages, Carapace, Acid Spit)."
+    },
+    {
+        "Name": "Tabaxi",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Feline humanoids driven by wanderlust, curiosity, and explosive bursts of agility.",
+        "Character Creation Implications": "Grants Feline Agility (double speed for a turn), Cat's Claws (climbing speed and unarmed strikes), Darkvision, and Perception/Stealth proficiencies."
+    },
+    {
+        "Name": "Thri-kreen",
+        "Edition": "5e",
+        "Source": "Spelljammer: Adventures in Space",
+        "Creature Type": "Monstrosity",
+        "Description": "Insectoid humanoids with carapace armor, four arms, and psionic telepathy.",
+        "Character Creation Implications": "Creature Type is Monstrosity. Grants Secondary Arms (manipulate light items/weapons), Chameleon Carapace (AC 13 + Dex and camouflage), Thri-kreen Telepathy, and Sleepless rest."
+    },
+    {
+        "Name": "Tortle",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Reptilian turtle-folk carrying their houses on their backs, simple wanderers and natural survivalists.",
+        "Character Creation Implications": "Grants Natural Armor (fixed AC 17, cannot wear armor), Shell Defense (withdraw into shell for +4 AC), Claws, Hold Breath (1 hr), and Survival skills."
+    },
+    {
+        "Name": "Triton",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Aquatic guardians from the Elemental Plane of Water who protect ocean depths from dark horrors.",
+        "Character Creation Implications": "Grants Amphibious, Swim speed equal to walking speed, Cold Resistance, Fog/Water innate spellcasting, Emissary of the Sea, and Darkvision."
+    },
+    {
+        "Name": "Vedalken",
+        "Edition": "5e",
+        "Source": "Guildmasters' Guide to Ravnica",
+        "Creature Type": "Humanoid",
+        "Description": "Tall, blue-skinned humanoids who pursue perfection and cold logical mastery above all else.",
+        "Character Creation Implications": "Grants Vedalken Dispassion (advantage on INT, WIS, CHA saves), Tireless Precision (bonus d4 to choice of skill/tool), and Partially Amphibious."
+    },
+    {
+        "Name": "Verdan",
+        "Edition": "5e",
+        "Source": "Acquisitions Incorporated",
+        "Creature Type": "Humanoid",
+        "Description": "Mutated goblinoids transformed by chaos magic, physically expanding as they mature.",
+        "Character Creation Implications": "Grants Black Blood Healing (reroll 1s/2s on Hit Dice), Telepathic Hub, Persuasive, and Growth Spurt (size changes from Small to Medium at level 5)."
+    },
+    {
+        "Name": "Yuan-ti",
+        "Edition": "5e",
+        "Source": "Mordenkainen Presents: Monsters of the Multiverse",
+        "Creature Type": "Humanoid",
+        "Description": "Serpentine humanoids blessed with serpent characteristics and innate psionic magic.",
+        "Character Creation Implications": "Grants Magic Resistance (advantage on saves vs spells), Poison Resilience (resistance and save advantage), Serpentine Spellcasting (Poison Spray, Animal Friendship), and Darkvision."
+    },
+    {
+        "Name": "Awakened Animal",
+        "Edition": "3rd Party",
+        "Source": "Tal'Dorei Campaign Setting Reborn (Darrington Press)",
+        "Creature Type": "Beast",
+        "Description": "Former wild beasts granted sentient humanoid intelligence through Druidic Awaken rituals.",
+        "Character Creation Implications": "Creature Type is Beast. Retains animal physical form, natural weapons, and beast senses while gaining humanoid language, intellect, and class abilities."
+    },
+    {
+        "Name": "Bearfolk",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Creature Type": "Humanoid",
+        "Description": "Massive Ursine humanoids from northern wilderness lands known for shamanic strength and warrior honor.",
+        "Character Creation Implications": "Grants Thick Hide (Natural Armor), Bite/Claw attack actions, Powerful Build, and Ursine Ferocity."
+    },
+    {
+        "Name": "Disembodied",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Creature Type": "Humanoid",
+        "Description": "People caught in planar magical accidents whose physical forms drift partially into the Ethereal Plane.",
+        "Character Creation Implications": "Grants Fade Away (brief ethereal phase to bypass obstacles or reduce damage) and Planar Dislocation features."
+    },
+    {
+        "Name": "Downcast",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Creature Type": "Humanoid",
+        "Description": "Fallen angelic beings stripped of divine grace who now wander mortal lands in mortal flesh.",
+        "Character Creation Implications": "Choose an Archseraph heritage determining divine spells and lingering celestial traits despite lost divinity."
+    },
+    {
+        "Name": "Gearforged",
+        "Edition": "3rd Party",
+        "Source": "Midgard Worldbook (Kobold Press)",
+        "Creature Type": "Construct",
+        "Description": "Mortals whose consciousness and soul have been transferred into elaborate brass, steel, and clockwork bodies.",
+        "Character Creation Implications": "Creature Type is Construct. Does not sleep/eat/breathe; requires daily gear-winding maintenance and specialized repair kits."
+    },
+    {
+        "Name": "Hollow One",
+        "Edition": "3rd Party",
+        "Source": "Explorer's Guide to Wildemount (Darrington Press / WotC)",
+        "Creature Type": "Humanoid",
+        "Description": "Supernatural lineage for creatures who died but whose bodies revived without a soul, preserved by tragic fate.",
+        "Character Creation Implications": "Retains base species stats while adding Ageless, Clinging to Life (d20 turn undead/death save advantage), Unsettling Presence, and Undead Revenant nature."
+    },
+    {
+        "Name": "Laneshi",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Creature Type": "Humanoid",
+        "Description": "Pale, amphibious aquatic humanoids from deep trenches who revere ancestral necromancy.",
+        "Character Creation Implications": "Grants Swim speed, Amphibious, Resistance to Cold/Necrotic, and innate dark underwater magic."
+    },
+    {
+        "Name": "Ratatosk",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Creature Type": "Celestial",
+        "Description": "Small, mischievous squirrel-folk messenger celestials who travel up and down the cosmic World Tree.",
+        "Character Creation Implications": "Grants Climbing speed, Sharp Teeth natural weapon, Skittering agility, and Gossip/Messenger Planar magic."
+    },
+    {
+        "Name": "Ravenfolk (Huginn)",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Creature Type": "Humanoid",
+        "Description": "Wingless raven-like tricksters and scholars who revere fate, secrets, and clever trickery.",
+        "Character Creation Implications": "Grants Feat of Memory, Mimicry, Beak strike, and natural deception skill proficiencies."
+    },
+    {
+        "Name": "Wechselkind",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Creature Type": "Construct",
+        "Description": "Small artificial porcelain or wooden changeling dolls animated by fey magic, left behind when human children are stolen.",
+        "Character Creation Implications": "Creature Type is Construct. Grants Artificial Form (no food/sleep), Childlike Glamour (magical disguise as a human child), and Fey Resilience."
+    }
+]

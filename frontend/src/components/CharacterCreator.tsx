@@ -7,6 +7,9 @@ import {
   rollAbilityScore,
   type Character,
 } from '../lib/character'
+import { getSpecies } from '../lib/api'
+import type { Species } from '../types'
+import { SpeciesBrowser } from './SpeciesBrowser'
 
 interface CharacterCreatorProps {
   open: boolean
@@ -16,9 +19,9 @@ interface CharacterCreatorProps {
   onSelect: (id: string) => void
   onDelete: (id: string) => void
   onClose: () => void
+  onBrowseAll?: () => void
 }
 
-const LINEAGE_SUGGESTIONS = ['Human', 'Elf', 'Wood Elf', 'High Elf', 'Dwarf', 'Halfling', 'Gnome', 'Half-Orc', 'Tiefling', 'Dragonborn']
 const CLASS_SUGGESTIONS = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard']
 
 export function CharacterCreator({
@@ -29,20 +32,25 @@ export function CharacterCreator({
   onSelect,
   onDelete,
   onClose,
+  onBrowseAll,
 }: CharacterCreatorProps) {
   const [editing, setEditing] = useState<Character | null>(null)
   const [conditionsText, setConditionsText] = useState('')
+  const [species, setSpecies] = useState<Species[] | null>(null)
+  const [speciesFailed, setSpeciesFailed] = useState(false)
+  const [browsing, setBrowsing] = useState(false)
 
   useEffect(() => {
     if (open) {
       setEditing(null) // always land on the roster
+      setBrowsing(false)
     }
   }, [open])
 
   useEffect(() => {
     if (!open) return
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !browsing) {
         if (editing) {
           setEditing(null)
         } else {
@@ -52,9 +60,35 @@ export function CharacterCreator({
     }
     document.addEventListener('keydown', onEscape)
     return () => document.removeEventListener('keydown', onEscape)
-  }, [open, editing, onClose])
+  }, [open, editing, browsing, onClose])
+
+  const editorOpen = open && editing !== null
+
+  useEffect(() => {
+    if (!editorOpen) return
+    let cancelled = false
+    setSpeciesFailed(false)
+    getSpecies()
+      .then((list) => {
+        if (!cancelled) setSpecies(list)
+      })
+      .catch(() => {
+        if (!cancelled) setSpeciesFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [editorOpen])
 
   if (!open) return null
+
+  const baseSpecies = species?.filter((s) => s.edition === '5.5e') ?? []
+  const speciesReady = species !== null && !speciesFailed
+
+  const openBrowser = () => {
+    setBrowsing(true)
+    onBrowseAll?.()
+  }
 
   const startEdit = (character: Character) => {
     setEditing(character)
@@ -69,6 +103,11 @@ export function CharacterCreator({
 
   const patch = (changes: Partial<Character>) =>
     setEditing((d) => (d ? { ...d, ...changes } : d))
+
+  const pickSpecies = (picked: Species) => {
+    patch({ lineage: picked.name })
+    setBrowsing(false)
+  }
 
   const setAbility = (key: (typeof ABILITY_KEYS)[number], score: number) =>
     setEditing((d) => (d ? { ...d, abilities: { ...d.abilities, [key]: score } } : d))
@@ -162,17 +201,11 @@ export function CharacterCreator({
                   <span>Lineage</span>
                   <input
                     type="text"
-                    list="lineage-options"
                     value={editing.lineage}
                     onChange={(e) => patch({ lineage: e.target.value })}
                     placeholder="Wood Elf"
                     maxLength={40}
                   />
-                  <datalist id="lineage-options">
-                    {LINEAGE_SUGGESTIONS.map((l) => (
-                      <option key={l} value={l} />
-                    ))}
-                  </datalist>
                 </label>
                 <label className="field">
                   <span>Class</span>
@@ -232,6 +265,39 @@ export function CharacterCreator({
                 </label>
               </div>
 
+              <div className="species-picker">
+                <h3 className="creator-section">Base Species</h3>
+                {speciesFailed ? (
+                  <p className="empty">Species list unavailable</p>
+                ) : species === null ? (
+                  <p className="empty">Loading species…</p>
+                ) : baseSpecies.length === 0 ? (
+                  <p className="empty">No base species on file.</p>
+                ) : (
+                  <ul className="species-list">
+                    {baseSpecies.map((s) => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          className={`species-option ${editing.lineage === s.name ? 'selected' : ''}`}
+                          aria-pressed={editing.lineage === s.name}
+                          onClick={() => patch({ lineage: s.name })}
+                        >
+                          <span className="species-name">{s.name}</span>
+                          <span className="species-desc">{s.description}</span>
+                          <span className="species-impl">{s.character_creation_implications}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="species-footer">
+                  <button type="button" className="ghost" onClick={openBrowser} disabled={!speciesReady}>
+                    Browse all species
+                  </button>
+                </div>
+              </div>
+
               <h3 className="creator-section">Ability Scores</h3>
               <div className="creator-abilities">
                 {ABILITY_KEYS.map((key) => (
@@ -282,6 +348,9 @@ export function CharacterCreator({
           </>
         )}
       </div>
+      {browsing && species ? (
+        <SpeciesBrowser species={species} onPick={pickSpecies} onClose={() => setBrowsing(false)} />
+      ) : null}
     </div>
   )
 }

@@ -3,6 +3,7 @@
 from typing import Any
 
 from app.config import get_settings
+from app.reference.species import load_species
 from app.services.inference_service import OllamaInferenceService
 from app.services.tool_service import ToolService
 
@@ -28,8 +29,12 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
     inference = OllamaInferenceService(settings, tool_service=tool_service)
     tool_service.default_context["inference"] = inference
 
+    reference = {"species": load_species()}
+    tool_service.default_context["reference"] = reference
+
     return {
         "session": session_store,
         "tool": tool_service,
         "inference": inference,
+        "reference": reference,
     }

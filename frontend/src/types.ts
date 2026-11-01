@@ -22,6 +22,22 @@ export interface MessageListResp {
   messages: Message[]
 }
 
+export interface Species {
+  id: string
+  name: string
+  edition: '5e' | '5.5e' | null
+  source: string
+  publisher: string | null
+  third_party: boolean
+  creature_type: string
+  description: string
+  character_creation_implications: string
+}
+
+export interface SpeciesListResp {
+  species: Species[]
+}
+
 export interface WsSnapshotEvent {
   type: 'snapshot'
   session_id: string

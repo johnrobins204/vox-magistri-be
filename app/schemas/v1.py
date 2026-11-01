@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, constr
+
+from app.reference.species import Species
 
 # ============================================================
 # Existing Models (Preserved Exactly As-Is)
@@ -201,3 +203,16 @@ class SessionSnapshotResp(BaseModel):
                 "snapshot_at": 1695841234.567,
             }
         }
+
+
+# ============================================================
+# Reference Data (SPEC-0011, PAT-ARCH-005 envelope)
+# ============================================================
+
+
+class SpeciesListResp(BaseModel):
+    """Read-only species catalog envelope."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    species: list[Species]
