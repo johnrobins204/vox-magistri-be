@@ -53,7 +53,7 @@ class MessageResp(BaseModel):
     client_message_id: str | None = Field(None, description="Client id if provided")
     role: str | None = Field(None, description="Role of the author")
     content: str | None = Field(None, description="Final or partial content")
-    status: str = Field(..., description="Message status: queued|in_progress|done|error|cancelled")
+    status: str = Field(..., description="Message status: queued|running|completed|error|cancelled")
     meta: dict[str, Any] | None = Field(None, description="Optional structured metadata")
     created_at: datetime | None = Field(None, description="Creation timestamp (UTC)")
     updated_at: datetime | None = Field(None, description="Last update timestamp (UTC)")
@@ -66,7 +66,7 @@ class MessageResp(BaseModel):
                 "client_message_id": "client-123",
                 "role": "assistant",
                 "content": "A band of goblins springs from the underbrush...",
-                "status": "done",
+                "status": "completed",
                 "meta": {"length_tokens": 42},
                 "created_at": "2026-09-26T12:34:56Z",
                 "updated_at": "2026-09-26T12:35:10Z",
@@ -76,7 +76,7 @@ class MessageResp(BaseModel):
 
 class MessageStatusResp(BaseModel):
     message_id: str = Field(..., description="Server-generated message id")
-    status: str = Field(..., description="Message status: queued|in_progress|done|error|cancelled")
+    status: str = Field(..., description="Message status: queued|running|completed|error|cancelled")
     meta: dict[str, Any] | None = Field(None, description="Optional structured metadata")
     queue_position: int | None = Field(None, description="Best-effort queue position")
     estimated_wait_seconds: float | None = Field(None, description="Best-effort ETA in seconds")
@@ -107,7 +107,7 @@ class MessageListResp(BaseModel):
                         "client_message_id": "client-123",
                         "role": "assistant",
                         "content": "A band of goblins springs from the underbrush...",
-                        "status": "done",
+                        "status": "completed",
                         "meta": {"length_tokens": 42},
                         "created_at": "2026-09-26T12:34:56Z",
                         "updated_at": "2026-09-26T12:35:10Z",

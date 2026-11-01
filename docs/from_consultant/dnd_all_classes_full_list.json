@@ -1,0 +1,154 @@
+[
+    {
+        "Name": "Artificer",
+        "Edition": "5e",
+        "Source": "Tasha's Cauldron of Everything",
+        "Primary Ability": "Intelligence",
+        "Description": "Makers of magic-infused objects who treat magic as a complex system to be decoded, engineered, and unleashed.",
+        "Character Creation Implications": "Hit Die: d8. Grants Magical Tinkering, Artificer spellcasting, and the Infuse Item ability to temporarily turn mundane items into magical gear. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Barbarian",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Strength",
+        "Description": "Fierce warriors powered by primal forces that manifest as a relentless rage, relying on immense physical might and durability.",
+        "Character Creation Implications": "Hit Die: d12. Saves: Strength & Constitution. Grants Rage (damage resistance and bonus damage), Unarmored Defense, and Weapon Mastery. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Bard",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Charisma",
+        "Description": "Inspiring performers who weave music, dance, and magic into powerful supportive abilities, illusions, and utility.",
+        "Character Creation Implications": "Hit Die: d8. Saves: Dexterity & Charisma. Grants Bardic Inspiration, comprehensive spellcasting, and Jack of All Trades. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Blood Hunter",
+        "Edition": "5e (3rd Party)",
+        "Source": "Critical Role / Matthew Mercer",
+        "Primary Ability": "Dexterity or Strength, & Intelligence",
+        "Description": "Hunters of monsters who undergo mutations and use hemocraft (blood magic) to combat the dark horrors that plague the land.",
+        "Character Creation Implications": "Grants a Hemocraft die used to augment abilities at the cost of hit points, Blood Maledict (blood curses), and Crimson Rite (elemental weapon damage). Subclass (Order) chosen at level 3."
+    },
+    {
+        "Name": "Cleric",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Wisdom",
+        "Description": "Miraculous priests who act as conduits for divine magic from the Outer Planes, balancing durable combat with potent healing.",
+        "Character Creation Implications": "Hit Die: d8. Saves: Wisdom & Charisma. Grants spellcasting, a Divine Order choice (armor/weapons vs. cantrips), and Channel Divinity. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Druid",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Wisdom",
+        "Description": "Priests of primal power who harness the forces of nature to shape-shift into animals, control terrain, and summon elemental fury.",
+        "Character Creation Implications": "Hit Die: d8. Saves: Intelligence & Wisdom. Grants a Primal Order choice (armor vs. cantrips), spellcasting, and Wild Shape. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Fighter",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Strength or Dexterity",
+        "Description": "Unparalleled masters of martial combat, armor, and weaponry, boasting high versatility and survivability on the battlefield.",
+        "Character Creation Implications": "Hit Die: d10. Saves: Strength & Constitution. Grants Weapon Mastery, Second Wind (healing/utility), a Fighting Style feat, and Action Surge. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Gunslinger",
+        "Edition": "5e (3rd Party)",
+        "Source": "heavyarms",
+        "Primary Ability": "Dexterity",
+        "Description": "A definitive take on a martial combatant specializing in the use of firearms.",
+        "Character Creation Implications": "Serves as a backline striker. Designed to fit the flexible face, scout, or sneak dynamic."
+    },
+    {
+        "Name": "Illrigger",
+        "Edition": "5e (3rd Party)",
+        "Source": "MCDM Productions",
+        "Primary Ability": "Charisma & Strength or Dexterity",
+        "Description": "An unholy herald of the powers of Hell that operates as the evil antithesis of the paladin.",
+        "Character Creation Implications": "Serves as a hellish anti-paladin. Subclasses alter their infernal focus and fighting style."
+    },
+    {
+        "Name": "Magus",
+        "Edition": "5e (3rd Party)",
+        "Source": "Sterling Vermin Adventure Co.",
+        "Primary Ability": "Strength or Dexterity, & Intelligence",
+        "Description": "A martial and magical hybrid class that blends swordplay with arcane spellcasting.",
+        "Character Creation Implications": "Subclasses offer varied disciplines, such as Arcane Order (knowledge seekers), Heaven's Guard (protectors/healers), and Knights Stygian."
+    },
+    {
+        "Name": "Monk",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Dexterity & Wisdom",
+        "Description": "Martial artists of supernatural focus who channel internal energy into extraordinary agility and rapid, unarmored strikes.",
+        "Character Creation Implications": "Hit Die: d8. Saves: Strength & Dexterity. Grants Martial Arts (unarmed scaling), Unarmored Defense, and Focus Points to fuel Flurry of Blows and Patient Defense. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Paladin",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Strength & Charisma",
+        "Description": "Devout warriors united by sacred oaths, blending frontline martial prowess with divine smites and defensive auras.",
+        "Character Creation Implications": "Hit Die: d10. Saves: Wisdom & Charisma. Grants Lay on Hands (healing pool), Weapon Mastery, Divine Smite, and half-caster spell progression. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Pugilist",
+        "Edition": "5e (3rd Party)",
+        "Source": "Sterling Vermin Adventure Co. / Benjamin Huffman",
+        "Primary Ability": "Strength & Constitution",
+        "Description": "Powerful martial warriors who rely on unarmed strikes and improvised weapons to grapple and batter foes into submission.",
+        "Character Creation Implications": "Highly resilient against saving throws. Trades the monk's ki for Moxie. Subclasses include Piss and Vinegar, Squared Circle, Street Saint, and Sweet Science."
+    },
+    {
+        "Name": "Ranger",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Dexterity & Wisdom",
+        "Description": "Wandering warriors imbued with primal magic, expertly navigating the wilds to hunt down monsters and protect the world.",
+        "Character Creation Implications": "Hit Die: d10. Saves: Strength & Dexterity. Grants Weapon Mastery, spellcasting, free uses of Hunter's Mark, and Deft Explorer expertise. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Rogue",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Dexterity",
+        "Description": "Dexterous experts in stealth, skill, and subterfuge who exploit enemy weaknesses for devastating precision strikes.",
+        "Character Creation Implications": "Hit Die: d8. Saves: Dexterity & Intelligence. Grants Sneak Attack (bonus damage on advantageous strikes), Skill Expertise, and Cunning Action. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Sorcerer",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Charisma",
+        "Description": "Dazzling mages who channel the raw, roiling power of innate magic stamped into their very bloodlines and being.",
+        "Character Creation Implications": "Hit Die: d6. Saves: Constitution & Charisma. Grants Innate Sorcery (temporary spellcasting buffs), spellcasting, and Font of Magic (Sorcery Points for Metamagic). Subclass chosen at level 3."
+    },
+    {
+        "Name": "Talent",
+        "Edition": "5e (3rd Party)",
+        "Source": "MCDM Productions",
+        "Primary Ability": "Intelligence",
+        "Description": "A psionic class capable of manipulating time, reality, and physical forms through intense mental prowess.",
+        "Character Creation Implications": "Subclasses specialize in distinct psionic focuses, including Chronopath (time manipulation), Metamorph (body manipulation), Pyrokinetic (flames), and Resopath (reality manipulation)."
+    },
+    {
+        "Name": "Warlock",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Charisma",
+        "Description": "Occultists empowered by pacts with otherworldly entities, trading loyalty for hidden knowledge and modular arcane secrets.",
+        "Character Creation Implications": "Hit Die: d8. Saves: Wisdom & Charisma. Grants Pact Magic (slots recover on short rest) and modular Eldritch Invocations. Subclass chosen at level 3."
+    },
+    {
+        "Name": "Wizard",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Primary Ability": "Intelligence",
+        "Description": "Scholarly magic-users who study arcane theory to cast spells of explosive fire, subtle deception, and spectacular transformations.",
+        "Character Creation Implications": "Hit Die: d6. Saves: Intelligence & Wisdom. Grants an expansive spellbook, Arcane Recovery (regain slots on short rest), and Ritual Casting. Subclass chosen at level 3."
+    }
+]

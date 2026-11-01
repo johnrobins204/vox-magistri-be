@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
-from queue import Empty, Queue
+from queue import Empty, Full, Queue
 from typing import Any
 from uuid import uuid4
 
@@ -19,6 +19,7 @@ from app.intelligence.tool_handler import detect_tool
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
+MAX_QUEUE_SIZE = 20
 
 
 @dataclass
@@ -60,7 +61,7 @@ class OllamaInferenceService:
         self._max_field_len = settings.app.max_field_len
 
         # Job queue and worker control
-        self._queue: Queue[InferenceJob] = Queue()
+        self._queue: Queue[InferenceJob] = Queue(maxsize=MAX_QUEUE_SIZE)
         self._shutdown_flag = threading.Event()
         # Serializes every Ollama chat call: the worker's chat and generate (ADR-0004).
         # Non-reentrant; never held around store writes or status updates.
@@ -87,52 +88,54 @@ class OllamaInferenceService:
         Enqueue a job for background processing.
         The session store already has a message record; we only update its status.
         """
+        job = InferenceJob(
+            session_id=session_id,
+            message_id=message_id,
+            prompt=prompt,
+            store=store,
+        )
         try:
-            job = InferenceJob(
-                session_id=session_id,
-                message_id=message_id,
-                prompt=prompt,
-                store=store,
-            )
-            # Mark message as queued before the job is visible to the worker (no race with running)
+            # Mark queued before the job is visible to the worker (no race with running)
             self._update_message_status(store, session_id, message_id, "queued")
             self._queue.put_nowait(job)
-            logger.info(
-                "enqueue",
-                extra={
-                    "session_id": session_id,
-                    "message_id": message_id,
-                    "prompt_len": len(prompt),
-                },
+        except Full:
+            logger.warning("enqueue.queue_full", extra={"session_id": session_id})
+            self._update_message_status(
+                store, session_id, message_id, "error", {"error": "inference queue full"}
             )
-            return True
+            return False
         except Exception as exc:
             logger.exception("enqueue failed", extra={"error": str(exc)})
             return False
 
-    def queue_position(self, message_id: str | None) -> int:
-        """
-        Return approximate queue position for a given message_id.
-        If message_id is None, return total queue size.
-        """
-        try:
-            items = list(self._queue.queue)
-        except Exception:
-            return 0
+        logger.info(
+            "enqueue",
+            extra={
+                "session_id": session_id,
+                "message_id": message_id,
+                "prompt_len": len(prompt),
+            },
+        )
+        return True
 
+    def queue_position(self, message_id: str | None) -> int | None:
+        """
+        Position of a queued message (0 = next up), or None if it is not waiting in the queue.
+        If message_id is None, return the number of waiting jobs.
+        """
+        items = list(self._queue.queue)
         if message_id is None:
             return len(items)
-
         for idx, job in enumerate(items):
             if job.message_id == message_id:
                 return idx
-        return 0
+        return None
 
-    def estimate_wait(self, message_id: str | None) -> float:
-        """
-        Rough ETA based on queue position and average job time.
-        """
+    def estimate_wait(self, message_id: str | None) -> float | None:
+        """Rough ETA from queue position and average job time; None if not waiting."""
         pos = self.queue_position(message_id)
+        if pos is None:
+            return None
         return float(pos) * self._avg_job_seconds
 
     # ------------------------------------------------------------
@@ -152,6 +155,7 @@ class OllamaInferenceService:
 
             # Check cancellation
             if job.message_id in self._cancelled:
+                self._cancelled.discard(job.message_id)
                 logger.info(
                     "job cancelled before start",
                     extra={
@@ -301,6 +305,7 @@ class OllamaInferenceService:
                 "content": text,
                 "meta": {**(meta or {}), "reply_to": user_message_id},
             },
+            status="completed",
         )
         store.update_message_status(session_id, reply_id, "completed")
         logger.info(

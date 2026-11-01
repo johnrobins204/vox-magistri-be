@@ -1,0 +1,226 @@
+[
+    {
+        "Name": "Padded",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Light Armor",
+        "Description": "Quilted layers of cloth and batting designed to soften blows.",
+        "Combat Implications": "Provides AC 11 + Dexterity modifier. Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Leather",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Light Armor",
+        "Description": "The breastplate and shoulder protectors of this armor are made of leather that has been stiffened by being boiled in oil.",
+        "Combat Implications": "Provides AC 11 + Dexterity modifier."
+    },
+    {
+        "Name": "Studded Leather",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Light Armor",
+        "Description": "Tough but flexible leather reinforced with close-set rivets or spikes.",
+        "Combat Implications": "Provides AC 12 + Dexterity modifier."
+    },
+    {
+        "Name": "Hide",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Medium Armor",
+        "Description": "A crude armor consisting of thick furs and pelts.",
+        "Combat Implications": "Provides AC 12 + Dexterity modifier (maximum 2)."
+    },
+    {
+        "Name": "Chain Shirt",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Medium Armor",
+        "Description": "A shirt of interlocking metal rings worn between layers of clothing or leather.",
+        "Combat Implications": "Provides AC 13 + Dexterity modifier (maximum 2)."
+    },
+    {
+        "Name": "Scale Mail",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Medium Armor",
+        "Description": "A leather coat and leggings covered with overlapping pieces of metal.",
+        "Combat Implications": "Provides AC 14 + Dexterity modifier (maximum 2). Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Breastplate",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Medium Armor",
+        "Description": "A fitted metal chest piece worn with supple leather, offering solid protection without restricting movement.",
+        "Combat Implications": "Provides AC 14 + Dexterity modifier (maximum 2)."
+    },
+    {
+        "Name": "Half Plate",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Medium Armor",
+        "Description": "Shaped metal plates covering most of the wearer's body, leaving the legs relatively unprotected.",
+        "Combat Implications": "Provides AC 15 + Dexterity modifier (maximum 2). Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Ring Mail",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Heavy Armor",
+        "Description": "Leather armor with heavy rings sewn into it, offering cheap but bulky protection.",
+        "Combat Implications": "Provides AC 14. Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Chain Mail",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Heavy Armor",
+        "Description": "Interlocking metal rings covering the entire body, complete with gauntlets.",
+        "Combat Implications": "Provides AC 16. Requires Strength 13. Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Splint",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Heavy Armor",
+        "Description": "Armor made of narrow vertical strips of metal riveted to a backing of leather worn over cloth padding.",
+        "Combat Implications": "Provides AC 17. Requires Strength 15. Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Plate",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Heavy Armor",
+        "Description": "Shaped, interlocking metal plates to cover the entire body, custom-fitted for the wearer.",
+        "Combat Implications": "Provides AC 18. Requires Strength 15. Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Shield",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Armor Type": "Shield",
+        "Description": "A protective board made of wood or metal, carried in one hand to deflect attacks.",
+        "Combat Implications": "Provides a +2 bonus to AC."
+    },
+    {
+        "Name": "Spiked Armor",
+        "Edition": "5e",
+        "Source": "Sword Coast Adventurer's Guide",
+        "Armor Type": "Medium Armor",
+        "Description": "A rugged suit of leather armor reinforced with metal spikes, heavily favored by Battlerager dwarves.",
+        "Combat Implications": "Provides AC 14 + Dexterity modifier (maximum 2). Imposes disadvantage on Stealth checks. Used for spiked retribution attacks by specific subclasses."
+    },
+    {
+        "Name": "Buckler",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Armor Type": "Shield",
+        "Description": "A small metal or wooden shield strapped to the forearm, leaving the hand free to hold light items or weapons.",
+        "Combat Implications": "Provides a +1 bonus to AC. Can be used while holding a light weapon or item in the same hand, but cannot be used for two-handed weapon strikes."
+    },
+    {
+        "Name": "Tower Shield",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Armor Type": "Shield",
+        "Description": "A massive wooden or metal shield nearly as tall as a person, offering superior portable cover.",
+        "Combat Implications": "Provides a +3 bonus to AC. Requires Strength 15. Speed is reduced by 10 feet. Can be planted as an action to provide half cover."
+    },
+    {
+        "Name": "Bone Armor",
+        "Edition": "5e",
+        "Source": "Dungeon Master's Guide (2014)",
+        "Armor Type": "Medium Armor",
+        "Description": "Armor crafted from the bones of massive beasts or monsters, often used by druids or tribal warriors lacking metalcraft.",
+        "Combat Implications": "Provides AC 12 + Dexterity modifier (maximum 2). Functions similarly to Hide but typically has lower durability."
+    },
+    {
+        "Name": "Chitin Half-Plate",
+        "Edition": "5e",
+        "Source": "Out of the Abyss",
+        "Armor Type": "Medium Armor",
+        "Description": "Shaped plates harvested from giant insects, monstrosities, or Underdark creatures like hook horrors.",
+        "Combat Implications": "Provides AC 15 + Dexterity modifier (maximum 2). Imposes disadvantage on Stealth checks. Desirable for druids as it provides Half-Plate protection without using metal."
+    },
+    {
+        "Name": "Gambeson",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Armor Type": "Light Armor",
+        "Description": "A thick, heavily padded linen jacket. A more practical, less restrictive, and combat-ready version of basic padded armor.",
+        "Combat Implications": "Provides AC 11 + Dexterity modifier. Unlike standard Padded armor, it does not impose disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Silken Armor",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Armor Type": "Light Armor",
+        "Description": "Tightly woven, alchemically treated giant spider silk that turns blades while feeling lighter than cloth.",
+        "Combat Implications": "Provides AC 11 + Dexterity modifier. Can be worn under normal clothing without being noticed."
+    },
+    {
+        "Name": "Brigandine",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Armor Type": "Medium Armor",
+        "Description": "Sturdy canvas or leather garments lined with small rectangular steel plates riveted to the fabric.",
+        "Combat Implications": "Provides AC 14 + Dexterity modifier (maximum 2). Does not impose disadvantage on Stealth checks, unlike Scale Mail."
+    },
+    {
+        "Name": "Lamellar",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Armor Type": "Medium Armor",
+        "Description": "Small rectangular plates of iron, leather, or bronze laced together into horizontal rows.",
+        "Combat Implications": "Provides AC 13 + Dexterity modifier (maximum 2)."
+    },
+    {
+        "Name": "Cuirass",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Armor Type": "Medium Armor",
+        "Description": "A piece of armor formed of a single or multiple pieces of metal or other rigid material covering the torso, lighter than a full breastplate.",
+        "Combat Implications": "Provides AC 14 + Dexterity modifier (maximum 2)."
+    },
+    {
+        "Name": "Banded Mail",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Armor Type": "Heavy Armor",
+        "Description": "A classic armor style consisting of overlapping horizontal bands of metal sewn over a layer of chain or leather.",
+        "Combat Implications": "Provides AC 16. Requires Strength 13. Imposes disadvantage on Stealth checks. Acts as a bridge between Chain Mail and Splint."
+    },
+    {
+        "Name": "Field Plate",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Armor Type": "Heavy Armor",
+        "Description": "A more accessible, mass-produced version of full plate armor designed for army regulars and mercenaries rather than custom-fitted nobility.",
+        "Combat Implications": "Provides AC 17. Requires Strength 15. Imposes disadvantage on Stealth checks."
+    },
+    {
+        "Name": "Targe",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Armor Type": "Shield",
+        "Description": "A round, studded shield frequently equipped with a central spike, favored by skirmishers for close combat.",
+        "Combat Implications": "Provides a +2 bonus to AC. Can often be used to make improvised melee attacks dealing 1d4 piercing damage."
+    },
+    {
+        "Name": "Kite Shield",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Armor Type": "Shield",
+        "Description": "A teardrop-shaped shield designed to protect a rider's or infantryman's leading leg during combat.",
+        "Combat Implications": "Provides a +2 bonus to AC. Often grants additional benefits against ranged attacks originating from the front."
+    },
+    {
+        "Name": "Pavise",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Armor Type": "Shield",
+        "Description": "A massive, convex shield specifically designed for crossbowmen and archers to reload behind in relative safety.",
+        "Combat Implications": "Provides a +2 bonus to AC while carried. As an action, it can be deployed into the ground to provide Half Cover (+2 AC and Dex saves) to a creature standing behind it, freeing their hands."
+    }
+]

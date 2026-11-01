@@ -1,0 +1,177 @@
+_[
+    {
+        "Name": "Acolyte",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You devoted yourself to service in a temple, either to a god or a pantheon, acting as an intermediary between the realm of the holy and the mortal world.",
+        "Character Creation Implications": "Grants +3 to distribute among Int, Wis, Cha. Grants the Magic Initiate (Cleric) origin feat. Grants Insight and Religion skill proficiencies."
+    },
+    {
+        "Name": "Artisan",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You began your life as a crafter or an apprentice, learning to create objects of exceptional quality through dedication and hard work.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Dex, Int. Grants the Crafter origin feat. Grants Investigation and Persuasion skill proficiencies."
+    },
+    {
+        "Name": "Charlatan",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You have a way with people, utilizing a glib tongue and a charming demeanor to bend others to your will and part them from their coin.",
+        "Character Creation Implications": "Grants +3 to distribute among Dex, Con, Cha. Grants the Skilled origin feat. Grants Deception and Sleight of Hand skill proficiencies."
+    },
+    {
+        "Name": "Criminal",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You have a history of breaking the law, surviving by your wits, stealth, and a healthy lack of respect for authority.",
+        "Character Creation Implications": "Grants +3 to distribute among Dex, Con, Int. Grants the Alert origin feat. Grants Sleight of Hand and Stealth skill proficiencies."
+    },
+    {
+        "Name": "Entertainer",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You thrive in front of an audience, knowing how to entrance, entertain, and inspire others through music, dance, or acrobatics.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Dex, Cha. Grants the Musician origin feat. Grants Acrobatics and Performance skill proficiencies."
+    },
+    {
+        "Name": "Farmer",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You grew up working the land, understanding the cycles of seasons, the care of animals, and the endurance required for hard physical labor.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Con, Wis. Grants the Tough origin feat. Grants Animal Handling and Nature skill proficiencies."
+    },
+    {
+        "Name": "Guard",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You stood watch over a community, a noble's estate, or a merchant's caravan, trained to spot trouble before it starts and deal with it by force if necessary.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Int, Wis. Grants the Alert origin feat. Grants Athletics and Perception skill proficiencies."
+    },
+    {
+        "Name": "Guide",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You are at home in the wilderness, making a living by safely navigating others through treacherous terrain and natural hazards.",
+        "Character Creation Implications": "Grants +3 to distribute among Dex, Con, Wis. Grants the Magic Initiate (Druid) origin feat. Grants Stealth and Survival skill proficiencies."
+    },
+    {
+        "Name": "Hermit",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You lived in seclusion, dedicating your time to quiet contemplation, prayer, or the study of the natural and mystical world.",
+        "Character Creation Implications": "Grants +3 to distribute among Con, Wis, Cha. Grants the Healer origin feat. Grants Medicine and Religion skill proficiencies."
+    },
+    {
+        "Name": "Merchant",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You learned the art of commerce, moving goods from where they are cheap to where they are desperately needed.",
+        "Character Creation Implications": "Grants +3 to distribute among Con, Int, Cha. Grants the Lucky origin feat. Grants Animal Handling and Persuasion skill proficiencies."
+    },
+    {
+        "Name": "Noble",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You were raised in a family of wealth and privilege, accustomed to a high standard of living and the expectation of authority.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Int, Cha. Grants the Skilled origin feat. Grants History and Persuasion skill proficiencies."
+    },
+    {
+        "Name": "Sage",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You spent your formative years poring over tomes, learning about the lore of the multiverse and the intricate workings of magic.",
+        "Character Creation Implications": "Grants +3 to distribute among Con, Int, Wis. Grants the Magic Initiate (Wizard) origin feat. Grants Arcana and History skill proficiencies."
+    },
+    {
+        "Name": "Sailor",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You sailed the open sea, learning to rig sails, navigate by the stars, and fight off the monstrous denizens of the deep.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Dex, Wis. Grants the Tavern Brawler origin feat. Grants Acrobatics and Perception skill proficiencies."
+    },
+    {
+        "Name": "Scribe",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You were a professional record keeper, calligrapher, or translator, possessing a keen eye for detail and a deep respect for the written word.",
+        "Character Creation Implications": "Grants +3 to distribute among Dex, Int, Wis. Grants the Skilled origin feat. Grants Investigation and Perception skill proficiencies."
+    },
+    {
+        "Name": "Soldier",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You were trained in the theater of war, marching in formation and fighting alongside your comrades against the enemies of your homeland.",
+        "Character Creation Implications": "Grants +3 to distribute among Str, Dex, Con. Grants the Savage Attacker origin feat. Grants Athletics and Intimidation skill proficiencies."
+    },
+    {
+        "Name": "Wayfarer",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Description": "You grew up on the streets or the open road, learning to survive with very little and finding luck in unexpected places.",
+        "Character Creation Implications": "Grants +3 to distribute among Dex, Wis, Cha. Grants the Lucky origin feat. Grants Insight and Stealth skill proficiencies."
+    },
+    {
+        "Name": "Folk Hero",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Description": "You come from a humble social rank, but you are destined for so much more, having already made a name for yourself as a champion of the common people.",
+        "Character Creation Implications": "Grants the Rustic Hospitality feature (commoners will help you hide or rest). Grants Animal Handling and Survival skill proficiencies, plus artisan's tools and land vehicles."
+    },
+    {
+        "Name": "Outlander",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Description": "You grew up in the wilds, far from civilization and the comforts of town and technology.",
+        "Character Creation Implications": "Grants the Wanderer feature (excellent memory for maps/geography and can forage food/water for 6 people). Grants Athletics and Survival skill proficiencies."
+    },
+    {
+        "Name": "Urchin",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Description": "You grew up on the streets alone, orphaned, and poor, surviving by begging, scavenging, and stealing.",
+        "Character Creation Implications": "Grants the City Secrets feature (travel between two points in a city twice as fast). Grants Sleight of Hand and Stealth skill proficiencies, plus disguise kit and thieves' tools."
+    },
+    {
+        "Name": "Haunted One",
+        "Edition": "5e",
+        "Source": "Van Richten's Guide to Ravenloft",
+        "Description": "You are haunted by something so terrible that you dare not speak of it, an event that has left you forever changed and attuned to the darkness.",
+        "Character Creation Implications": "Grants the Heart of Darkness feature (commoners will extend basic courtesy and pity you). Choose two proficiencies from Arcana, Investigation, Religion, or Survival."
+    },
+    {
+        "Name": "Far Traveler",
+        "Edition": "5e",
+        "Source": "Sword Coast Adventurer's Guide",
+        "Description": "You are from a distant place, carrying the customs, accent, and mannerisms of a culture foreign to the region you adventure in.",
+        "Character Creation Implications": "Grants the All Eyes on You feature (your exotic presence draws attention, allowing you to easily gain audiences with nobles/scholars). Grants Insight and Perception skill proficiencies."
+    },
+    {
+        "Name": "Urban Bounty Hunter",
+        "Edition": "5e",
+        "Source": "Sword Coast Adventurer's Guide",
+        "Description": "You catch people who have run from the law, navigating the urban jungle to track down marks for coin.",
+        "Character Creation Implications": "Grants the Ear to the Ground feature (reliable contacts in cities). Choose two proficiencies from Deception, Insight, Persuasion, or Stealth."
+    },
+    {
+        "Name": "Fey Hostage",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Description": "You were spirited away to the Feywild in your youth, serving an eladrin or archfey before eventually escaping or earning your freedom.",
+        "Character Creation Implications": "Grants the Feywild Survivor feature (immunity to certain fey charm effects and knowledge of fey paths). Grants Deception and Survival skill proficiencies."
+    },
+    {
+        "Name": "Pauper",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Description": "You have lived in absolute poverty in a dark, unforgiving world, learning to go unnoticed to survive another day.",
+        "Character Creation Implications": "Grants the Unobtrusive feature (ability to blend into crowds and go completely ignored by city guards/nobles unless drawing attention). Grants Sleight of Hand and Survival skill proficiencies."
+    },
+    {
+        "Name": "Doomsayer",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Description": "You carry visions of an impending apocalypse and actively warn others of the world's tragic end.",
+        "Character Creation Implications": "Grants the Prophet of Doom feature (people will often give you small amounts of food or coin simply to make you go away or out of fear). Grants Intimidation and Religion skill proficiencies."
+    }
+]

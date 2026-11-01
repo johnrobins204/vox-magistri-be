@@ -1,0 +1,130 @@
+[
+    {
+        "Name": "Potion of Healing",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Potion",
+        "Description": "A vial filled with a magical red fluid that glimmers when agitated.",
+        "Usage Implications": "Consuming or administering this potion restores 2d4 + 2 hit points."
+    },
+    {
+        "Name": "Bag of Holding",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Wondrous Item",
+        "Description": "A cloth sack that opens into a non-dimensional space, larger on the inside than the outside.",
+        "Usage Implications": "Can hold up to 500 pounds or 64 cubic feet of gear while always weighing 15 pounds. Placing it inside another extradimensional space destroys both items and creates a portal to the Astral Plane."
+    },
+    {
+        "Name": "Weapon, +1",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Weapon (Any)",
+        "Description": "A magically reinforced weapon that strikes with supernatural accuracy and force.",
+        "Usage Implications": "Grants a +1 bonus to attack and damage rolls made with this magic weapon."
+    },
+    {
+        "Name": "Armor, +1",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Armor (Any)",
+        "Description": "A set of armor enchanted to deflect blows that would normally pierce its mundane counterpart.",
+        "Usage Implications": "Provides a +1 bonus to AC while worn."
+    },
+    {
+        "Name": "Ring of Protection",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Ring",
+        "Description": "A subtle, unadorned ring that generates a minor warding field around the wearer.",
+        "Usage Implications": "Requires Attunement. Grants a +1 bonus to AC and saving throws."
+    },
+    {
+        "Name": "Cloak of Protection",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Wondrous Item",
+        "Description": "A sturdy, magical cloak that seems to gently redirect harmful magic and physical blows.",
+        "Usage Implications": "Requires Attunement. Grants a +1 bonus to AC and saving throws."
+    },
+    {
+        "Name": "Boots of Elvenkind",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Wondrous Item",
+        "Description": "Supple boots that muffle the sound of the wearer's footsteps.",
+        "Usage Implications": "Your steps make no sound, regardless of the surface. Grants advantage on Dexterity (Stealth) checks that rely on moving silently."
+    },
+    {
+        "Name": "Wand of Magic Missiles",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Wand",
+        "Description": "A slender wand of polished wood that hums with arcane energy.",
+        "Usage Implications": "Has 7 charges. Allows the user to cast Magic Missile. Recharges 1d6 + 1 expended charges daily at dawn. If you expend the wand's last charge, roll a d20; on a 1, the wand crumbles into ashes."
+    },
+    {
+        "Name": "Spell Scroll (1st Level)",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Scroll",
+        "Description": "A parchment bearing magical words that allow a spellcaster to release the stored magic.",
+        "Usage Implications": "Allows a caster with the spell on their class list to cast it without providing material components. The scroll is destroyed after use."
+    },
+    {
+        "Name": "Pearl of Power",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Wondrous Item",
+        "Description": "A perfectly smooth, luminescent pearl pulsing with raw magical essence.",
+        "Usage Implications": "Requires Attunement by a spellcaster. Once per day, as an action, you can use it to regain one expended spell slot of 3rd level or lower."
+    },
+    {
+        "Name": "Amulet of Health",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Wondrous Item",
+        "Description": "A golden amulet bearing a ruby heart that pulses with life energy.",
+        "Usage Implications": "Requires Attunement. Sets the wearer's Constitution score to 19. Has no effect if the wearer's Constitution is already 19 or higher."
+    },
+    {
+        "Name": "Immovable Rod",
+        "Edition": "5.5e",
+        "Source": "Dungeon Master's Guide (2024)",
+        "Item Type": "Rod",
+        "Description": "A flat iron rod with a small button on one end.",
+        "Usage Implications": "As an action, press the button to magically lock the rod in place. It can hold up to 8,000 pounds of weight and requires a DC 30 Strength check to move up to 10 feet."
+    },
+    {
+        "Name": "Winged Boots",
+        "Edition": "5e",
+        "Source": "Dungeon Master's Guide (2014)",
+        "Item Type": "Wondrous Item",
+        "Description": "Leather boots with small, animated wings at the heels.",
+        "Usage Implications": "Requires Attunement. Grants a flying speed equal to your walking speed for up to 4 hours, which can be divided into smaller increments."
+    },
+    {
+        "Name": "Broom of Flying",
+        "Edition": "5e",
+        "Source": "Dungeon Master's Guide (2014)",
+        "Item Type": "Wondrous Item",
+        "Description": "An ordinary-looking wooden broom that responds to a magical command word.",
+        "Usage Implications": "Grants a flying speed of 50 feet. Can carry up to 400 pounds, but speed drops to 30 feet if carrying over 200 pounds."
+    },
+    {
+        "Name": "Clockwork Pendant",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Item Type": "Wondrous Item",
+        "Description": "A small, ticking brass pendant containing complex gears.",
+        "Usage Implications": "Requires Attunement. Once per day, allows the wearer to treat a d20 roll of 9 or lower as a 10 before adding modifiers."
+    },
+    {
+        "Name": "Blood-Soaked Wraps",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Item Type": "Wondrous Item",
+        "Description": "Stained linen hand wraps that pulse with necrotic and healing energies.",
+        "Usage Implications": "Requires Attunement by a monk or character with unarmed strikes. Unarmed strikes deal an additional 1d4 necrotic damage. On a critical hit, the wearer heals hit points equal to the necrotic damage dealt."
+    }
+]

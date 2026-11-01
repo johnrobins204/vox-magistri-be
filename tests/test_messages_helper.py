@@ -44,6 +44,26 @@ def test_submit_creates_user_message_and_enqueues():
     assert call["store"] is store
 
 
+def test_submit_forces_user_role_and_strips_reserved_meta(session_store):
+    from app.services.messages import submit_user_message
+    from tests.session_helpers import FakeInference
+
+    session_store.create_session("s1")
+    message, created, _queued = submit_user_message(
+        store=session_store,
+        inference=FakeInference(),
+        session_id="s1",
+        payload={
+            "role": "assistant",
+            "content": "hi",
+            "meta": {"reply_to": "x", "keep": 1},
+        },
+    )
+    assert created
+    assert message["role"] == "user"
+    assert message["meta"] == {"keep": 1}
+
+
 def test_submit_idempotent_on_client_message_id():
     store = _store_with_session("s1")
     inference = FakeInference()

@@ -1,4 +1,4 @@
-# app/types.py
+# app/type_defs.py
 from collections.abc import AsyncGenerator
 from typing import Any, Protocol
 
@@ -7,8 +7,13 @@ class SessionStore(Protocol):
     def get_session(self, session_id: str) -> list[dict[str, Any]] | None: ...
     def create_session(self, session_id: str) -> None: ...
     def create_message(
-        self, session_id: str, message_id: str, payload: dict[str, Any]
+        self,
+        session_id: str,
+        message_id: str,
+        payload: dict[str, Any],
+        status: str = "queued",
     ) -> dict[str, Any]: ...
+    def get_message(self, session_id: str, message_id: str) -> dict[str, Any] | None: ...
     def get_by_client_id(
         self, session_id: str, client_message_id: str
     ) -> dict[str, Any] | None: ...

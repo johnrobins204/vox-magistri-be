@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DND5e_Monster",
+  "description": "Data model for D&D 5e and 5.5e (2024) monster stat blocks",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "description": "Unique identifier for the monster" },
+    "name": { "type": "string", "description": "Display name of the monster" },
+    "source": { "type": "string", "description": "Source book/material (e.g., 'Monster Manual 2024')" },
+    "size": { "type": "string", "enum": ["Tiny", "Small", "Medium", "Large", "Huge", "Gargantuan"] },
+    "type": { "type": "string", "description": "Creature type, e.g., 'Humanoid', 'Dragon', 'Undead'" },
+    "subtype": { "type": "string", "description": "Creature subtype or tag, e.g., 'Goblinoid', 'Elf', 'Demon'" },
+    "alignment": { "type": "string", "description": "e.g., 'Lawful Evil', 'Unaligned', 'Any Alignment'" },
+    
+    "armor_class": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": { "type": "integer" },
+          "type": { "type": "string", "description": "e.g., 'natural armor', 'leather armor', 'shield'" }
+        }
+      }
+    },
+    "hit_points": {
+      "type": "object",
+      "properties": {
+        "average": { "type": "integer" },
+        "formula": { "type": "string", "description": "e.g., '2d6 + 2'" }
+      }
+    },
+    "speed": {
+      "type": "object",
+      "description": "Speed in feet",
+      "properties": {
+        "walk": { "type": "integer" },
+        "fly": { "type": "integer" },
+        "swim": { "type": "integer" },
+        "burrow": { "type": "integer" },
+        "climb": { "type": "integer" },
+        "hover": { "type": "boolean", "default": false }
+      }
+    },
+    
+    "ability_scores": {
+      "type": "object",
+      "properties": {
+        "str": { "type": "integer" },
+        "dex": { "type": "integer" },
+        "con": { "type": "integer" },
+        "int": { "type": "integer" },
+        "wis": { "type": "integer" },
+        "cha": { "type": "integer" }
+      }
+    },
+    
+    "saves": {
+      "type": "object",
+      "description": "Saving throw bonuses. Keyed by ability abbreviation.",
+      "additionalProperties": { "type": "integer" }
+    },
+    "skills": {
+      "type": "object",
+      "description": "Skill bonuses. Keyed by skill name (e.g., 'perception', 'stealth').",
+      "additionalProperties": { "type": "integer" }
+    },
+    
+    "vulnerabilities": { "type": "array", "items": { "type": "string" } },
+    "resistances": { "type": "array", "items": { "type": "string" } },
+    "immunities": { "type": "array", "items": { "type": "string" } },
+    "condition_immunities": { "type": "array", "items": { "type": "string" } },
+    
+    "senses": {
+      "type": "object",
+      "properties": {
+        "darkvision": { "type": "integer", "description": "Range in feet" },
+        "blindsight": { "type": "integer", "description": "Range in feet" },
+        "tremorsense": { "type": "integer", "description": "Range in feet" },
+        "truesight": { "type": "integer", "description": "Range in feet" },
+        "passive_perception": { "type": "integer" }
+      }
+    },
+    "languages": { "type": "array", "items": { "type": "string" } },
+    "telepathy": { "type": "integer", "description": "Range in feet, if applicable" },
+    
+    "challenge_rating": { "type": "string", "description": "e.g., '1/4', '1', '21'" },
+    "proficiency_bonus": { "type": "integer" },
+    "experience_points": { "type": "integer" },
+    
+    "traits": {
+      "type": "array",
+      "description": "Passive abilities (e.g., Pack Tactics, Magic Resistance)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    
+    "actions": {
+      "type": "array",
+      "description": "Standard actions, including attacks and spells cast as actions.",
+      "items": { "$ref": "#/definitions/Action" }
+    },
+    "bonus_actions": {
+      "type": "array",
+      "description": "Bonus actions (Prominent in 5.5e / Monsters of the Multiverse format).",
+      "items": { "$ref": "#/definitions/Action" }
+    },
+    "reactions": {
+      "type": "array",
+      "description": "Reactions, including triggers.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "trigger": { "type": "string", "description": "Condition that allows the reaction" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "legendary_actions": {
+      "type": "object",
+      "description": "Legacy 5e mechanic. 5.5e shifts towards multiple reactions or Lair Actions.",
+      "properties": {
+        "count": { "type": "integer" },
+        "actions": { "type": "array", "items": { "$ref": "#/definitions/Action" } }
+      }
+    },
+    "lair_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string" }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Action": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string", "description": "Full text of the action" },
+        "attack_bonus": { "type": "integer", "description": "To-hit bonus, if applicable" },
+        "damage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "formula": { "type": "string", "description": "e.g., '1d8 + 2'" },
+              "type": { "type": "string", "description": "e.g., 'piercing', 'fire'" }
+            }
+          }
+        },
+        "save": {
+          "type": "object",
+          "properties": {
+            "ability": { "type": "string", "description": "e.g., 'dex'" },
+            "dc": { "type": "integer" },
+            "effect": { "type": "string", "description": "e.g., 'half damage on success'" }
+          }
+        }
+      }
+    }
+  }
+}

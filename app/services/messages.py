@@ -11,6 +11,16 @@ from app.services.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Shared by REST and WebSocket so both transports enforce the same rules.
+MAX_INPUT_CHARS = 4096
+RESERVED_META_KEYS = frozenset({"reply_to", "tool", "updated_by", "error"})
+
+
+def _clean_user_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Client text is always a user message; clients cannot set server-owned meta keys."""
+    meta = {k: v for k, v in (payload.get("meta") or {}).items() if k not in RESERVED_META_KEYS}
+    return {**payload, "role": "user", "meta": meta}
+
 
 def submit_user_message(
     *, store, inference, session_id: str, payload: dict[str, Any]
@@ -22,6 +32,8 @@ def submit_user_message(
     client_message_id; nothing is created or enqueued then and `queued` is False.
     `queued` is False when the inference queue rejected the job; the message stays stored.
     """
+    payload = _clean_user_payload(payload)
+
     cid = payload.get("client_message_id")
     if cid:
         existing = store.get_by_client_id(session_id, cid)

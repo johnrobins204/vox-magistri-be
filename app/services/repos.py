@@ -3,7 +3,7 @@
 import json
 import sqlite3
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from app.services.logger import get_logger
@@ -14,7 +14,12 @@ INTERRUPTED_ERROR = "interrupted by server restart"
 
 
 def _now() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(UTC)
+
+
+def _parse_ts(value: str) -> datetime:
+    ts = datetime.fromisoformat(value)
+    return ts if ts.tzinfo is not None else ts.replace(tzinfo=UTC)
 
 
 def _message_from_row(row: sqlite3.Row) -> dict[str, Any]:
@@ -25,8 +30,8 @@ def _message_from_row(row: sqlite3.Row) -> dict[str, Any]:
         "content": row["content"],
         "status": row["status"],
         "meta": json.loads(row["meta"]),
-        "created_at": datetime.fromisoformat(row["created_at"]),
-        "updated_at": datetime.fromisoformat(row["updated_at"]),
+        "created_at": _parse_ts(row["created_at"]),
+        "updated_at": _parse_ts(row["updated_at"]),
     }
 
 
@@ -112,7 +117,11 @@ class SqliteSessionStore:
                 )
 
     def create_message(
-        self, session_id: str, message_id: str, payload: dict[str, Any]
+        self,
+        session_id: str,
+        message_id: str,
+        payload: dict[str, Any],
+        status: str = "queued",
     ) -> dict[str, Any]:
         client_message_id = payload.get("client_message_id")
         role = payload.get("role", "user")
@@ -129,13 +138,14 @@ class SqliteSessionStore:
                 self._conn.execute(
                     "INSERT INTO messages (session_id, id, client_message_id, role, content, "
                     "status, meta, created_at, updated_at) "
-                    "VALUES (?, ?, ?, ?, ?, 'queued', ?, ?, ?)",
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         session_id,
                         message_id,
                         client_message_id,
                         role,
                         content,
+                        status,
                         meta_text,
                         now.isoformat(),
                         now.isoformat(),
@@ -146,11 +156,19 @@ class SqliteSessionStore:
             "client_message_id": client_message_id,
             "role": role,
             "content": content,
-            "status": "queued",
+            "status": status,
             "meta": json.loads(meta_text),
             "created_at": now,
             "updated_at": now,
         }
+
+    def get_message(self, session_id: str, message_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM messages WHERE session_id = ? AND id = ?",
+                (session_id, message_id),
+            ).fetchone()
+            return None if row is None else _message_from_row(row)
 
     def get_by_client_id(self, session_id: str, client_message_id: str) -> dict[str, Any] | None:
         with self._lock:

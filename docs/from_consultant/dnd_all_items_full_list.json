@@ -1,0 +1,258 @@
+[
+    {
+        "Name": "Abacus",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A standard tool used by merchants and scribes to calculate complex sums rapidly.",
+        "Usage Implications": "Assists in tracking large sums of currency, trade goods, or complex mathematical calculations."
+    },
+    {
+        "Name": "Acid (vial)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "A small glass vial filled with highly corrosive liquid.",
+        "Usage Implications": "Can be thrown as an improvised weapon (range 20/60 ft). On a hit, deals 2d6 acid damage."
+    },
+    {
+        "Name": "Alchemist's Fire (flask)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "A sticky, volatile adhesive fluid that ignites when exposed to air.",
+        "Usage Implications": "Thrown as an improvised weapon. On a hit, the target takes 1d4 fire damage at the start of each of its turns until an action is used to extinguish the flames."
+    },
+    {
+        "Name": "Antitoxin (vial)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "A specially brewed liquid that purges toxins from the bloodstream.",
+        "Usage Implications": "Drinking it grants advantage on saving throws against poison for 1 hour."
+    },
+    {
+        "Name": "Backpack",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A sturdy canvas or leather pack designed to distribute weight across the shoulders and back.",
+        "Usage Implications": "Can hold 1 cubic foot or 30 pounds of gear. You can strap items like bedrolls or rope to the outside."
+    },
+    {
+        "Name": "Ball Bearings (bag of 1,000)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A small pouch containing hundreds of tiny metal spheres.",
+        "Usage Implications": "As an action, cover a 10-foot-square area. Creatures moving through it must succeed on a DC 10 Dexterity saving throw or fall prone."
+    },
+    {
+        "Name": "Bedroll",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "Thick blankets and a ground pad designed to provide minimal comfort while sleeping outdoors.",
+        "Usage Implications": "Required to properly benefit from a long rest in outdoor or dungeon environments without incurring exhaustion from exposure."
+    },
+    {
+        "Name": "Bell",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A simple brass bell without a handle.",
+        "Usage Implications": "Used for signaling, rigging simple alarms with string, or drawing attention."
+    },
+    {
+        "Name": "Block and Tackle",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A set of pulleys and rope used to hoist heavy objects.",
+        "Usage Implications": "Allows you to hoist up to four times the weight you can normally lift."
+    },
+    {
+        "Name": "Bullseye Lantern",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A brass lantern with a reflective back and a curved glass lens to focus light into a beam.",
+        "Usage Implications": "Burns for 6 hours on a flask of oil. Casts bright light in a 60-foot cone and dim light for an additional 60 feet."
+    },
+    {
+        "Name": "Caltrops (bag of 20)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "Four-pronged metal spikes designed so one prong always faces upward.",
+        "Usage Implications": "Cover a 5-foot-square area. Creatures entering the area must succeed on a DC 15 Dexterity save or stop moving and take 1 piercing damage, reducing their walking speed by 10 feet until healed."
+    },
+    {
+        "Name": "Climber's Kit",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Equipment Kit",
+        "Description": "Special pitons, boot tips, gloves, and a harness.",
+        "Usage Implications": "Using it as an action secures you to the wall, preventing falls of more than 25 feet. Does not grant a climb speed."
+    },
+    {
+        "Name": "Crowbar",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A heavy iron bar with a wedged end used for prying.",
+        "Usage Implications": "Grants advantage on Strength checks where the crowbar's leverage can be applied."
+    },
+    {
+        "Name": "Grappling Hook",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A multi-pronged iron hook designed to catch on ledges or branches.",
+        "Usage Implications": "Can be attached to a rope to secure a climbing path. Requires an attack roll or ability check to lodge securely into a target surface."
+    },
+    {
+        "Name": "Healer's Kit",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Equipment Kit",
+        "Description": "A leather pouch containing bandages, salves, and splints.",
+        "Usage Implications": "Has 10 uses. As an action, expend one use to stabilize a dying creature without needing to make a Wisdom (Medicine) check."
+    },
+    {
+        "Name": "Hooded Lantern",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A standard oil lantern with a deployable metal hood to restrict light.",
+        "Usage Implications": "Burns for 6 hours. Casts 30 ft bright light and 30 ft dim light. Using an action to lower the hood reduces the light to dim light in a 5-foot radius."
+    },
+    {
+        "Name": "Hunting Trap",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A heavy iron jaw trap secured by a heavy chain to a stationary object.",
+        "Usage Implications": "DC 13 Dex save to avoid. On fail, creature takes 1d4 piercing damage and is stopped. Escaping requires a DC 13 Strength check."
+    },
+    {
+        "Name": "Lock",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A heavy padlock that comes with a key.",
+        "Usage Implications": "Can be picked with thieves' tools. The DC depends on the quality of the lock, usually requiring a DC 15 Dexterity check for a standard lock."
+    },
+    {
+        "Name": "Magnifying Glass",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A lens crafted to enlarge small details.",
+        "Usage Implications": "Grants advantage on ability checks made to appraise or inspect small or highly detailed items. Can also start a fire with sunlight and tinder in 5 minutes."
+    },
+    {
+        "Name": "Manacles",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "Metal restraints meant to bind a Small or Medium creature.",
+        "Usage Implications": "Requires a DC 20 Dexterity check to slip out of, or a DC 20 Strength check to break them. Has 15 hit points."
+    },
+    {
+        "Name": "Oil (flask)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "Refined fuel for lamps, or a highly flammable hazard.",
+        "Usage Implications": "Can be splashed on a creature (ranged attack). If the target takes fire damage before the oil dries (1 minute), it takes an additional 5 fire damage."
+    },
+    {
+        "Name": "Poison, Basic (vial)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "A rudimentary toxic paste derived from common venomous creatures or plants.",
+        "Usage Implications": "Applied to a weapon or 3 pieces of ammunition. Next target hit must make a DC 10 Con save or take 1d4 poison damage. Remains potent for 1 minute."
+    },
+    {
+        "Name": "Rations (1 day)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "Compact, dry foods such as jerky, hardtack, dried fruit, and nuts.",
+        "Usage Implications": "Prevents exhaustion from starvation. One ration sustains a standard humanoid for one day."
+    },
+    {
+        "Name": "Rope, Hempen (50 feet)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A thick, heavy, woven rope made of natural plant fibers.",
+        "Usage Implications": "Has 2 hit points and can be burst with a DC 17 Strength check."
+    },
+    {
+        "Name": "Rope, Silk (50 feet)",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "An expensive, lightweight rope prized for its strength and flexibility.",
+        "Usage Implications": "Has 2 hit points and can be burst with a DC 17 Strength check. Weighs significantly less than hempen rope."
+    },
+    {
+        "Name": "Thieves' Tools",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Tool",
+        "Description": "A specialized set containing files, lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers.",
+        "Usage Implications": "Proficiency allows adding your bonus to ability checks to disarm traps or open locks."
+    },
+    {
+        "Name": "Tinderbox",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A small container holding flint, fire steel, and dry tinder.",
+        "Usage Implications": "Used to light a torch, or start a small fire. Lighting a fire takes 1 action."
+    },
+    {
+        "Name": "Torch",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A wooden shaft tipped with oil-soaked rags.",
+        "Usage Implications": "Burns for 1 hour. Casts bright light in a 20-foot radius and dim light for an additional 20 feet. If you make a melee attack with a burning torch, it deals 1 fire damage."
+    },
+    {
+        "Name": "Waterskin",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A treated leather bag designed to hold drinking water.",
+        "Usage Implications": "Holds up to 4 pints of liquid. Essential for surviving travel to avoid exhaustion from dehydration."
+    },
+    {
+        "Name": "Smokestick",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "An alchemically treated wooden stick that instantly emits a thick cloud of obscuring smoke when broken or struck.",
+        "Usage Implications": "As an action, creates a 10-foot-radius sphere of heavily obscured smoke that lasts for 1 minute or until dispersed by wind."
+    },
+    {
+        "Name": "Sunrod",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Item Type": "Adventuring Gear",
+        "Description": "A metal rod tipped with an alchemical crystal that glows brightly when struck against a hard surface.",
+        "Usage Implications": "Provides bright light in a 30-foot radius and dim light for an additional 30 feet. Glows continuously for 6 hours without producing heat or requiring oxygen."
+    },
+    {
+        "Name": "Tanglefoot Bag",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Item Type": "Adventuring Gear (Consumable)",
+        "Description": "A fragile bladder filled with rapid-setting alchemical resin.",
+        "Usage Implications": "Thrown as an improvised weapon. On a hit, the target's movement speed is reduced to 0 until they use an action to pass a Strength check to break free."
+    }
+]

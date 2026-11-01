@@ -19,7 +19,7 @@ from fastapi.encoders import jsonable_encoder
 from app.config import get_settings
 from app.deps import get_inference_service, get_session_store
 from app.services.logger import get_logger
-from app.services.messages import build_snapshot, submit_user_message
+from app.services.messages import MAX_INPUT_CHARS, build_snapshot, submit_user_message
 
 logger = get_logger(__name__)
 
@@ -30,8 +30,11 @@ WS_POLL_INTERVAL_SECONDS = 0.05
 WS_REPLY_MARGIN_SECONDS = 10.0
 
 
-def _reply_timeout_seconds() -> float:
-    return float(get_settings().ollama.timeout_seconds) + WS_REPLY_MARGIN_SECONDS
+def _reply_timeout_seconds(inference) -> float:
+    per_job = float(get_settings().ollama.timeout_seconds) + WS_REPLY_MARGIN_SECONDS
+    waiting = inference.queue_position(None) or 0
+    # waiting jobs (including ours) plus one that may already be running
+    return per_job * (waiting + 1)
 
 
 async def ws_send(ws: WebSocket, payload: dict[str, Any]) -> None:
@@ -53,9 +56,9 @@ async def _wait_for_terminal(
 ) -> dict[str, Any] | None:
     deadline = time.monotonic() + timeout
     while True:
-        for m in store.list_messages(session_id):
-            if m.get("id") == message_id and m.get("status") in TERMINAL_STATUSES:
-                return copy.deepcopy(m)
+        m = store.get_message(session_id, message_id)
+        if m is not None and m.get("status") in TERMINAL_STATUSES:
+            return m
         if time.monotonic() >= deadline:
             return None
         await asyncio.sleep(WS_POLL_INTERVAL_SECONDS)
@@ -80,6 +83,9 @@ async def _handle_user_message(
     if not isinstance(text, str) or not text.strip():
         await _send_error(ws, "text is required")
         return
+    if len(text) > MAX_INPUT_CHARS:
+        await _send_error(ws, f"text too long (max {MAX_INPUT_CHARS} characters)")
+        return
     client_message_id = data.get("client_message_id")
     if client_message_id is not None and not isinstance(client_message_id, str):
         await _send_error(ws, "client_message_id must be a string")
@@ -102,7 +108,9 @@ async def _handle_user_message(
         await _send_error(ws, "Inference queue full; try again later", message_id=message["id"])
         return
 
-    final = await _wait_for_terminal(store, session_id, message["id"], _reply_timeout_seconds())
+    final = await _wait_for_terminal(
+        store, session_id, message["id"], _reply_timeout_seconds(inference)
+    )
     if final is None:
         await _send_error(ws, "Timed out waiting for reply", message_id=message["id"])
         return

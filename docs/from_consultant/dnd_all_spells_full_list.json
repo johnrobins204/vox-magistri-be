@@ -1,0 +1,210 @@
+[
+    {
+        "Name": "Firebolt",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "Evocation Cantrip",
+        "Description": "You hurl a mote of fire at a creature or object within range.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 120 ft. Components: V, S. Duration: Instantaneous. Deals 1d10 Fire damage on a ranged spell attack hit. Damage scales at higher levels."
+    },
+    {
+        "Name": "Guidance",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "Divination Cantrip",
+        "Description": "You channel divine insight to an ally, bolstering their attempt at a task.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Touch. Components: V, S. Duration: Concentration, up to 1 minute. The target can roll a d4 and add the number rolled to one ability check of its choice."
+    },
+    {
+        "Name": "Cure Wounds",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "1st-Level Abjuration",
+        "Description": "A creature you touch is suffused with healing energy.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Touch. Components: V, S. Duration: Instantaneous. Restores hit points equal to 2d8 + your spellcasting ability modifier. (Note: 5.5e buffed base healing from 1d8 to 2d8)."
+    },
+    {
+        "Name": "Magic Missile",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "1st-Level Evocation",
+        "Description": "You create three glowing darts of magical force that unfailingly strike targets of your choice.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 120 ft. Components: V, S. Duration: Instantaneous. Each dart deals 1d4 + 1 Force damage. Darts strike simultaneously and auto-hit."
+    },
+    {
+        "Name": "Shield",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "1st-Level Abjuration",
+        "Description": "An invisible barrier of magical force appears and protects you.",
+        "Casting Implications": "Casting Time: 1 Reaction (taken when hit by an attack or targeted by Magic Missile). Components: V, S. Duration: 1 Round. Grants +5 AC until the start of your next turn and negates Magic Missile."
+    },
+    {
+        "Name": "Invisibility",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "2nd-Level Illusion",
+        "Description": "A creature you touch becomes completely unseen.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Touch. Components: V, S, M. Duration: Concentration, up to 1 hour. The spell ends early if the target attacks or casts a spell."
+    },
+    {
+        "Name": "Spiritual Weapon",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "2nd-Level Evocation",
+        "Description": "You create a floating, spectral weapon that attacks your foes.",
+        "Casting Implications": "Casting Time: 1 Bonus Action. Range: 60 ft. Components: V, S. Duration: Concentration, up to 1 minute. Make a melee spell attack on cast and subsequent bonus actions dealing 1d8 + spellcasting modifier Force damage. (Note: 5.5e added Concentration)."
+    },
+    {
+        "Name": "Counterspell",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "3rd-Level Abjuration",
+        "Description": "You attempt to interrupt a creature in the process of casting a spell.",
+        "Casting Implications": "Casting Time: 1 Reaction. Range: 60 ft. Components: S. Duration: Instantaneous. The target must succeed on a Constitution saving throw or the spell fails. (Note: 5.5e changed the mechanic to a Con save rather than an ability check)."
+    },
+    {
+        "Name": "Fireball",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "3rd-Level Evocation",
+        "Description": "A bright streak flashes from your pointing finger into the distance and then blossoms with a low roar into an explosion of flame.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 150 ft. Components: V, S, M. Duration: Instantaneous. 20-foot-radius sphere. DC Dex save or take 8d6 Fire damage (half on success)."
+    },
+    {
+        "Name": "Spirit Guardians",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "3rd-Level Conjuration",
+        "Description": "You call forth spirits to protect you, flitting around you to a distance of 15 feet.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Self (15-foot radius). Components: V, S, M. Duration: Concentration, up to 10 minutes. Halves enemy speed and deals 3d8 Radiant/Necrotic damage on a failed Wis save."
+    },
+    {
+        "Name": "Polymorph",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "4th-Level Transmutation",
+        "Description": "This spell transforms a creature that you can see within range into a new form.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 60 ft. Components: V, S, M. Duration: Concentration, up to 1 hour. Target must make a Wis save. Transforms into a Beast with a CR equal to or less than the target's level."
+    },
+    {
+        "Name": "Wall of Force",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "5th-Level Evocation",
+        "Description": "An invisible wall of force springs into existence at a point you choose.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 120 ft. Components: V, S, M. Duration: Concentration, up to 10 minutes. Immune to all damage and cannot be dispelled by Dispel Magic, but is destroyed by Disintegrate."
+    },
+    {
+        "Name": "Wish",
+        "Edition": "5.5e",
+        "Source": "Player's Handbook (2024)",
+        "Spell Level & School": "9th-Level Conjuration",
+        "Description": "Wish is the mightiest spell a mortal creature can cast, altering the very foundations of reality in accord with your desires.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Self. Components: V. Duration: Instantaneous. Can duplicate any spell of 8th level or lower safely, or be used for extreme reality alterations (risking a 33% chance to never cast Wish again)."
+    },
+    {
+        "Name": "Armor of Agathys",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Spell Level & School": "1st-Level Abjuration",
+        "Description": "A protective magical force of frost surrounds you, manifesting as a spectral frost that covers you and your gear.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Self. Components: V, S, M. Duration: 1 hour. You gain 5 temp HP. If a creature hits you with a melee attack while you have these temp HP, they take 5 Cold damage."
+    },
+    {
+        "Name": "Silvery Barbs",
+        "Edition": "5e",
+        "Source": "Strixhaven: A Curriculum of Chaos",
+        "Spell Level & School": "1st-Level Enchantment",
+        "Description": "You magically distract the triggering creature and turn its momentary uncertainty into encouragement for another creature.",
+        "Casting Implications": "Casting Time: 1 Reaction. Range: 60 ft. Components: V. Duration: Instantaneous. Forces a creature to reroll a successful d20 and use the lower roll, then grants another creature advantage on their next roll."
+    },
+    {
+        "Name": "Chaos Bolt",
+        "Edition": "5e",
+        "Source": "Xanathar's Guide to Everything",
+        "Spell Level & School": "1st-Level Evocation",
+        "Description": "You hurl an undulating, warbling mass of chaotic energy at one creature.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 120 ft. Components: V, S. Duration: Instantaneous. Deals 2d8 + 1d6 damage. The damage type is determined by the d8 rolls. If the d8s match, the bolt leaps to a new target within 30 ft."
+    },
+    {
+        "Name": "Toll the Dead",
+        "Edition": "5e",
+        "Source": "Xanathar's Guide to Everything",
+        "Spell Level & School": "Necromancy Cantrip",
+        "Description": "You point at one creature you can see, and the sound of a dolorous bell fills the air around it for a moment.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 60 ft. Components: V, S. Duration: Instantaneous. Target makes a Wis save. Takes 1d8 Necrotic damage if at full HP, or 1d12 Necrotic damage if missing any HP."
+    },
+    {
+        "Name": "Vortex Warp",
+        "Edition": "5e",
+        "Source": "Strixhaven: A Curriculum of Chaos",
+        "Spell Level & School": "2nd-Level Conjuration",
+        "Description": "You magically twist space around another creature you can see, teleporting it.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 90 ft. Components: V, S. Duration: Instantaneous. Target must make a Con save (willing creatures can choose to fail). On failure, teleport them to an unoccupied space on a solid surface."
+    },
+    {
+        "Name": "Hunger of Hadar",
+        "Edition": "5e",
+        "Source": "Player's Handbook (2014)",
+        "Spell Level & School": "3rd-Level Conjuration",
+        "Description": "You open a gateway to the dark between the stars, a region infested with unknown horrors.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 150 ft. Components: V, S, M. Duration: Concentration, up to 1 minute. Creates a 20-foot-radius sphere of blackness and difficult terrain. Creatures take 2d6 Cold damage at the start of their turn and 2d6 Acid damage at the end if they fail a Dex save."
+    },
+    {
+        "Name": "Shadow of Moil",
+        "Edition": "5e",
+        "Source": "Xanathar's Guide to Everything",
+        "Spell Level & School": "4th-Level Necromancy",
+        "Description": "Flame-like shadows wreathe your body until the spell ends, causing you to become heavily obscured to others.",
+        "Casting Implications": "Casting Time: 1 Action. Range: Self. Components: V, S, M (undead eyeball encased in a gem worth 150 gp). Duration: Concentration, up to 1 minute. Grants resistance to radiant damage. Any creature that hits you with a melee attack takes 2d8 Necrotic damage."
+    },
+    {
+        "Name": "Steel Wind Strike",
+        "Edition": "5e",
+        "Source": "Xanathar's Guide to Everything",
+        "Spell Level & School": "5th-Level Conjuration",
+        "Description": "You flourish a weapon then vanish to strike like the wind.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 30 ft. Components: S, M (a melee weapon worth at least 1 sp). Duration: Instantaneous. Make a melee spell attack against up to 5 targets. On a hit, deals 6d10 Force damage. You then teleport next to one of the targets."
+    },
+    {
+        "Name": "Mental Prison",
+        "Edition": "5e",
+        "Source": "Xanathar's Guide to Everything",
+        "Spell Level & School": "6th-Level Illusion",
+        "Description": "You attempt to bind a creature within an illusory cell that only it perceives.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 60 ft. Components: S. Duration: Concentration, up to 1 minute. Int save. Takes 5d10 Psychic damage and is restrained. If it moves or attacks through the illusion, it takes an additional 10d10 Psychic damage and the spell ends."
+    },
+    {
+        "Name": "Blade of Blood",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Spell Level & School": "1st-Level Necromancy",
+        "Description": "You draw a trace of your own blood to infuse a melee weapon with dark, life-draining magic.",
+        "Casting Implications": "Casting Time: 1 Bonus Action. Range: Touch. Components: V, S. Duration: Concentration, up to 1 minute. You can sacrifice up to 5 of your own hit points; your next weapon hit deals an extra 1d6 necrotic damage plus 1d6 for every 5 HP sacrificed."
+    },
+    {
+        "Name": "Crushing Curse",
+        "Edition": "3rd Party",
+        "Source": "Grim Hollow Campaign Guide (Ghostfire Gaming)",
+        "Spell Level & School": "2nd-Level Enchantment",
+        "Description": "You speak a word of oppressive magical weight that forces a creature to its knees.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 60 ft. Components: V, S. Duration: Instantaneous. Target must make a Str save or take 3d8 Force damage and be knocked prone. Movement speed is halved on their next turn."
+    },
+    {
+        "Name": "Void Strike",
+        "Edition": "3rd Party",
+        "Source": "Tome of Heroes (Kobold Press)",
+        "Spell Level & School": "Evocation Cantrip",
+        "Description": "You pull a shred of the dark void and fling it at an enemy.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 60 ft. Components: V, S. Duration: Instantaneous. Ranged spell attack. Deals 1d8 Necrotic damage. Target cannot take reactions until the start of its next turn."
+    },
+    {
+        "Name": "Clockwork Swarm",
+        "Edition": "3rd Party",
+        "Source": "Midgard Heroes Handbook (Kobold Press)",
+        "Spell Level & School": "4th-Level Conjuration",
+        "Description": "You conjure a biting, stinging swarm of mechanical insects that tear through armor and flesh.",
+        "Casting Implications": "Casting Time: 1 Action. Range: 60 ft. Components: V, S, M (a tiny brass gear). Duration: Concentration, up to 1 minute. Creates a 20-ft radius sphere. Creatures take 4d4 piercing damage and suffer a -2 to AC while in the area."
+    }
+]

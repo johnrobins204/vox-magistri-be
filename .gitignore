@@ -25,6 +25,10 @@ venv-dnd-server/
 dev.db
 logs/
 
+# Bulk upstream reference snapshots (open5e sync scratch; rebuilt by scripts)
+dnd_data/
+tmp_*/
+
 # Node frontend (if applicable)
 node_modules/
 

@@ -1,0 +1,418 @@
+[
+{
+"Name": "Club",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A heavy wooden stick used for bludgeoning foes.",
+"Combat Implications": "Deals 1d4 Bludgeoning damage. Features the Light property."
+},
+{
+"Name": "Dagger",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A short, sharp blade versatile in close combat or thrown at a distance.",
+"Combat Implications": "Deals 1d4 Piercing damage. Features the Finesse, Light, and Thrown (range 20/60) properties."
+},
+{
+"Name": "Greatclub",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A massive wooden club requiring two hands to swing effectively.",
+"Combat Implications": "Deals 1d8 Bludgeoning damage. Features the Two-Handed property."
+},
+{
+"Name": "Handaxe",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A small axe optimized for chopping wood or enemies, suitable for throwing.",
+"Combat Implications": "Deals 1d6 Slashing damage. Features the Light and Thrown (range 20/60) properties."
+},
+{
+"Name": "Javelin",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A light spear specifically balanced for throwing.",
+"Combat Implications": "Deals 1d6 Piercing damage. Features the Thrown (range 30/120) property."
+},
+{
+"Name": "Light Hammer",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A small forging hammer repurposed for quick martial strikes.",
+"Combat Implications": "Deals 1d4 Bludgeoning damage. Features the Light and Thrown (range 20/60) properties."
+},
+{
+"Name": "Mace",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A heavy metal head on a sturdy wooden or metal haft, designed to crush armor.",
+"Combat Implications": "Deals 1d6 Bludgeoning damage."
+},
+{
+"Name": "Quarterstaff",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A versatile wooden staff heavily favored by monks and spellcasters.",
+"Combat Implications": "Deals 1d6 Bludgeoning damage. Features the Versatile (1d8) property."
+},
+{
+"Name": "Sickle",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A curved agricultural blade capable of sweeping attacks.",
+"Combat Implications": "Deals 1d4 Slashing damage. Features the Light property."
+},
+{
+"Name": "Spear",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Melee",
+"Description": "A simple shaft with a pointed head, one of the most common and reliable weapons in the world.",
+"Combat Implications": "Deals 1d6 Piercing damage. Features the Thrown (range 20/60) and Versatile (1d8) properties."
+},
+{
+"Name": "Crossbow, Light",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Ranged",
+"Description": "A mechanical bow mounted on a stock, drawing string tension mechanically for powerful bolts.",
+"Combat Implications": "Deals 1d8 Piercing damage. Features the Ammunition (range 80/320), Loading, and Two-Handed properties."
+},
+{
+"Name": "Dart",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Ranged",
+"Description": "A small, weighted projectile favored for stealthy, quick throws.",
+"Combat Implications": "Deals 1d4 Piercing damage. Features the Finesse and Thrown (range 20/60) properties."
+},
+{
+"Name": "Shortbow",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Ranged",
+"Description": "A small, flexible bow suitable for firing from cover or on the move.",
+"Combat Implications": "Deals 1d6 Piercing damage. Features the Ammunition (range 80/320) and Two-Handed properties."
+},
+{
+"Name": "Sling",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Simple Ranged",
+"Description": "A simple leather pouch and cord used to hurl stones with lethal velocity.",
+"Combat Implications": "Deals 1d4 Bludgeoning damage. Features the Ammunition (range 30/120) property."
+},
+{
+"Name": "Battleaxe",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A heavy, wide-bladed axe capable of cleaving through tough hides and armor.",
+"Combat Implications": "Deals 1d8 Slashing damage. Features the Versatile (1d10) property."
+},
+{
+"Name": "Flail",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A spiked metal head attached to a handle by a chain, designed to wrap around shields.",
+"Combat Implications": "Deals 1d8 Bludgeoning damage."
+},
+{
+"Name": "Glaive",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A polearm featuring a single-edged blade on the end of a long staff.",
+"Combat Implications": "Deals 1d10 Slashing damage. Features the Heavy, Reach, and Two-Handed properties."
+},
+{
+"Name": "Greataxe",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A massive axe built to maximize the force of a full-body swing.",
+"Combat Implications": "Deals 1d12 Slashing damage. Features the Heavy and Two-Handed properties."
+},
+{
+"Name": "Greatsword",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "An enormous two-handed sword known for wide, devastating arcs.",
+"Combat Implications": "Deals 2d6 Slashing damage. Features the Heavy and Two-Handed properties."
+},
+{
+"Name": "Halberd",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A multi-faceted polearm combining an axe blade and a thrusting spike.",
+"Combat Implications": "Deals 1d10 Slashing damage. Features the Heavy, Reach, and Two-Handed properties."
+},
+{
+"Name": "Lance",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A long, sturdy thrusting spear primarily designed for mounted cavalry charges.",
+"Combat Implications": "Deals 1d12 Piercing damage. Features the Reach and Special (disadvantage against targets within 5 feet) properties. Two-handed when not mounted."
+},
+{
+"Name": "Longsword",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A balanced, double-edged blade symbolizing classic knighthood.",
+"Combat Implications": "Deals 1d8 Slashing damage. Features the Versatile (1d10) property."
+},
+{
+"Name": "Maul",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A colossal, two-handed sledgehammer designed to pulverize defenses.",
+"Combat Implications": "Deals 2d6 Bludgeoning damage. Features the Heavy and Two-Handed properties."
+},
+{
+"Name": "Morningstar",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A vicious, spiked metal club.",
+"Combat Implications": "Deals 1d8 Piercing damage."
+},
+{
+"Name": "Pike",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "An exceptionally long spear meant for holding off charging enemies or maintaining formations.",
+"Combat Implications": "Deals 1d10 Piercing damage. Features the Heavy, Reach, and Two-Handed properties."
+},
+{
+"Name": "Rapier",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A slender, sharply pointed sword optimized for fast, precise thrusts.",
+"Combat Implications": "Deals 1d8 Piercing damage. Features the Finesse property."
+},
+{
+"Name": "Scimitar",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A curved sword balanced for sweeping slashes.",
+"Combat Implications": "Deals 1d6 Slashing damage. Features the Finesse and Light properties."
+},
+{
+"Name": "Shortsword",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A highly maneuverable thrusting blade commonly used by skirmishers and rogues.",
+"Combat Implications": "Deals 1d6 Piercing damage. Features the Finesse and Light properties."
+},
+{
+"Name": "Trident",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A three-pronged spear often associated with gladiators and aquatic combatants.",
+"Combat Implications": "Deals 1d6 Piercing damage. Features the Thrown (range 20/60) and Versatile (1d8) properties."
+},
+{
+"Name": "War Pick",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A heavy, sharp spike set onto a sturdy handle to punch through plate armor.",
+"Combat Implications": "Deals 1d8 Piercing damage."
+},
+{
+"Name": "Warhammer",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A heavy, balanced hammer favored by clerics, paladins, and dwarven warriors.",
+"Combat Implications": "Deals 1d8 Bludgeoning damage. Features the Versatile (1d10) property."
+},
+{
+"Name": "Whip",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Melee",
+"Description": "A braided leather cord capable of striking from a distance with a cracking slash.",
+"Combat Implications": "Deals 1d4 Slashing damage. Features the Finesse and Reach properties."
+},
+{
+"Name": "Blowgun",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Ranged",
+"Description": "A narrow tube used to silently fire small needles, often coated in poison.",
+"Combat Implications": "Deals 1 Piercing damage. Features the Ammunition (range 25/100) and Loading properties."
+},
+{
+"Name": "Crossbow, Hand",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Ranged",
+"Description": "A miniature crossbow capable of being fired with one hand.",
+"Combat Implications": "Deals 1d6 Piercing damage. Features the Ammunition (range 30/120), Light, and Loading properties."
+},
+{
+"Name": "Crossbow, Heavy",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Ranged",
+"Description": "A powerful, heavy arbalest capable of punching through armor at long ranges.",
+"Combat Implications": "Deals 1d10 Piercing damage. Features the Ammunition (range 100/400), Heavy, Loading, and Two-Handed properties."
+},
+{
+"Name": "Longbow",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Ranged",
+"Description": "A tall bow offering supreme range and powerful piercing capability.",
+"Combat Implications": "Deals 1d8 Piercing damage. Features the Ammunition (range 150/600), Heavy, and Two-Handed properties."
+},
+{
+"Name": "Musket",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "An early long-barreled firearm offering high damage at significant range.",
+"Combat Implications": "Deals 1d12 Piercing damage. Features the Ammunition (range 40/120), Loading, and Two-Handed properties."
+},
+{
+"Name": "Pistol",
+"Edition": "5.5e",
+"Source": "Player's Handbook (2024)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "A one-handed flintlock or matchlock firearm.",
+"Combat Implications": "Deals 1d10 Piercing damage. Features the Ammunition (range 30/90) and Loading properties."
+},
+{
+"Name": "Boomerang",
+"Edition": "5e",
+"Source": "Princes of the Apocalypse",
+"Weapon Type": "Simple Ranged",
+"Description": "A curved aerodynamic piece of wood that returns to the thrower on a miss.",
+"Combat Implications": "Deals 1d4 Bludgeoning damage. Features the Thrown (range 60/120) property. If it misses, it returns to the thrower's hand."
+},
+{
+"Name": "Double-Bladed Scimitar",
+"Edition": "5e",
+"Source": "Eberron: Rising from the Last War",
+"Weapon Type": "Martial Melee",
+"Description": "A traditional elven weapon featuring curved blades at both ends of a central haft.",
+"Combat Implications": "Deals 2d4 Slashing damage. Features the Two-Handed and Special properties (allows a bonus action attack dealing 1d4 slashing damage)."
+},
+{
+"Name": "Yklwa",
+"Edition": "5e",
+"Source": "Tomb of Annihilation",
+"Weapon Type": "Simple Melee",
+"Description": "A short-shafted spear with a broad, sword-like blade native to Chult.",
+"Combat Implications": "Deals 1d8 Piercing damage. Features the Thrown (range 10/30) property."
+},
+{
+"Name": "Antimatter Rifle",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "A highly advanced futuristic weapon utilizing devastating technological payloads.",
+"Combat Implications": "Deals 6d8 Necrotic damage. Features the Ammunition (range 120/360), Reload (2 shots), and Two-Handed properties."
+},
+{
+"Name": "Laser Pistol",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "A handheld energy weapon of futuristic origin.",
+"Combat Implications": "Deals 3d6 Radiant damage. Features the Ammunition (range 40/120) and Reload (50 shots) properties."
+},
+{
+"Name": "Laser Rifle",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "A two-handed futuristic energy weapon providing continuous long-range radiant blasts.",
+"Combat Implications": "Deals 3d8 Radiant damage. Features the Ammunition (range 100/300), Reload (30 shots), and Two-Handed properties."
+},
+{
+"Name": "Ballista",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Siege Engine",
+"Description": "A massive, stationary crossbow typically mounted on walls or ships.",
+"Combat Implications": "Deals 3d10 Piercing damage. Takes one action to load, one to aim, and one to fire. Large object."
+},
+{
+"Name": "Cannon",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Siege Engine",
+"Description": "A heavy artillery piece firing iron balls via black powder propulsion.",
+"Combat Implications": "Deals 8d10 Bludgeoning damage. Takes one action to load, one to aim, and one to fire. Large object."
+},
+{
+"Name": "Mangonel",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Siege Engine",
+"Description": "A stone-throwing catapult mechanism for battering fortifications.",
+"Combat Implications": "Deals 5d10 Bludgeoning damage. Takes two actions to load, two to aim, and one to fire. Large object."
+},
+{
+"Name": "Trebuchet",
+"Edition": "5e",
+"Source": "Dungeon Master's Guide (2014)",
+"Weapon Type": "Siege Engine",
+"Description": "A heavy counterweight siege engine capable of hurling boulders massive distances.",
+"Combat Implications": "Deals 8d10 Bludgeoning damage. Takes two actions to load, two to aim, and one to fire. Huge object."
+},
+{
+"Name": "Blunderbuss",
+"Edition": "3rd Party",
+"Source": "Complete Gunslinger (Mage Hand Press)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "A short, large-caliber firearm flared at the muzzle, firing scattered shots.",
+"Combat Implications": "Deals 1d10 Piercing damage. Features the Ammunition (range 15/60), Scatter, and Reload properties."
+},
+{
+"Name": "Revolver",
+"Edition": "3rd Party",
+"Source": "Complete Gunslinger (Mage Hand Press)",
+"Weapon Type": "Martial Ranged (Firearm)",
+"Description": "An advanced sidearm with a revolving cylinder for multiple successive shots.",
+"Combat Implications": "Deals 2d8 Piercing damage. Features the Ammunition (range 40/120), Reload (6 shots), and Light properties."
+},
+{
+"Name": "Cestus",
+"Edition": "3rd Party",
+"Source": "Tome of Heroes (Kobold Press)",
+"Weapon Type": "Simple Melee",
+"Description": "Leather hand wraps reinforced with metal plates or spikes for brawling.",
+"Combat Implications": "Deals 1d4 Bludgeoning damage. Features the Light and Unarmed modifiers."
+},
+{
+"Name": "Lucerne Hammer",
+"Edition": "3rd Party",
+"Source": "Tome of Heroes (Kobold Press)",
+"Weapon Type": "Martial Melee",
+"Description": "A polearm carrying a specialized hammer head with a prolonged spike.",
+"Combat Implications": "Deals 1d10 Piercing damage. Features the Heavy, Reach, and Two-Handed properties."
+}
+]
