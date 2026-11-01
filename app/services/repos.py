@@ -12,6 +12,11 @@ logger = get_logger(__name__)
 
 INTERRUPTED_ERROR = "interrupted by server restart"
 
+# Append-only (PAT-ARCH-008): (version, table, column, ddl). Never edit an entry.
+_MIGRATIONS: list[tuple[int, str, str, str]] = [
+    (2, "sessions", "character", "ALTER TABLE sessions ADD COLUMN character TEXT"),
+]
+
 
 def _now() -> datetime:
     return datetime.now(UTC)
@@ -73,8 +78,38 @@ class SqliteSessionStore:
                     "CREATE INDEX IF NOT EXISTS idx_messages_client "
                     "ON messages(session_id, client_message_id)"
                 )
-                self._conn.execute("PRAGMA user_version = 1")
+            self._migrate()
             self._recover_interrupted()
+
+    def _migrate(self) -> None:
+        # Caller holds self._lock. Each step is one explicit transaction (PAT-ARCH-008).
+        start = self._conn.execute("PRAGMA user_version").fetchone()[0]
+        newest = _MIGRATIONS[-1][0]
+        if start > newest:
+            logger.warning("store.schema_newer_than_code", extra={"version": start})
+            return
+        if start < 1:
+            with self._conn:
+                self._conn.execute("PRAGMA user_version = 1")
+        current = max(start, 1)
+        for version, table, column, ddl in _MIGRATIONS:
+            if version <= current:
+                continue
+            try:
+                self._conn.execute("BEGIN")
+                columns = {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}
+                if column not in columns:
+                    self._conn.execute(ddl)
+                self._conn.execute(f"PRAGMA user_version = {int(version)}")
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                logger.exception("store.migration_failed", extra={"version": version})
+                self._conn.close()
+                raise
+        final = self._conn.execute("PRAGMA user_version").fetchone()[0]
+        if final != start:
+            logger.info("store.migrated", extra={"from": start, "to": final})
 
     def _recover_interrupted(self) -> None:
         # Caller holds self._lock. G-4: queued/running messages cannot survive a restart.
@@ -108,13 +143,23 @@ class SqliteSessionStore:
                 return None
             return self._messages(session_id)
 
-    def create_session(self, session_id: str) -> None:
+    def create_session(self, session_id: str, character: dict[str, Any] | None = None) -> None:
+        character_text = None if character is None else json.dumps(character)
         with self._lock:
             with self._conn:
                 self._conn.execute(
-                    "INSERT INTO sessions (id, created_at) VALUES (?, ?)",
-                    (session_id, _now().isoformat()),
+                    "INSERT INTO sessions (id, created_at, character) VALUES (?, ?, ?)",
+                    (session_id, _now().isoformat(), character_text),
                 )
+
+    def get_character(self, session_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT character FROM sessions WHERE id = ?", (session_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(session_id)
+            return None if row[0] is None else json.loads(row[0])
 
     def create_message(
         self,

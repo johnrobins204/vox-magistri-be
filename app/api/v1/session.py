@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 
 from app.deps import get_inference_service, get_session_store, require_local_token
-from app.schemas.v1 import MessageCreateReq, MessageResp, SessionCreateResp
+from app.schemas.v1 import (
+    MessageCreateReq,
+    MessageResp,
+    SessionCreateReq,
+    SessionCreateResp,
+)
 from app.services.logger import get_logger
 from app.services.messages import MAX_INPUT_CHARS, submit_user_message
 from app.type_defs import InferenceService, SessionStore
@@ -26,11 +31,18 @@ router = APIRouter(prefix="/api/v1", tags=["sessions"])
 async def create_session(
     response: Response,
     store: Annotated[Any, Depends(get_session_store)],
+    req: SessionCreateReq | None = None,
 ):
     session_id = str(uuid4())
-    store.create_session(session_id)
+    character = (
+        req.character.model_dump() if req is not None and req.character is not None else None
+    )
+    store.create_session(session_id, character=character)
     response.headers["Location"] = f"/api/v1/sessions/{session_id}"
-    logger.info("session.created", extra={"session_id": session_id})
+    logger.info(
+        "session.created",
+        extra={"session_id": session_id, "has_character": character is not None},
+    )
     return SessionCreateResp(session_id=session_id, capabilities={"streaming": True})
 
 
@@ -105,6 +117,35 @@ async def get_message_status(
             extra={"session_id": session_id, "message_id": message_id},
         )
         raise HTTPException(status_code=404, detail="Message not found")
+
+    resp: dict = {
+        "message_id": message_id,
+        "status": msg.get("status", "unknown"),
+        "meta": msg.get("meta") or {},
+    }
+    try:
+        queue_pos = inference.queue_position(message_id)
+    except Exception:
+        queue_pos = None
+    try:
+        eta_seconds = inference.estimate_wait(message_id)
+    except Exception:
+        eta_seconds = None
+    if queue_pos is not None:
+        resp["queue_position"] = queue_pos
+    if eta_seconds is not None:
+        resp["estimated_wait_seconds"] = eta_seconds
+
+    logger.info(
+        "get_message_status",
+        extra={
+            "session_id": session_id,
+            "message_id": message_id,
+            "status": resp["status"],
+            "queue_position": queue_pos,
+        },
+    )
+    return resp
 
 
 @router.post(

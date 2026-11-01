@@ -416,6 +416,72 @@
         "RESOLVED 2026-10-18: Manual frontend checks F-01 to F-07 (SPEC-0011) passed live in the browser, including the backend-down case (F-02). WP-5 and WP-6 flipped to COMPLETE and this item to completed.",
         "docs/from_consultant/dnd_all_species_full_list.json is staged because the ingest script and T-01 to T-08 read it. The directory may become public with the repo; confirm the delivered text is summary-level."
       ]
+    },
+    {
+      "id": "REQ-0019",
+      "title": "Bulk open5e reference ingest (sync script, allowlist and projection, budget CI test, attribution, pilot dataset)",
+      "status": "completed",
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "adr_id": "ADR-0007",
+      "spec_path": "docs/specs/SPEC-0012-open5e-bulk-reference-ingest.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review (bypassed by human instruction; ADR-0007 and PAT-ARCH-007 set to accepted 2026-11-01; three PAT-ARCH-006 clarifications applied)",
+        "[COMPLETE] Spec drafting (SPEC-0012)",
+        "[COMPLETE] Implementation WP-1 sync script and manifest",
+        "[COMPLETE] Implementation WP-2 ingest core (allowlist, projection, ids, overlay, budget check)",
+        "[COMPLETE] Implementation WP-3 attribution generation and budget CI test",
+        "[COMPLETE] Implementation WP-4 pilot dataset and consumer route (weapons pilot; conditions deviation, see SPEC-0012 Deviations)",
+        "[COMPLETE] Implementation WP-5 creatures budget measurement (verdict: does not fit combined; decision parked)"
+      ],
+      "follow_ups": [
+        "RESOLVED 2026-11-01: pilot dataset is weapons (human direction), not conditions. Fresh v2 conditions data has top-level keys core and a5e-ag, so SRD-only projection does not apply. Route: GET /api/v1/reference/weapons. See SPEC-0012 Deviations.",
+        "Human decision: confirm the edition-disambiguation rule in SPEC-0012 section 3 (published ids win; otherwise the 2024 entry takes the bare slug and the 2014 entry takes a -5e suffix).",
+        "RESOLVED 2026-11-01: scripts/licenses/OGL-1.0a.txt supplied by the human (normalized). The ingest gate is satisfied.",
+        "RESOLVED 2026-11-01: dnd_data/ is not tracked by git (git ls-files is empty); .gitignore covers it. No git rm --cached is needed.",
+        "PARKED human decision (not resolved here): creatures with srd-2014 and srd-2024 combined = 656 entries / 2,692,306 bytes, over the 2 MB budget. Each SRD alone fits (325 entries / 1.41 MB and 331 / 1.28 MB); names-only actions combined = 1.19 MB. Options: one ruleset, slim actions, or the ADR-0007 reference.db fallback.",
+        "Open: whether the creatures consumer (a monster lookup tool or route) is a follow-up spec. Creatures are not committed until a consumer exists.",
+        "Open (needs human sign-off; pattern NOT edited): PAT-ARCH-001 text should note that the SessionStore Protocol now includes get_message (added for the message status endpoint). Its Context and Consequences wording is otherwise unchanged."
+      ]
+    },
+    {
+      "id": "REQ-0020",
+      "title": "The DM knows my hero: store the player character on the session and feed it into the DM prompt (slice 1)",
+      "status": "completed",
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "adr_id": "ADR-0008",
+      "spec_path": "docs/specs/SPEC-0013-character-on-session.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review (ADR-0008 and PAT-ARCH-008 accepted 2026-11-01)",
+        "[COMPLETE] Spec drafting (SPEC-0013)",
+        "[COMPLETE] Implementation WP-1 migration ladder and character column",
+        "[COMPLETE] Implementation WP-2 Protocol and store methods",
+        "[COMPLETE] Implementation WP-3 REST contract",
+        "[COMPLETE] Implementation WP-4 pure prompt builder",
+        "[COMPLETE] Implementation WP-5 worker wiring",
+        "[COMPLETE] Implementation WP-6 integration test with a faked Ollama",
+        "[COMPLETE] Implementation WP-7 frontend model and API",
+        "[COMPLETE] Implementation WP-8 frontend hero and tale rule",
+        "[COMPLETE] Verification 2026-11-01: pytest 366 passed; ruff and black clean; npm run build ok; test_backlog_schema ok; live Ollama reply addressed the hero by name (Dwarf Fighter); migration of a copy of dnd.db v1 to v2 (7 sessions, 58 messages preserved, reopen idempotent); browser checks F-02 to F-13 on a scratch DB"
+      ],
+      "follow_ups": [
+        "OPEN: F-14 human playtest (10 minutes): play with a real hero and write what felt bad. This gates the choice of the next slice (REQ-0007, REQ-0021 or REQ-0022).",
+        "Open: failed POST after the switch is confirmed is unspecified (SPEC-0013 notes); not browser-verified.",
+        "NORTH STAR (2026-11-01): a kid forges a hero and plays a 30-minute adventure in which the DM knows who they are, speaks as it thinks, rolls with their real modifiers, and still remembers the opening scene at the end; the next day it picks up. Slices: REQ-0020 (hero), REQ-0007 (talks), REQ-0021 (remembers), REQ-0022 (dice).",
+        "PLANNING RULE: each slice ends with a ~10-minute human playtest; its what-felt-bad notes drive the next slice.",
+        "STOP-DOING RULES: no new dataset ingests (spells, creatures, classes, items) until a slice consumes an existing one; the creatures file-vs-reference.db decision stays parked; no new menu stubs; ADR and spec ceremony only for cross-component decisions.",
+        "ORDER: REQ-0020 first; REQ-0007 and REQ-0021 in either order after it; REQ-0022 last (hard dependency on REQ-0020). REQ-0023 is independent cleanup.",
+        "Carve-out of REQ-0015 (campaign domain); REQ-0015 remains the larger item.",
+        "Scope: the client sends the character on session create; the backend stores it nullable on the session; the worker adds a character section (name, species, class, level, ability scores with modifiers, HP/AC, conditions) built by pure builders per PAT-ARCH-003, plus the species character_creation_implications when the species id resolves in services['reference']['species'].",
+        "Storage: nullable column on the sessions table via a user_version migration (PAT-ARCH-002). The character is immutable for the session's life (no edit endpoint).",
+        "Species identity: the frontend stores the species NAME in free-text lineage today. The spec decides between an id-based model with legacy migration and graceful degradation.",
+        "ADR expected: character storage shape, species id-vs-name, back-compat.",
+        "Out of scope: streaming, summaries, attack tool, campaign/quest/scene state.",
+        "Size sketch: schema and repos S; Protocol methods S; REST create-session payload M; prompt builder and worker wiring M; frontend species-id model and legacy migration M; frontend createSession(character) S; integration test M. Rough LOC: backend 150-250, frontend 100-150, tests 80-120."
+      ]
     }
   ]
 }

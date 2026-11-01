@@ -7,12 +7,12 @@ It never raises: a missing or invalid file logs one WARNING and returns []; an i
 duplicate entry is dropped with one WARNING each. Logs carry reasons and indexes only.
 """
 
-import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field
 
+from app.reference.loader import load_entries
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
@@ -36,36 +36,4 @@ class Species(BaseModel):
 
 def load_species(path: Path | str = SPECIES_PATH) -> list[Species]:
     """Load the species catalog from a JSON array file. Never raises; see module docstring."""
-    try:
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        reason = "missing"
-    except (OSError, UnicodeDecodeError):
-        reason = "unreadable"
-    except ValueError:
-        reason = "invalid_json"
-    else:
-        if isinstance(data, list):
-            return _validate_entries(data)
-        reason = "not_list"
-    logger.warning("reference.unavailable", extra={"reason": reason})
-    return []
-
-
-def _validate_entries(data: list) -> list[Species]:
-    species: list[Species] = []
-    seen_ids: set[str] = set()
-    for index, raw in enumerate(data):
-        try:
-            entry = Species.model_validate(raw)
-        except ValidationError:
-            logger.warning("reference.entry_dropped", extra={"index": index, "reason": "invalid"})
-            continue
-        if entry.id in seen_ids:
-            logger.warning(
-                "reference.entry_dropped", extra={"index": index, "reason": "duplicate_id"}
-            )
-            continue
-        seen_ids.add(entry.id)
-        species.append(entry)
-    return species
+    return load_entries(path, Species, "species", logger)

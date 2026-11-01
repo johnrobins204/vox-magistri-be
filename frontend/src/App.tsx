@@ -9,7 +9,7 @@ import { DiceTray } from './components/DiceTray'
 import { FeatureModal, type FeatureKey } from './components/FeatureModal'
 import { NarrativeLog } from './components/NarrativeLog'
 import { SceneBar } from './components/SceneBar'
-import { loadActiveId, loadRoster, removeCharacter, resolveActive, saveActiveId, saveRoster, upsertCharacter } from './lib/roster'
+import { loadActiveId, loadRoster, removeCharacter, resolveActive, saveActiveId, saveRoster, sendableHero, upsertCharacter } from './lib/roster'
 import type { Character } from './lib/character'
 import type { MenuAction } from './components/Menu'
 import type { Message, WsEvent } from './types'
@@ -78,7 +78,7 @@ function App() {
           }
         }
 
-        const session = await createSession()
+        const session = await createSession(sendableHero(roster, activeCharacterId))
         if (!mounted) return
         localStorage.setItem(SESSION_STORAGE_KEY, session.session_id)
         setSessionId(session.session_id)
@@ -180,11 +180,11 @@ function App() {
     [sendText],
   )
 
-  const startNewSession = async () => {
+  const startNewSession = async (hero: Character | null = sendableHero(roster, activeCharacterId)) => {
     try {
       setErrorText('')
       setMessages([])
-      const session = await createSession()
+      const session = await createSession(hero)
       localStorage.setItem(SESSION_STORAGE_KEY, session.session_id)
       setSessionId(session.session_id)
     } catch (error) {
@@ -211,28 +211,49 @@ function App() {
     setActiveFeature(action)
   }
 
+  // ADR-0008 D3: a hero change at the table starts a new tale, after a confirm.
   const handleSaveCharacter = (next: Character) => {
     const nextRoster = upsertCharacter(roster, next)
     saveRoster(nextRoster)
     setRoster(nextRoster)
-    saveActiveId(next.id)
-    setActiveCharacterId(next.id)
+    const saved = nextRoster.find((c) => c.id === next.id) ?? next
+    if (saved.id === character.id) {
+      saveActiveId(saved.id)
+      setActiveCharacterId(saved.id)
+      return
+    }
+    if (!window.confirm(`Start a new tale with ${saved.name}?`)) return
+    saveActiveId(saved.id)
+    setActiveCharacterId(saved.id)
+    void startNewSession(saved)
   }
 
   const handleSelectCharacter = (id: string) => {
+    if (id === character.id) return
+    const target = roster.find((c) => c.id === id)
+    if (!target || !window.confirm(`Start a new tale with ${target.name}?`)) return
     saveActiveId(id)
     setActiveCharacterId(id)
+    void startNewSession(target)
   }
 
   const handleDeleteCharacter = (id: string) => {
     const nextRoster = removeCharacter(roster, id)
+    if (id !== character.id) {
+      saveRoster(nextRoster)
+      setRoster(nextRoster)
+      return
+    }
+    const fallback = nextRoster[0] ?? null
+    const question = fallback
+      ? `Start a new tale with ${fallback.name}?`
+      : 'Start a new tale without a hero?'
+    if (!window.confirm(question)) return
     saveRoster(nextRoster)
     setRoster(nextRoster)
-    if (activeCharacterId === id) {
-      const fallback = nextRoster[0]?.id ?? null
-      saveActiveId(fallback)
-      setActiveCharacterId(fallback)
-    }
+    saveActiveId(fallback?.id ?? null)
+    setActiveCharacterId(fallback?.id ?? null)
+    void startNewSession(fallback)
   }
 
   const askStatus = () => {
@@ -279,7 +300,7 @@ function App() {
       <CharacterCreator
         open={creatorOpen}
         roster={roster}
-        activeId={activeCharacterId}
+        activeId={character.id}
         onSave={handleSaveCharacter}
         onSelect={handleSelectCharacter}
         onDelete={handleDeleteCharacter}

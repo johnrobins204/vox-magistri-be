@@ -105,7 +105,9 @@ def test_session_store_protocol_unchanged():
     assert names == {
         "get_session",
         "create_session",
+        "get_character",
         "create_message",
+        "get_message",
         "get_by_client_id",
         "list_messages",
         "update_message_status",

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, constr
 
 from app.reference.species import Species
+from app.reference.weapons import Weapon
 
 # ============================================================
 # Existing Models (Preserved Exactly As-Is)
@@ -22,6 +23,42 @@ class SessionCreateResp(BaseModel):
         schema_extra = {
             "example": {"session_id": "b3f1c2d4-...", "capabilities": {"streaming": True}}
         }
+
+
+class AbilitiesIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    STR: int = Field(..., ge=1, le=30)
+    DEX: int = Field(..., ge=1, le=30)
+    CON: int = Field(..., ge=1, le=30)
+    INT: int = Field(..., ge=1, le=30)
+    WIS: int = Field(..., ge=1, le=30)
+    CHA: int = Field(..., ge=1, le=30)
+
+
+CONDITION_STR = Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)]
+
+
+class CharacterIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    id: str = Field("", max_length=64)
+    name: str = Field(..., min_length=1, max_length=60)
+    lineage: str = Field("", max_length=60)
+    species_id: str | None = Field(None, max_length=64, pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
+    char_class: str = Field("", max_length=40)
+    level: int = Field(..., ge=1, le=20)
+    hp_current: int = Field(..., ge=0, le=999)
+    hp_max: int = Field(..., ge=1, le=999)
+    ac: int = Field(..., ge=0, le=30)
+    abilities: AbilitiesIn
+    conditions: list[CONDITION_STR] = Field(default_factory=list, max_length=8)
+
+
+class SessionCreateReq(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    character: CharacterIn | None = None
 
 
 ContentStr = constr(min_length=1, max_length=16384)
@@ -216,3 +253,11 @@ class SpeciesListResp(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     species: list[Species]
+
+
+class WeaponListResp(BaseModel):
+    """Read-only weapons catalog envelope."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    weapons: list[Weapon]

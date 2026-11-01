@@ -11,11 +11,13 @@ from uuid import uuid4
 
 from app.intelligence.client import OllamaClient
 from app.intelligence.prompt_builders import (
+    build_character_section,
     build_chat_messages,
     build_system_prompt,
     load_voice_configs,
 )
 from app.intelligence.tool_handler import detect_tool
+from app.reference.species import Species
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
@@ -44,7 +46,7 @@ class OllamaInferenceService:
     - WebSocket: direct streaming via generate_tokens
     """
 
-    def __init__(self, settings, tool_service=None):
+    def __init__(self, settings, tool_service=None, species: list[Species] | None = None):
         # settings must provide ollama.base_url and ollama.model
         self.client = OllamaClient(
             base_url=settings.ollama.base_url,
@@ -59,6 +61,8 @@ class OllamaInferenceService:
         self._system_prompt = build_system_prompt(settings.prompts, load_voice_configs())
         self._max_turns = settings.app.max_turns
         self._max_field_len = settings.app.max_field_len
+        # Character species lookup (SPEC-0013 D2): built once here, never per job.
+        self._species_by_id: dict[str, Species] = {s.id: s for s in (species or [])}
 
         # Job queue and worker control
         self._queue: Queue[InferenceJob] = Queue(maxsize=MAX_QUEUE_SIZE)
@@ -211,8 +215,21 @@ class OllamaInferenceService:
                     )
                 else:
                     history = job.store.list_messages(job.session_id)
+                    character = job.store.get_character(job.session_id)
+                    system = self._system_prompt
+                    species_resolved = False
+                    if character is not None:
+                        species = self._species_by_id.get(character.get("species_id") or "")
+                        species_resolved = species is not None
+                        section = build_character_section(
+                            character,
+                            species.name if species else None,
+                            species.character_creation_implications if species else None,
+                            max_field_len=self._max_field_len,
+                        )
+                        system = system + "\n\n" + section
                     messages = build_chat_messages(
-                        self._system_prompt,
+                        system,
                         history,
                         job.message_id,
                         job.prompt,
@@ -226,6 +243,8 @@ class OllamaInferenceService:
                             "message_id": job.message_id,
                             "history_count": len(messages) - 2,
                             "message_count": len(messages),
+                            "character": character is not None,
+                            "species_resolved": species_resolved,
                         },
                     )
                     with self._ollama_lock:

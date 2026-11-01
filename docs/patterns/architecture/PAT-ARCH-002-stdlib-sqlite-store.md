@@ -39,7 +39,7 @@ exists (constraints.md, constraint 2).
    since Python 3.12). `dict`/`list` <-> JSON TEXT.
 5. **Schema on open.** `CREATE TABLE IF NOT EXISTS ...` in the constructor plus `PRAGMA
    user_version = N`. Bump N and add a small `ALTER` branch when the schema changes. No
-   migration framework.
+   migration framework (see PAT-ARCH-008 for the ordered `user_version` ladder).
 6. **Configuration.** The path comes from `settings.database.url` (`sqlite:///<path>`,
    `sqlite:////abs/path`, or `sqlite:///:memory:`), parsed in one place. Any other scheme
    raises `ValueError` at startup. The store is built in `app/main.py` (not at import

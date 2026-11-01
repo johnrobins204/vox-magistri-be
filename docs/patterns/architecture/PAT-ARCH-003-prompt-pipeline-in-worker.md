@@ -42,7 +42,9 @@ may keep returning a single string.
 3. **The system message comes from configuration only.** It combines a built-in DM role
    sentence, the `dm_voice` style sentence from
    `app/intelligence/voice_configs/voice_configs.json`, and a voice line from
-   `settings.prompts.dm_voice.*` and `settings.prompts.verbosity_default`. The pipeline
+   `settings.prompts.dm_voice.*` and `settings.prompts.verbosity_default`, plus, when the
+   session has one, a character section built by `build_character_section` from
+   `SessionStore.get_character` (ADR-0008). The pipeline
    needs no campaign context. A campaign section is added only when a real campaign
    source exists (REQ-0015). There is no speculative optional parameter before then.
 4. **Config files load robustly, once.** The voice config is read once when
@@ -55,7 +57,8 @@ may keep returning a single string.
    then `client.chat(messages)`. The worker is a single FIFO thread, so every earlier
    job, including its assistant reply, has finished when the next job runs. Transports
    and `app/services/messages.py` keep enqueueing `prompt=content`. The
-   `InferenceService` and `SessionStore` Protocols do not change.
+   `InferenceService` and `SessionStore` Protocols do not change, except that the worker
+   also calls `get_character` (ADR-0008).
    Slash-command jobs (`/name args`, [PAT-ARCH-004](./PAT-ARCH-004-slash-tools-in-worker.md))
    skip the chat builder and run the tool instead.
 6. **The client has two entry points and one HTTP path.**

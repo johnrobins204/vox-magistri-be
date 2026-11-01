@@ -1,4 +1,5 @@
 import { getApiBaseUrl, getApiToken } from './config'
+import { toCharacterIn, type Character } from './character'
 import type { MessageListResp, SessionCreateResp, Species, SpeciesListResp } from '../types'
 
 function authHeaders(): HeadersInit {
@@ -12,8 +13,9 @@ async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let detail = `Request failed: ${response.status}`
     try {
-      const body = (await response.json()) as { detail?: string }
-      if (body.detail) {
+      // FastAPI 422 bodies carry an array here; only a string is a readable message.
+      const body = (await response.json()) as { detail?: unknown }
+      if (typeof body.detail === 'string' && body.detail) {
         detail = body.detail
       }
     } catch {
@@ -24,11 +26,16 @@ async function parseJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
 
-export async function createSession(): Promise<SessionCreateResp> {
+export async function createSession(character?: Character | null): Promise<SessionCreateResp> {
   const url = `${getApiBaseUrl()}/api/v1/sessions`
-  const response = await fetch(url, {
-    method: 'POST',
-  })
+  const init: RequestInit = character
+    ? {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ character: toCharacterIn(character) }),
+      }
+    : { method: 'POST' }
+  const response = await fetch(url, init)
   return parseJson<SessionCreateResp>(response)
 }
 

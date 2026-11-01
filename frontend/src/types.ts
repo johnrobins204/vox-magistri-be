@@ -1,4 +1,21 @@
+import type { AbilityKey } from './lib/character'
+
 export type MessageStatus = 'queued' | 'running' | 'completed' | 'error' | 'cancelled'
+
+/** Snake_case wire shape of the character sent on session create (ADR-0008 D4). */
+export interface CharacterIn {
+  id: string
+  name: string
+  lineage: string
+  species_id: string | null
+  char_class: string
+  level: number
+  hp_current: number
+  hp_max: number
+  ac: number
+  abilities: Record<AbilityKey, number>
+  conditions: string[]
+}
 
 export type Role = 'user' | 'assistant' | 'system'
 

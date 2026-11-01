@@ -18,7 +18,7 @@ redelivery can quietly change what the app serves.
 
 ## Context
 This pattern applies to read-only, curator-maintained datasets that are small enough to keep
-in memory (up to roughly thousands of entries).
+in memory (a canonical file under 2 MB and 2,000 entries; above that, see ADR-0007's fallback tier).
 
 It does not apply to:
 - Data that users create or edit at runtime, including homebrew. That data is user data and
@@ -29,7 +29,7 @@ It does not apply to:
 1. **Canonical file.** Store one normalized JSON file per dataset in git under
    `app/reference/`. Git is the version history.
 2. **Raw deliveries are provenance only.** Keep them as delivered (for example in
-   `docs/from_consultant/`). The app never reads them.
+   `docs/from_consultant/`). The app never reads them. Bulk upstream snapshots MAY be kept as gitignored local source copies with a manifest, when their size makes committing them impractical (PAT-ARCH-007).
 3. **Normalize at ingest.** Convert each delivery into the repo schema in one reviewable
    commit. The schema has:
    - snake_case keys;
@@ -46,7 +46,7 @@ It does not apply to:
    - CI fails hard: a test asserts that the checked-in file loads with no entry dropped.
 5. **Serve read-only.** Use GET routes only, each with a `response_model` and a
    `{"<plural>": [...]}` envelope (PAT-ARCH-005). Return the full list and let the client
-   filter.
+   filter. A summary list plus GET by id is allowed for a dataset that is within budget but too heavy for one response.
 6. **Backend consumers** (tools, prompt builders) read the in-memory catalog and never open
    the file.
 7. **References from user data** store the `id` as TEXT, validated against the catalog on

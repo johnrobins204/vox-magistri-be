@@ -200,7 +200,7 @@ def test_ws_non_json_frame_gets_error_event_and_stays_open(stub_client, session_
 
 # 24
 def test_ws_reply_wait_is_bounded(session_store, monkeypatch):
-    monkeypatch.setattr("app.api.v1.ws._reply_timeout_seconds", lambda: 0.3)
+    monkeypatch.setattr("app.api.v1.ws._reply_timeout_seconds", lambda _inference: 0.3)
     app = create_app(services={"inference": FakeInference(), "session": session_store})
 
     with TestClient(app) as c:

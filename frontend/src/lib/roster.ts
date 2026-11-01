@@ -67,6 +67,12 @@ export function resolveActive(roster: Character[], activeId: string | null): Cha
   return found ?? roster[0] ?? PLACEHOLDER_CHARACTER
 }
 
+/** The hero to send on session create, or null for the placeholder (never sent). */
+export function sendableHero(roster: Character[], activeId: string | null): Character | null {
+  const hero = resolveActive(roster, activeId)
+  return hero.id === PLACEHOLDER_CHARACTER.id ? null : hero
+}
+
 export function upsertCharacter(roster: Character[], character: Character): Character[] {
   const normalized = normalizeCharacter(character)
   const index = roster.findIndex((c) => c.id === normalized.id)

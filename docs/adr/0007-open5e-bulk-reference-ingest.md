@@ -1,8 +1,8 @@
 ---
 id: ADR-0007
-status: proposed
+status: accepted
 date: 2026-10-31
-requirement: REQ-TBD  # placeholder: the orchestrator assigns the REQ id when it logs the requirement in docs/requirements/LOG.md
+requirement: REQ-0019
 supersedes: null
 superseded_by: null
 ---

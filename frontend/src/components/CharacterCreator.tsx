@@ -80,6 +80,17 @@ export function CharacterCreator({
     }
   }, [editorOpen])
 
+  // Preselects the one 5.5e species matching a legacy lineage; saved only on Forge Hero.
+  useEffect(() => {
+    if (!editing || editing.speciesId || !species) return
+    const lineage = editing.lineage.trim().toLowerCase()
+    const matches = species.filter((s) => s.edition === '5.5e' && s.name.toLowerCase() === lineage)
+    if (matches.length === 1) {
+      const id = matches[0].id
+      setEditing((d) => (d && !d.speciesId ? { ...d, speciesId: id } : d))
+    }
+  }, [species, editing?.id])
+
   if (!open) return null
 
   const baseSpecies = species?.filter((s) => s.edition === '5.5e') ?? []
@@ -105,7 +116,7 @@ export function CharacterCreator({
     setEditing((d) => (d ? { ...d, ...changes } : d))
 
   const pickSpecies = (picked: Species) => {
-    patch({ lineage: picked.name })
+    patch({ lineage: picked.name, speciesId: picked.id })
     setBrowsing(false)
   }
 
@@ -279,9 +290,9 @@ export function CharacterCreator({
                       <li key={s.id}>
                         <button
                           type="button"
-                          className={`species-option ${editing.lineage === s.name ? 'selected' : ''}`}
-                          aria-pressed={editing.lineage === s.name}
-                          onClick={() => patch({ lineage: s.name })}
+                          className={`species-option ${editing.speciesId === s.id ? 'selected' : ''}`}
+                          aria-pressed={editing.speciesId === s.id}
+                          onClick={() => patch({ lineage: s.name, speciesId: s.id })}
                         >
                           <span className="species-name">{s.name}</span>
                           <span className="species-desc">{s.description}</span>
@@ -335,6 +346,9 @@ export function CharacterCreator({
                   maxLength={120}
                 />
               </label>
+              {isExisting && editing.id === activeId ? (
+                <p className="roster-sub">Changes reach the DM at the next New Tale.</p>
+              ) : null}
             </div>
 
             <footer className="creator-actions">
