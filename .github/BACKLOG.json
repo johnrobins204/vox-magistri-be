@@ -158,11 +158,11 @@
       "title": "Real, non-blocking streaming and honest inference health",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-01",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
-        "[PENDING] Restate requirement",
+        "[COMPLETE] Restate requirement",
         "[PENDING] Architecture review",
         "[PENDING] Spec drafting",
         "[PENDING] Implementation"
@@ -170,7 +170,12 @@
       "follow_ups": [
         "Tier: P1, needed by the frontend. Evidence: generate_tokens calls sync httpx inside an async generator (blocks the event loop) and emits one 'token'; settings.ollama.stream is unused; the WS path bypasses the FIFO queue so REST and WS can hit Ollama concurrently; cancel cannot stop a running job; model_loaded is hard-coded True.",
         "Scope: Ollama NDJSON streaming via httpx.AsyncClient, one serialized path for REST and WS, cancel mid-stream, real health probe, and a documented WS event protocol (token/done/error/status).",
-        "Depends on: REQ-0004, REQ-0006. ADR likely: yes (streaming protocol is a cross-cutting contract with the frontend)."
+        "Depends on: REQ-0004, REQ-0006. ADR likely: yes (streaming protocol is a cross-cutting contract with the frontend).",
+        "Re-scoped 2026-11-01 as 'The DM talks' (slice 2 of the north star; see REQ-0020 follow-ups). Independent of REQ-0020 and REQ-0021.",
+        "Central design question: worker thread to WebSocket token path, either an in-memory channel or incremental store writes.",
+        "Missing artifact: no WS contract doc exists (docs/api/ does not exist); the token, done and cancel events must be documented in the spec.",
+        "Cancellation mid-stream is in scope. ADR expected.",
+        "Size sketch: client stream method M; worker token channel M; WS token, done and cancel events M; frontend token accumulation S; WS contract doc S. Rough LOC: backend 200-300, frontend 80-120, tests 110-150."
       ]
     },
     {
@@ -230,21 +235,24 @@
     {
       "id": "REQ-0010",
       "title": "Frontend-ready API contract (pydantic v2 schemas, one status vocabulary, session CRUD, error shape)",
-      "status": "in_progress",
+      "status": "blocked",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-01",
       "adr_id": "ADR-0005",
       "spec_path": "docs/specs/SPEC-0010-frontend-ready-api-contract.md",
       "tasks": [
         "[COMPLETE] Restate requirement",
         "[COMPLETE] Architecture review",
         "[COMPLETE] Spec drafting",
-        "[PENDING] Implementation"
+        "[PENDING] Implementation (superseded by REQ-0023; not to be executed)"
       ],
       "follow_ups": [
         "Tier: P1. Evidence: schemas use pydantic v1 Config/orm_mode/schema_extra and .dict() under pydantic 2.13 (deprecation warnings); schema docs say queued|in_progress|done but the service emits running|completed; MessageListResp is unused; two entry shapes (MessageResp vs SessionEntry); no list/get/delete session endpoints; the 429 queue-full path is dead because the Queue is unbounded; naive datetime.utcnow().",
         "Scope: enum for message status, session list/get/delete, consistent error body, timezone-aware timestamps, committed OpenAPI snapshot test for frontend codegen.",
-        "Depends on: REQ-0004. ADR likely: no."
+        "Depends on: REQ-0004. ADR likely: no.",
+        "CLOSED 2026-11-01: superseded by REQ-0023, which carries only item (1), the pydantic v2 idioms. Status is blocked because the status enum has no superseded or cancelled value; this note records the closure.",
+        "Not carried over: items (2)-(9) (status enum, session CRUD, list-messages shape, single error body and 429 path, UTC datetimes, shared message length limit, WS contract doc, OpenAPI snapshot). The error-shape item needs an amendment to accepted ADR-0004 and PAT-ARCH-004 (gates G-3 and G-4 in SPEC-0010). No replacement entry exists for items (2)-(9); human to confirm.",
+        "HUMAN: accept, supersede or withdraw ADR-0005 (proposed), PAT-ARCH-005 (proposed) and SPEC-0010 (draft). Not edited by this run."
       ]
     },
     {
@@ -342,46 +350,51 @@
       "follow_ups": [
         "Tier: P2 (needed once chat works end to end). Evidence: a DM server with no campaign, character or quest state. prompting.CampaignContext and the build_*_prompt functions exist but have no data source; data/models.py has the rich schema but is unwired.",
         "Scope: the smallest slice of campaign/character/quest/scene needed to ground the DM prompt, plus CRUD endpoints. Not the 30-table schema.",
-        "Depends on: REQ-0005, REQ-0006. ADR likely: yes (domain boundary and storage shape)."
+        "Depends on: REQ-0005, REQ-0006. ADR likely: yes (domain boundary and storage shape).",
+        "Dependency note 2026-11-01: REQ-0020 is the first carve-out of this item (character on the session feeding the prompt); REQ-0021 and REQ-0022 build on it."
       ]
     },
     {
       "id": "REQ-0016",
       "title": "Frontend MVP design brief (screens, user flows, message lifecycle states, API gap list)",
-      "status": "backlog",
+      "status": "completed",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-01",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
-        "[PENDING] Restate requirement",
-        "[PENDING] Architecture review",
-        "[PENDING] Spec drafting",
-        "[PENDING] Implementation"
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review (no ADR was written)",
+        "[PENDING] Spec drafting (none; as-built)",
+        "[COMPLETE] Implementation (as-built)"
       ],
       "follow_ups": [
         "Tier: P1 planning item (documentation only, can start now). Deliverable under docs/: screen inventory (session list/start, chat/DM view with streaming and queue/ETA, dice/tool panel, character and quest views), message state machine, and the endpoints each screen needs. Gaps found feed back into REQ-0007, REQ-0009, REQ-0010 and REQ-0015.",
         "Charter fit: audience is the author's children, so favor a simple, kid-friendly UX over feature breadth.",
-        "Depends on: none. ADR likely: no."
+        "Depends on: none. ADR likely: no.",
+        "COMPLETED AS-BUILT 2026-11-01: design brief at docs/design/playboard-brief.md; frontend app in frontend/ (commits 32351413 'the frontend is born', c94118a7, bdbcfd8f).",
+        "Deviation: no API client generation was done; the typed client is hand-written in frontend/src/lib/api.ts and ws.ts. The API gap list part is superseded by REQ-0020, REQ-0007, REQ-0021 and REQ-0022."
       ]
     },
     {
       "id": "REQ-0017",
       "title": "Frontend stack, repo layout and dev-loop decision (React app, API client generation, WS client)",
-      "status": "backlog",
+      "status": "completed",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-01",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
-        "[PENDING] Restate requirement",
-        "[PENDING] Architecture review",
-        "[PENDING] Spec drafting",
-        "[PENDING] Implementation"
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review (no ADR was written)",
+        "[PENDING] Spec drafting (none; as-built)",
+        "[COMPLETE] Implementation (as-built)"
       ],
       "follow_ups": [
         "Tier: P2 planning item. Questions for the ADR: separate repo (current assumption) vs web/ in this repo; Vite on :5173 (matches current CORS); TypeScript or not; data fetching and WS client approach; types generated from the REQ-0010 OpenAPI snapshot; one-command dev startup for backend plus frontend; fun/learning value is a legitimate rubric criterion.",
-        "Depends on: REQ-0016, REQ-0010. ADR likely: yes (new external dependency set, hard to reverse)."
+        "Depends on: REQ-0016, REQ-0010. ADR likely: yes (new external dependency set, hard to reverse).",
+        "COMPLETED AS-BUILT 2026-11-01: React, TypeScript and Vite frontend in frontend/ (commits 32351413, c94118a7, bdbcfd8f).",
+        "Deviation: no generated types from an OpenAPI snapshot (REQ-0010 snapshot was never built); the hand-written client is in frontend/src/lib/api.ts and ws.ts. The stack questions were not answered by an ADR."
       ]
     },
     {
@@ -481,6 +494,75 @@
         "ADR expected: character storage shape, species id-vs-name, back-compat.",
         "Out of scope: streaming, summaries, attack tool, campaign/quest/scene state.",
         "Size sketch: schema and repos S; Protocol methods S; REST create-session payload M; prompt builder and worker wiring M; frontend species-id model and legacy migration M; frontend createSession(character) S; integration test M. Rough LOC: backend 150-250, frontend 100-150, tests 80-120."
+      ]
+    },
+    {
+      "id": "REQ-0021",
+      "title": "The tale remembers: persistent rolling summary of turns that leave the recent-turn window (slice 3)",
+      "status": "backlog",
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "NORTH STAR slice 3 of 4; see REQ-0020 follow-ups for the north star and the playtest rule.",
+        "Depends on REQ-0020 for sequencing only: the sessions-table migration lands character column first, summary column second; coordinate user_version bumps (PAT-ARCH-002). Also shares the prompt builder path.",
+        "Latency: the worker shares one _ollama_lock across all Ollama calls, so a summary call can delay the next turn. The spec MUST decide when and how it runs and state the bounded delay.",
+        "Known risk: summary quality on an 8B model is unknown. The spec needs a playtest checkpoint before the trigger is fixed.",
+        "ADR optional; the architect decides at its turn. The Game Diary frontend is not changed in this slice.",
+        "Size sketch: summary column and repos S; summary prompt builder S; worker summarization trigger M; builder integration S; e2e test M. Rough LOC: backend 130-180, frontend 0, tests 80-100."
+      ]
+    },
+    {
+      "id": "REQ-0022",
+      "title": "The dice are mine: /roll and /attack use the session character's modifiers (slice 4)",
+      "status": "backlog",
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "NORTH STAR slice 4 of 4. HARD DEPENDENCY on REQ-0020: the tool reads the character from the session.",
+        "Ability heuristic (accepted MVP simplification): finesse takes the best of STR and DEX, ranged uses DEX, otherwise STR.",
+        "Weapon lookup uses services['reference']['weapons'] (already in the tool default_context). First consumer of the REQ-0019 weapons dataset.",
+        "Help text MUST state that proficiency and spell attacks are out of scope. No HP tracking; the stored character is not mutated.",
+        "Contract: .github/instructions/tools.instructions.md and PAT-ARCH-004. No ADR expected.",
+        "Frontend weapon picker in the dice tray is a separate small WP.",
+        "Size sketch: attack tool M; weapon lookup S; ability heuristic S; frontend picker M; e2e test M. Rough LOC: backend 100-150, frontend 50-80, tests 60-100."
+      ]
+    },
+    {
+      "id": "REQ-0023",
+      "title": "Pydantic v2 idiom cleanup in schemas, session route and config (carry-over from REQ-0010)",
+      "status": "backlog",
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Carry-over from REQ-0010 item (1) only. Sizing S-M, one small WP set. No ADR expected.",
+        "Scope: class Config, orm_mode and schema_extra in app/schemas/v1.py (9-10 blocks) become ConfigDict(json_schema_extra=...); payload.dict() in app/api/v1/session.py and ns.dict() in app/config.py become model_dump().",
+        "Acceptance: the startup UserWarning 'Valid config keys have changed in V2' no longer appears; no API behaviour change.",
+        "DROPPED from REQ-0010: the single error-shape part (including /intel tool-invoke errors) requires amending accepted ADR-0004 and PAT-ARCH-004 (human sign-off gates G-3 and G-4 in SPEC-0010).",
+        "Sequencing: app/api/v1/session.py is also touched by REQ-0020; land REQ-0023 after REQ-0020 or rebase carefully."
       ]
     }
   ]
