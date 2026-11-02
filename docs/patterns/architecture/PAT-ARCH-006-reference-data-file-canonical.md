@@ -37,14 +37,15 @@ It does not apply to:
    - edition and publisher as separate fields;
    - an explicit first-party/third-party flag.
 
-   The diff of the canonical file is exactly what the app serves.
+   The diff of the canonical file is exactly what the app serves. An allowlisted SRD
+   document (PAT-ARCH-007) MAY carry verbatim text when `ATTRIBUTION.md` covers it.
 4. **Load once.** Use one pydantic model per dataset. Load the file while the services are
    built (not at import time) and expose it through the services dict and a `deps`
    accessor.
    - Runtime fails soft: a missing or invalid file gives an empty catalog and one
      `get_logger` warning. A bad entry is dropped with one warning.
    - CI fails hard: a test asserts that the checked-in file loads with no entry dropped.
-5. **Serve read-only.** Use GET routes only, each with a `response_model` and a
+5. **Serve read-only.** A dataset consumed only by backend tools MAY have no GET route. Otherwise use GET routes only, each with a `response_model` and a
    `{"<plural>": [...]}` envelope (PAT-ARCH-005). Return the full list and let the client
    filter. A summary list plus GET by id is allowed for a dataset that is within budget but too heavy for one response.
 6. **Backend consumers** (tools, prompt builders) read the in-memory catalog and never open

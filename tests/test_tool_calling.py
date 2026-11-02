@@ -15,6 +15,7 @@ from app.intelligence.prompt_builders import NarratorVoiceParams, build_narrator
 from app.intelligence.tool_handler import get_registry
 from app.intelligence.tools import ToolError
 from app.intelligence.tools import narrate as narrate_tool
+from app.reference.rules import Rule
 from app.services.build_services import build_services
 from app.services.repos import make_default_repos
 from app.services.tool_service import ToolService, UnknownToolError
@@ -453,3 +454,48 @@ def test_invoke_endpoint_clear_is_unknown_tool_404():
     assert body["detail"] == "Unknown tool: clear"
     assert body["text"] is None
     assert body["meta"] is None
+
+
+def _opportunity_rule() -> Rule:
+    return Rule(
+        id="opportunity-attacks",
+        name="Opportunity Attacks",
+        edition="5.5e",
+        source="5e 2024 Rules",
+        publisher="Wizards of the Coast",
+        third_party=False,
+        source_key="srd-2024_combat_opportunity-attacks",
+        description=(
+            "When a hostile creature you can see leaves your reach, you can use your "
+            "reaction to make one melee attack against that creature."
+        ),
+    )
+
+
+# SPEC-0014 T-39
+def test_discovery_registers_rules_and_registry_matches_service():
+    tools = ToolService(discover_on_init=True).list_tools()
+
+    assert tools["rules"] == "app.intelligence.tools.rules"
+    registry_names = set(get_registry(refresh=True))
+    assert registry_names == set(ToolService().list_tools())
+    assert {"roll", "narrate", "rules"} <= registry_names
+
+
+# SPEC-0014 T-40
+def test_invoke_drops_client_reference_and_uses_server_catalog():
+    rule = _opportunity_rule()
+    fake = FakeInference(reply="Provoked.")
+    svc = ToolService(
+        default_context={"inference": fake, "reference": {"rules": [rule]}},
+        discover_on_init=True,
+    )
+
+    # The untrusted client context is the `client_context` keyword; the third positional
+    # argument is server context and would override the catalog.
+    result = svc.invoke("rules", "opportunity attacks", client_context={"reference": {"rules": []}})
+
+    assert result["meta"] == {"tool": "rules", "source": "rules", "rule_ids": [rule.id]}
+    assert result["text"] == "Provoked."
+    assert len(fake.prompts) == 1
+    assert rule.description in fake.prompts[0]

@@ -34,10 +34,21 @@ DEFAULT_DOCUMENTS = [SRD_2014, SRD_2024]
 
 DOCUMENT_ALLOWLIST: dict[str, list[str]] = {
     "conditions": DEFAULT_DOCUMENTS,
+    "rules": DEFAULT_DOCUMENTS,
     "weapons": DEFAULT_DOCUMENTS,
 }
 PROJECTION: dict[str, tuple[str, ...]] = {
     "conditions": (
+        "id",
+        "name",
+        "edition",
+        "source",
+        "publisher",
+        "third_party",
+        "source_key",
+        "description",
+    ),
+    "rules": (
         "id",
         "name",
         "edition",
@@ -65,7 +76,10 @@ PROJECTION: dict[str, tuple[str, ...]] = {
         "is_improvised",
     ),
 }
-CONSUMERS: dict[str, str] = {"weapons": "GET /api/v1/reference/weapons"}
+CONSUMERS: dict[str, str] = {
+    "rules": "/rules tool (REQ-0024)",
+    "weapons": "GET /api/v1/reference/weapons",
+}
 
 _NON_SLUG = re.compile(r"[^a-z0-9]+")
 _ID_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -122,7 +136,12 @@ def _flatten(raw: dict, dataset: str) -> dict:
         "source_key": raw["key"],
         "document_key": key,
     }
-    if "description" in PROJECTION[dataset]:
+    if dataset == "rules":
+        if not isinstance(raw["desc"], str):
+            raise ValueError(f"desc of {raw['key']!r} is not a string")
+        flat["description"] = raw["desc"]
+        flat["id_fallbacks"] = [_slug(raw["key"])]
+    elif "description" in PROJECTION[dataset]:
         flat["description"] = _description(raw, key)
     if dataset in _DATASET_FIELDS:
         flat.update(_DATASET_FIELDS[dataset](raw))
@@ -134,15 +153,30 @@ def filter_allowlisted(entries: list[dict], allowed: list[str]) -> tuple[list[di
     return kept, len(entries) - len(kept)
 
 
+def resolve_documents(entries: list[dict], documents: dict[str, dict]) -> list[dict]:
+    """Replace a string `document` key with its _documents.json record; inputs are not mutated."""
+    resolved: list[dict] = []
+    for entry in entries:
+        doc = entry["document"]
+        if isinstance(doc, str):
+            if doc not in documents:
+                raise ValueError(f"unknown document {doc!r} for entry {entry['key']!r}")
+            entry = {**entry, "document": documents[doc]}
+        resolved.append(entry)
+    return resolved
+
+
 def _id_candidates(record: dict) -> list[str]:
     """Bare slug first, then the suffix for the record's edition or third-party document."""
     slug = record["slug"]
     key = record["document_key"]
     if key == SRD_2024:
-        return [slug]
-    if key == SRD_2014:
-        return [slug, f"{slug}-5e"]
-    return [slug, f"{slug}-{_slug(key)}"]
+        candidates = [slug]
+    elif key == SRD_2014:
+        candidates = [slug, f"{slug}-5e"]
+    else:
+        candidates = [slug, f"{slug}-{_slug(key)}"]
+    return candidates + record.get("id_fallbacks", [])
 
 
 def _rank(record: dict) -> int:
@@ -410,6 +444,13 @@ def ingest(
     out_path = Path(out_path)
     entries = json.loads((snapshot_dir / f"{dataset}.json").read_text(encoding="utf-8"))
     allowed = DOCUMENT_ALLOWLIST[dataset]
+    documents = _load_documents(snapshot_dir)
+    if dataset == "rules":
+        if documents is None:
+            raise ValueError(
+                f"{DOCUMENTS_FILE} is missing in {snapshot_dir}; run python -m scripts.sync_open5e"
+            )
+        entries = resolve_documents(entries, documents)
     records = build_records(
         dataset,
         entries,
@@ -418,7 +459,6 @@ def ingest(
     )
     text = check_budget(records)
 
-    documents = _load_documents(snapshot_dir)
     ogl_keys: list[str] = []
     if documents is None:
         log.warning("ingest.documents_missing", extra={"dataset": dataset, "file": DOCUMENTS_FILE})

@@ -19,7 +19,10 @@ MAX_ENTRIES = 2_000
 FORBIDDEN_IMPORTS = {"scripts", "sync_open5e", "ingest_open5e"}
 UPSTREAM_HOST = b"api.open5e.com"
 
-OPEN5E_MODELS: dict[str, tuple[str, str]] = {"weapons": ("app.reference.weapons", "Weapon")}
+OPEN5E_MODELS: dict[str, tuple[str, str]] = {
+    "weapons": ("app.reference.weapons", "Weapon"),
+    "rules": ("app.reference.rules", "Rule"),
+}
 
 REFERENCE_FILES = sorted(REFERENCE_DIR.glob("*.json"))
 
@@ -58,6 +61,15 @@ def test_t25_open5e_file_drops_no_entries(dataset, caplog):
 
     assert len(loaded) == len(raw)
     assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
+
+
+# SPEC-0014 T-24: the committed rules catalog is present and within budget.
+def test_t24_rules_file_is_committed_and_within_budget():
+    path = REFERENCE_DIR / "rules.json"
+
+    assert path in REFERENCE_FILES
+    assert path.stat().st_size <= MAX_BYTES
+    assert 1 <= _entry_count(path) <= MAX_ENTRIES
 
 
 def test_t26_no_file_under_app_names_the_upstream_host():

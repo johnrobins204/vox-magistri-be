@@ -564,6 +564,33 @@
         "DROPPED from REQ-0010: the single error-shape part (including /intel tool-invoke errors) requires amending accepted ADR-0004 and PAT-ARCH-004 (human sign-off gates G-3 and G-4 in SPEC-0010).",
         "Sequencing: app/api/v1/session.py is also touched by REQ-0020; land REQ-0023 after REQ-0020 or rebase carefully."
       ]
+    },
+    {
+      "id": "REQ-0024",
+      "title": "Rules consult slash tool (/rules) answering from the SRD rules reference catalog, not the narrator voice",
+      "status": "in_progress",
+      "created_at": "2026-11-01",
+      "updated_at": "2026-11-01",
+      "adr_id": "ADR-0009",
+      "spec_path": "docs/specs/SPEC-0014-rules-consult-tool.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review",
+        "[COMPLETE] Spec drafting",
+        "[COMPLETE] Implementation: WP-1 to WP-8 of SPEC-0014 done; gate green (pytest 422 passed, ruff clean, black clean); rules.json regeneration byte-identical across two runs (377,097 bytes, 283 entries)",
+        "[PENDING] Manual 10-question live Ollama smoke run (SPEC-0014 section 4 / WP-8): 4 of 10 run so far; record meta.source (rules or training) per question in the repo or PR note",
+        "[PENDING] Tighten T-37 (tests/test_rules_tool.py, about line 214): the no-secret-in-logs check must iterate over all caplog.records, not only records from the tool logger, to match the spec's 'no log record' wording"
+      ],
+      "follow_ups": [
+        "Spec doc drift in docs/specs/SPEC-0014-rules-consult-tool.md: T-26 table row still says srd-2014_ (should be srd_ / srd-2024_); record the T-40 correction (the test uses the client_context= keyword matching the spec text, and the third positional argument of invoke is context); fix the stale 'ADR-0009 (status proposed)' text in sections 1 and 4 (ADR-0009 and PAT-ARCH-009 are now accepted).",
+        "Oversized rules entry: 'madness-effects' (source_key srd_madness_madness-effects) has a description of 8,252 chars, above the 6,000-char rules_budget_chars default, so it is never included in an excerpt and a question that top-ranks it gets training mode. Decide whether the budget needs tuning (for example about 3,000 in settings.json) or the entry needs a rule. 16 entries exceed 3,000 chars and 1 exceeds 6,000.",
+        "Fallback id measurement: 1 id matches the spec's literal srd-2014-/srd-2024- prefix test (srd-2024-social-interaction-ability-checks). Other fallback-style ids use the srd-<slug> form (for example srd-multiclassing-proficiencies, srd-monsters-hit-points). Count and document both forms in the PR note.",
+        "Edge cases in app/intelligence/tools/rules.py and scripts/ingest_open5e.py: run() calls reply.rstrip() (around line 129), which fails if generate returns None; _flatten raises KeyError rather than ValueError when desc is missing (around lines 139-142); run(args: str, context: dict) has a bare dict type.",
+        "Ingest ordering: _load_documents now runs before build_records for all datasets (scripts/ingest_open5e.py around line 447). Only the exception order changes for the weapons and conditions datasets.",
+        "Brittle test: tests/test_rules_wiring.py around line 39 hard-codes 68 species; derive the count from the dataset instead.",
+        "Recall/context risks from SPEC-0014 section 4: selection is lexical, so paraphrased questions fall back to training mode. Ollama num_ctx is 4096 but the client sends no num_ctx; if the installed default is 2,048 tokens, set prompts.rules_budget_chars to about 3,000.",
+        "Docs: docs/patterns/INDEX.md gained a PAT-ARCH-009 accepted row, and PAT-ARCH-006 and the REQ-0018 note were amended with human approval; the human should confirm these are in the same commit or a separate docs commit."
+      ]
     }
   ]
 }

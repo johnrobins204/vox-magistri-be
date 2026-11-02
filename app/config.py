@@ -64,6 +64,8 @@ class PromptSettings(BaseModel):
     enable_narration: bool = Field(default=True)
     enable_adjudication: bool = Field(default=True)
     verbosity_default: str = Field(default="normal")
+    # Counts only the rules text placed in the prompt (not instructions or the question). 0 = always answer from training data.
+    rules_budget_chars: int = Field(default=6000, ge=0)
     dm_voice: PromptVoiceSettings = Field(default_factory=PromptVoiceSettings)
 
 

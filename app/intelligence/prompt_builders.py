@@ -18,6 +18,7 @@ and client to use.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -264,3 +265,46 @@ def build_chat_messages(
         *({"role": m["role"], "content": _truncate(m.get("content"), max_field_len)} for m in kept),
         {"role": "user", "content": current_text},
     ]
+
+
+# --- rules consult (SPEC-0014 WP-3) -----------------------------------------
+_RULES_EDITION_LABELS = {"5e": "SRD 5.1 (2014)", "5.5e": "SRD 5.2 (2024)"}
+
+RULES_DIRECTIVES_GROUNDED = "\n".join(
+    [
+        "DIRECTIVES:",
+        "- Answer as a D&D rules referee in plain language, using the rules excerpts above.",
+        "- Name the rule you rely on and give the answer first.",
+        "- If the excerpts do not answer the question, say so instead of guessing.",
+        "- Do not narrate, role-play or describe the scene.",
+    ]
+)
+
+RULES_DIRECTIVES_TRAINING = "\n".join(
+    [
+        "DIRECTIVES:",
+        "- Answer as a D&D 5e rules referee in plain language, from your general knowledge of the "
+        "rules.",
+        "- Give the answer first, then the rule name if you know it.",
+        "- If you are not sure, say so instead of guessing.",
+        "- Do not narrate, role-play or describe the scene.",
+    ]
+)
+
+
+def build_rules_prompt(question: str, excerpts: Sequence[Mapping[str, str | None]]) -> str:
+    """
+    One-shot rules consult prompt. Each excerpt is a mapping with name, edition and text.
+    With excerpts: the rules excerpts block, then the question, then the grounded directives.
+    Without excerpts: the question, then the training directives. Excerpt text is inserted
+    verbatim. Pure: no I/O, no logging, no mutation of the inputs.
+    """
+    text_question = f"QUESTION: {question.strip()}"
+    if not excerpts:
+        return "\n\n".join([text_question, RULES_DIRECTIVES_TRAINING])
+    blocks = []
+    for index, excerpt in enumerate(excerpts, start=1):
+        label = _RULES_EDITION_LABELS.get(excerpt["edition"] or "", "edition unknown")
+        blocks.append(f"[{index}] {excerpt['name']} ({label})\n{excerpt['text']}")
+    excerpts_block = "RULES EXCERPTS (SRD):\n\n" + "\n\n".join(blocks)
+    return "\n\n".join([excerpts_block, text_question, RULES_DIRECTIVES_GROUNDED])

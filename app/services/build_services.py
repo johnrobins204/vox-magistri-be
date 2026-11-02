@@ -4,6 +4,7 @@ from typing import Any
 
 from app.config import get_settings
 from app.reference.loader import load_entries
+from app.reference.rules import RULES_PATH, Rule
 from app.reference.species import load_species
 from app.reference.weapons import WEAPONS_PATH, Weapon
 from app.services.inference_service import OllamaInferenceService
@@ -32,6 +33,7 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
     reference = {
         "species": load_species(),
         "weapons": load_entries(WEAPONS_PATH, Weapon, "weapons"),
+        "rules": load_entries(RULES_PATH, Rule, "rules"),
     }
 
     inference = OllamaInferenceService(

@@ -18,7 +18,13 @@ from fastapi.testclient import TestClient
 
 from app.config import get_settings
 from app.factory import create_app
-from app.intelligence.prompt_builders import NarratorVoiceParams, build_narrator_prompt
+from app.intelligence.prompt_builders import (
+    NarratorVoiceParams,
+    build_narrator_prompt,
+    build_rules_prompt,
+)
+from app.intelligence.tools.rules import TRAINING_DISCLAIMER
+from app.reference.rules import Rule
 from app.services.build_services import build_services
 from app.services.repos import SqliteSessionStore, make_default_repos
 from app.services.tool_service import ToolService
@@ -452,3 +458,62 @@ def test_ws_production_graph_unknown_slash_is_error(prod_env):
         "message_id": user_evt["entry"]["id"],
     }
     assert prod_env.chat_calls == []
+
+
+def _opportunity_rule() -> Rule:
+    return Rule(
+        id="opportunity-attacks",
+        name="Opportunity Attacks",
+        edition="5.5e",
+        source="5e 2024 Rules",
+        publisher="Wizards of the Coast",
+        third_party=False,
+        source_key="srd-2024_combat_opportunity-attacks",
+        description=(
+            "When a hostile creature you can see leaves your reach, you can use your "
+            "reaction to make one melee attack against that creature."
+        ),
+    )
+
+
+# SPEC-0014 T-41: /rules with no catalog answers from training; the disclaimer is appended.
+def test_rules_slash_without_catalog_answers_from_training(slash_env):
+    _post(slash_env, "/rules what is a bonus action")
+    wait_idle(slash_env.svc)
+
+    msgs = slash_env.store.list_messages("s1")
+    assert [m["role"] for m in msgs] == ["user", "assistant"]
+    user, reply = msgs
+    assert user["status"] == "completed"
+    assert reply["content"] == "stub reply\n\n" + TRAINING_DISCLAIMER
+    assert reply["meta"] == {
+        "tool": "rules",
+        "source": "training",
+        "rule_ids": [],
+        "reply_to": user["id"],
+    }
+    assert slash_env.chat_calls == [
+        [{"role": "user", "content": build_rules_prompt("what is a bonus action", [])}]
+    ]
+
+
+# SPEC-0014 T-42: /rules with a catalog answers from the rule text; no disclaimer.
+def test_rules_slash_with_catalog_answers_from_rules(slash_env):
+    rule = _opportunity_rule()
+    slash_env.ts.default_context["reference"] = {"rules": [rule]}
+    _post(slash_env, "/rules how do opportunity attacks work")
+    wait_idle(slash_env.svc)
+
+    msgs = slash_env.store.list_messages("s1")
+    assert [m["role"] for m in msgs] == ["user", "assistant"]
+    user, reply = msgs
+    assert user["status"] == "completed"
+    assert reply["content"] == "stub reply"
+    assert reply["meta"] == {
+        "tool": "rules",
+        "source": "rules",
+        "rule_ids": ["opportunity-attacks"],
+        "reply_to": user["id"],
+    }
+    assert len(slash_env.chat_calls) == 1
+    assert rule.description in slash_env.chat_calls[0][-1]["content"]
