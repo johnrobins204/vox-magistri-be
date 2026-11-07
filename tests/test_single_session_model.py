@@ -111,6 +111,7 @@ def test_session_store_protocol_unchanged():
         "get_by_client_id",
         "list_messages",
         "update_message_status",
+        "update_message",
     }
 
 

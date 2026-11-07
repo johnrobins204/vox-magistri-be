@@ -9,11 +9,18 @@ from app.deps import get_inference_service, get_session_store, require_local_tok
 from app.schemas.v1 import (
     MessageCreateReq,
     MessageResp,
+    MessageUpdateReq,
     SessionCreateReq,
     SessionCreateResp,
 )
 from app.services.logger import get_logger
-from app.services.messages import MAX_INPUT_CHARS, submit_user_message
+from app.services.messages import (
+    MAX_INPUT_CHARS,
+    CorrectionError,
+    correct_message,
+    regenerate_reply,
+    submit_user_message,
+)
 from app.type_defs import InferenceService, SessionStore
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
@@ -91,6 +98,29 @@ async def get_message(
         extra={"session_id": session_id, "message_id": message_id},
     )
     return message
+
+
+@router.patch(
+    "/sessions/{session_id}/messages/{message_id}",
+    response_model=MessageResp,
+    dependencies=[Depends(require_local_token)],
+)
+async def patch_message(
+    session_id: str,
+    message_id: str,
+    payload: MessageUpdateReq,
+    store: Annotated[SessionStore, Depends(get_session_store)],
+):
+    try:
+        return correct_message(
+            store=store,
+            session_id=session_id,
+            message_id=message_id,
+            content=payload.content,
+            canon=payload.canon,
+        )
+    except CorrectionError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
 
 
 @router.get(
@@ -197,3 +227,39 @@ async def post_message(
     queue_pos = inference.queue_position(message["id"])
     response.headers["Location"] = f"/api/v1/sessions/{session_id}/messages/{message['id']}"
     return {"message_id": message["id"], "status": "queued", "queue_position": queue_pos}
+
+
+@router.post(
+    "/sessions/{session_id}/messages/{message_id}/regenerate",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_local_token)],
+)
+async def regenerate_message(
+    session_id: str,
+    message_id: str,
+    response: Response,
+    store: Annotated[Any, Depends(get_session_store)],
+    inference: Annotated[Any, Depends(get_inference_service)],
+):
+    # message_id names the assistant reply; the source user message is re-run (ADR-0011).
+    try:
+        user, queued = regenerate_reply(
+            store=store, inference=inference, session_id=session_id, reply_id=message_id
+        )
+    except CorrectionError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
+
+    if not queued:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "status": "queued_full",
+                "retry_after": MAX_QUEUE_RETRY_AFTER,
+                "message_id": user["id"],
+            },
+            headers={"Retry-After": str(MAX_QUEUE_RETRY_AFTER)},
+        )
+
+    queue_pos = inference.queue_position(user["id"])
+    response.headers["Location"] = f"/api/v1/sessions/{session_id}/messages/{user['id']}"
+    return {"message_id": user["id"], "status": "queued", "queue_position": queue_pos}

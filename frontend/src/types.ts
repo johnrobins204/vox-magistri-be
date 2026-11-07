@@ -25,9 +25,17 @@ export interface Message {
   role: Role | null
   content: string | null
   status: MessageStatus
+  canon: boolean
   meta: Record<string, unknown> | null
   created_at: string
   updated_at: string
+}
+
+/** Superseded content kept in `meta.revisions` (ADR-0011). */
+export interface MessageRevision {
+  content: string
+  replaced_at: string
+  reason: 'edit' | 'regenerate'
 }
 
 export interface SessionCreateResp {

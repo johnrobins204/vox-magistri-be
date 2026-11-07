@@ -11,6 +11,7 @@ interface SessionSocketHandlers {
 export interface SessionSocket {
   sendUserMessage: (text: string, clientMessageId: string) => void
   sendStatus: () => void
+  sendRegenerate: (messageId: string) => void
   close: () => void
 }
 
@@ -51,6 +52,14 @@ export function openSessionSocket(
       socket.send(
         JSON.stringify({
           action: 'status',
+        }),
+      )
+    },
+    sendRegenerate: (messageId: string) => {
+      socket.send(
+        JSON.stringify({
+          action: 'regenerate',
+          message_id: messageId,
         }),
       )
     },

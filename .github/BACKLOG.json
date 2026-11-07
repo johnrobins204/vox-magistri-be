@@ -647,22 +647,33 @@
     {
       "id": "REQ-0027",
       "title": "Operator controls: regenerate or edit a narrator reply, and mark a message not canon (retcon)",
-      "status": "backlog",
+      "status": "completed",
       "created_at": "2026-11-07",
       "updated_at": "2026-11-07",
-      "adr_id": null,
-      "spec_path": null,
+      "adr_id": "ADR-0011",
+      "spec_path": "docs/specs/SPEC-0016-message-corrections.md",
       "tasks": [
         "[COMPLETE] Restate requirement",
-        "[PENDING] Architecture review",
-        "[PENDING] Spec drafting",
-        "[PENDING] Implementation"
+        "[COMPLETE] Architecture review: ADR-0011 (accepted, option B), PAT-ARCH-010 (accepted)",
+        "[COMPLETE] Spec drafting: SPEC-0016 (WP-1..WP-9, accepted)",
+        "[COMPLETE] Implementation: SPEC-0016 WP-1..WP-9 done plus fix for queue-full regenerate orphaning a reply (review finding); gate pytest 539 passed, ruff and black clean, frontend build ok; v2->v4 verified on a COPY of dnd.db (backup dnd.pre-req0027.db)"
       ],
       "follow_ups": [
         "Priority 3 of the 2026-11-07 priorities assessment (owner-approved). Sequenced BEFORE the world-memory approval queue so extraction never queues retconned facts.",
         "Interacts with REQ-0026: entities already carry a non-canon exclusion; this item adds the message-level equivalent. Likely needs an additive messages column (PAT-ARCH-008). Owner asked for regenerate/edit and retcon, not a hide-and-reveal flow.",
         "Frontend work is in scope only as the minimum UI to use the controls; ADR optional, architect decides.",
-        "Sequencing: ships before REQ-0028 so the approval queue never mines non-canon messages."
+        "Sequencing: ships before REQ-0028 so the approval queue never mines non-canon messages.",
+        "GAP (blocks COMPLETE): a queue-full regenerate (429) calls enqueue, which sets the user message to status error before returning. The user turn then drops out of the prompt history while its completed reply stays in, leaving an orphan reply. Fix: check queue capacity before writing status, or restore the prior status on rejection; add a test asserting the user status is unchanged after a 429 regenerate (tests/test_message_corrections_api.py, tests/test_ws_session.py).",
+        "(1) frontend Save closes the editor before the PATCH result, so typed text is lost on failure (NarrativeLog/App).",
+        "(2) the regenerate REST route and post_message lack a response_model (PAT-ARCH-005).",
+        "(3) update_message merges meta over old meta, so keys a regenerated tool reply omits persist; includes the stale meta.error left on the user message after a failed regenerate is retried (no test asserts it is cleared).",
+        "(4) no pytest-timeout or bounded WS receive helper, so a red WS test hangs.",
+        "(5) no WS API doc exists for the regenerate action.",
+        "(6) frontend has no JS test runner: UI behaviour is checked only by build and manual smoke. A manual smoke with Ollama is still owed.",
+        "(7) REQ-0028 (mention detection) must honour canon=false when mining messages.",
+        "Minor: ws.py sends the user entry snapshotted before enqueue, so it shows status completed while queued (WP-7 asks for the fresh message).",
+        "Minor: regenerate check-then-enqueue is not locked, so two concurrent regenerates can both pass the 409 check, running the chat twice and recording two revisions (one reply row is kept).",
+        "update_message_status merges meta and cannot delete keys: a rejected regenerate on a message that never had 'error' leaves 'error': null and updated_by behind; a replace-meta store method would clean it up. Also enqueue sets 'queued' before put_nowait, so a non-Full exception leaves the status queued (regenerate now restores, root cause is in enqueue)."
       ]
     },
     {

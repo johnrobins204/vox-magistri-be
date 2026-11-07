@@ -32,7 +32,9 @@ and [PAT-ARCH-002](./PAT-ARCH-002-stdlib-sqlite-store.md).
 4. Writing a user message goes through one shared function used by REST and WS (create
    the message, apply `client_message_id` idempotency, enqueue). Replies are written
    only by the inference worker, as a separate `role='assistant'` message with
-   `meta.reply_to` (REQ-0003). Transports read the reply back from the store.
+   `meta.reply_to` (REQ-0003); a regenerate rewrites that reply in place, still in the
+   worker (ADR-0011). Operator edits and canon changes go through one shared helper in
+   `app/services/messages.py`. Transports read the reply back from the store.
 5. A session "exists" iff `store.get_session(id) is not None`. Unknown id: REST/snapshot
    return 404; WS closes with 1008. Transports never auto-create sessions.
 6. No silent fallbacks: do not probe the store with `hasattr`, and do not catch broad

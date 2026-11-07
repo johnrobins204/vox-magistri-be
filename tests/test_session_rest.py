@@ -49,6 +49,23 @@ def test_rest_post_message_idempotent(stub_client, stub_svc):
     assert [m["role"] for m in messages] == ["user", "assistant"]
 
 
+def test_message_resp_exposes_canon(stub_client, stub_svc):
+    sid = _new_session(stub_client)
+    posted = stub_client.post(
+        f"/api/v1/sessions/{sid}/messages", json={"content": "hello"}, headers=AUTH
+    ).json()
+    wait_idle(stub_svc)
+
+    one = stub_client.get(f"/api/v1/sessions/{sid}/messages/{posted['message_id']}", headers=AUTH)
+    listed = stub_client.get(f"/api/v1/sessions/{sid}/messages", headers=AUTH)
+
+    assert one.status_code == 200
+    assert one.json()["canon"] is True
+    assert listed.status_code == 200
+    assert len(listed.json()) == 2
+    assert all(m["canon"] is True for m in listed.json())
+
+
 def test_rest_post_message_queue_full_returns_429(session_store):
     app = create_app(services={"inference": FakeInference(accept=False), "session": session_store})
     with TestClient(app) as client:

@@ -21,6 +21,7 @@ MESSAGE_KEYS = {
     "meta",
     "created_at",
     "updated_at",
+    "canon",
 }
 
 
@@ -264,7 +265,7 @@ def test_schema_created_on_open(tmp_path):
     finally:
         raw.close()
     assert {"sessions", "messages"} <= tables
-    assert version == 3
+    assert version == 4
 
     reopened = SqliteSessionStore(path)
     try:

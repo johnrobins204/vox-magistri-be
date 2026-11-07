@@ -1,6 +1,12 @@
 import { getApiBaseUrl, getApiToken } from './config'
 import { toCharacterIn, type Character } from './character'
-import type { MessageListResp, SessionCreateResp, Species, SpeciesListResp } from '../types'
+import type {
+  Message,
+  MessageListResp,
+  SessionCreateResp,
+  Species,
+  SpeciesListResp,
+} from '../types'
 
 function authHeaders(): HeadersInit {
   return {
@@ -47,6 +53,20 @@ export async function listMessages(sessionId: string): Promise<MessageListResp> 
   // Backend currently returns a bare array; SPEC-0010 will wrap it in {"messages": [...]}.
   const body = await parseJson<MessageListResp | MessageListResp['messages']>(response)
   return Array.isArray(body) ? { messages: body } : body
+}
+
+export async function updateMessage(
+  sessionId: string,
+  messageId: string,
+  changes: { content?: string; canon?: boolean },
+): Promise<Message> {
+  const url = `${getApiBaseUrl()}/api/v1/sessions/${sessionId}/messages/${messageId}`
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify(changes),
+  })
+  return parseJson<Message>(response)
 }
 
 export async function getIntelStatus(): Promise<{

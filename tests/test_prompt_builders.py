@@ -28,8 +28,15 @@ DEFAULT_VOICE_LINE = (
 SYSTEM = build_system_prompt(Settings().prompts, {})
 
 
-def _m(id, role, content, status="completed"):
-    return {"id": id, "role": role, "content": content, "status": status, "meta": {}}
+def _m(id, role, content, status="completed", canon=None):
+    return {
+        "id": id,
+        "role": role,
+        "content": content,
+        "status": status,
+        "meta": {},
+        "canon": canon,
+    }
 
 
 def _warnings(caplog):
@@ -240,6 +247,52 @@ def test_t17_plain_dicts_only_and_no_mutation():
         {"role": "user", "content": "now"},
     ]
     assert all(set(item) == {"role", "content"} for item in messages)
+
+
+# --- canon filter (SPEC-0016 WP-3; T-20, T-21) -------------------------------------------
+
+
+def test_non_canon_skipped():
+    history = [
+        _m("u0", "user", "keep-u0", canon=True),
+        _m("a0", "assistant", "drop-a0", canon=False),
+        _m("u1", "user", "keep-u1", canon=None),
+        {"id": "a1", "role": "assistant", "content": "keep-a1", "status": "completed"},
+        _m("u2", "user", "drop-u2", canon=False),
+        _m("cur", "user", "now", "running"),
+    ]
+
+    messages = build_chat_messages(SYSTEM, history, "cur", "now", max_turns=6, max_field_len=240)
+
+    assert messages == [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": "keep-u0"},
+        {"role": "user", "content": "keep-u1"},
+        {"role": "assistant", "content": "keep-a1"},
+        {"role": "user", "content": "now"},
+    ]
+
+
+def test_max_turns_counts_only_canon():
+    history = [
+        _m("c0", "user", "c0", canon=True),
+        _m("c1", "assistant", "c1", canon=True),
+        _m("c2", "user", "c2", canon=True),
+        _m("x", "assistant", "non-canon", canon=False),
+        _m("c3", "assistant", "c3", canon=True),
+        _m("c4", "user", "c4", canon=True),
+        _m("cur", "user", "now", "running"),
+    ]
+
+    messages = build_chat_messages(SYSTEM, history, "cur", "now", max_turns=3, max_field_len=240)
+
+    assert messages == [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": "c2"},
+        {"role": "assistant", "content": "c3"},
+        {"role": "user", "content": "c4"},
+        {"role": "user", "content": "now"},
+    ]
 
 
 # --- voice config loader (T-18..T-22) ----------------------------------------------------

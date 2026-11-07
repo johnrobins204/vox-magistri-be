@@ -85,6 +85,15 @@ class MessageCreateReq(BaseModel):
         }
 
 
+class MessageUpdateReq(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    content: str | None = Field(
+        None, min_length=1, description="Replacement text (assistant replies only)"
+    )
+    canon: bool | None = Field(None, description="Set false to mark a message not canon")
+
+
 class MessageResp(BaseModel):
     id: str = Field(..., description="Server-generated message id")
     client_message_id: str | None = Field(None, description="Client id if provided")
@@ -94,6 +103,7 @@ class MessageResp(BaseModel):
     meta: dict[str, Any] | None = Field(None, description="Optional structured metadata")
     created_at: datetime | None = Field(None, description="Creation timestamp (UTC)")
     updated_at: datetime | None = Field(None, description="Last update timestamp (UTC)")
+    canon: bool = Field(True, description="False when the message is marked not canon")
 
     class Config:
         orm_mode = True

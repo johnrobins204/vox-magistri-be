@@ -12,6 +12,7 @@ from app.services.logger import get_logger
 logger = get_logger(__name__)
 
 INTERRUPTED_ERROR = "interrupted by server restart"
+_REVISION_REASONS = frozenset({"edit", "regenerate"})
 
 # Append-only (PAT-ARCH-008): (version, table, column, ddl). Never edit an entry.
 # column None = CREATE TABLE IF NOT EXISTS step, guarded by sqlite_master (ADR-0010).
@@ -27,6 +28,7 @@ _MIGRATIONS: list[tuple[int, str, str | None, str]] = [
         "status TEXT NOT NULL DEFAULT 'canon', created_at TEXT NOT NULL, "
         "updated_at TEXT NOT NULL)",
     ),
+    (4, "messages", "canon", "ALTER TABLE messages ADD COLUMN canon INTEGER DEFAULT 1"),
 ]
 
 
@@ -49,6 +51,7 @@ def _message_from_row(row: sqlite3.Row) -> dict[str, Any]:
         "meta": json.loads(row["meta"]),
         "created_at": _parse_ts(row["created_at"]),
         "updated_at": _parse_ts(row["updated_at"]),
+        "canon": row["canon"] is None or bool(row["canon"]),
     }
 
 
@@ -242,6 +245,7 @@ class SqliteSessionStore:
             "meta": json.loads(meta_text),
             "created_at": now,
             "updated_at": now,
+            "canon": True,
         }
 
     def get_message(self, session_id: str, message_id: str) -> dict[str, Any] | None:
@@ -284,6 +288,55 @@ class SqliteSessionStore:
                     "WHERE session_id = ? AND id = ?",
                     (status, meta_text, _now().isoformat(), session_id, message_id),
                 )
+
+    def update_message(
+        self,
+        session_id: str,
+        message_id: str,
+        *,
+        content: str | None = None,
+        canon: bool | None = None,
+        meta: dict[str, Any] | None = None,
+        reason: str = "edit",
+    ) -> dict[str, Any]:
+        # PAT-ARCH-010: content changes append to meta.revisions; nothing is deleted.
+        if content is None and canon is None and meta is None:
+            raise ValueError("nothing to change")
+        if reason not in _REVISION_REASONS:
+            raise ValueError(f"invalid revision reason: {reason!r}")
+        if meta is not None and "revisions" in meta:
+            raise ValueError("meta key 'revisions' is reserved")
+        with self._lock:
+            with self._conn:
+                row = self._conn.execute(
+                    "SELECT * FROM messages WHERE session_id = ? AND id = ?",
+                    (session_id, message_id),
+                ).fetchone()
+                if row is None:
+                    raise KeyError(message_id)
+                merged = {**json.loads(row["meta"]), **(meta or {})}
+                now = _now().isoformat()
+                new_content = row["content"]
+                if content is not None and content != row["content"]:
+                    revisions = list(merged.get("revisions", []))
+                    revisions.append(
+                        {"content": row["content"], "replaced_at": now, "reason": reason}
+                    )
+                    merged["revisions"] = revisions
+                    new_content = content
+                # Serialize before the UPDATE so a bad meta raises with nothing written.
+                meta_text = json.dumps(merged)
+                new_canon = row["canon"] if canon is None else int(canon)
+                self._conn.execute(
+                    "UPDATE messages SET content = ?, canon = ?, meta = ?, updated_at = ? "
+                    "WHERE session_id = ? AND id = ?",
+                    (new_content, new_canon, meta_text, now, session_id, message_id),
+                )
+                updated = self._conn.execute(
+                    "SELECT * FROM messages WHERE session_id = ? AND id = ?",
+                    (session_id, message_id),
+                ).fetchone()
+                return _message_from_row(updated)
 
     def create_entity(
         self,

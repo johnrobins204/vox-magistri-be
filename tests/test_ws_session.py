@@ -1,6 +1,7 @@
 """The single session WebSocket (SPEC-0004, WP-4, test items 17-27 and 26a)."""
 
 from datetime import datetime
+from queue import Full
 
 import pytest
 from fastapi.routing import APIWebSocketRoute
@@ -319,3 +320,184 @@ async def test_ws_send_does_not_swallow_non_disconnect_errors():
 
     assert isinstance(recorder.sent[0]["t"], str)
     assert recorder.sent[0]["t"].startswith("2026-01-01")
+
+
+# SPEC-0016 WP-7: WebSocket `regenerate` action (REQ-0027)
+def _one_turn(ws) -> tuple[str, str]:
+    ws.receive_json()  # snapshot
+    ws.send_json({"action": "user_message", "text": "hello"})
+    user_id = ws.receive_json()["entry"]["id"]
+    reply_id = ws.receive_json()["entry"]["id"]
+    ws.receive_json()  # done
+    return user_id, reply_id
+
+
+def _seed_turn(store, sid: str) -> tuple[str, str]:
+    store.create_message(sid, "u1", {"role": "user", "content": "hi"}, status="completed")
+    store.create_message(
+        sid,
+        "a1",
+        {"role": "assistant", "content": "stub reply", "meta": {"reply_to": "u1"}},
+        status="completed",
+    )
+    return "u1", "a1"
+
+
+# T-60
+def test_ws_regenerate(stub_client, stub_svc, monkeypatch):
+    sid = _new_session(stub_client)
+    with stub_client.websocket_connect(_ws_url(sid)) as ws:
+        user_id, reply_id = _one_turn(ws)
+        monkeypatch.setattr(stub_svc.client, "chat", lambda messages, **kw: "v2")
+
+        ws.send_json({"action": "regenerate", "message_id": reply_id})
+        user_evt = ws.receive_json()
+        reply_evt = ws.receive_json()
+        done = ws.receive_json()
+
+    assert user_evt["type"] == "entry"
+    assert user_evt["entry"]["id"] == user_id
+    assert user_evt["entry"]["role"] == "user"
+
+    assert reply_evt["type"] == "entry"
+    reply = reply_evt["entry"]
+    assert reply["id"] == reply_id
+    assert reply["content"] == "v2"
+    assert len(reply["meta"]["revisions"]) == 1
+    assert reply["meta"]["revisions"][0]["content"] == "stub reply"
+    assert reply["canon"] is True
+
+    assert done == {"type": "done", "message_id": user_id, "reply_id": reply_id}
+
+
+# T-61
+def test_ws_regenerate_errors_keep_socket(stub_client, session_store):
+    sid = _new_session(stub_client)
+    user_id, reply_id = _seed_turn(session_store, sid)
+    bad_requests = [
+        ({"action": "regenerate"}, "message_id is required"),
+        ({"action": "regenerate", "message_id": ""}, "message_id is required"),
+        ({"action": "regenerate", "message_id": 5}, "message_id is required"),
+        ({"action": "regenerate", "message_id": "nope"}, "Message not found"),
+        ({"action": "regenerate", "message_id": user_id}, "assistant"),
+    ]
+
+    with stub_client.websocket_connect(_ws_url(sid)) as ws:
+        ws.receive_json()  # snapshot
+        for request, expected in bad_requests:
+            ws.send_json(request)
+            evt = ws.receive_json()
+            assert evt["type"] == "error"
+            assert expected in evt["message"]
+        ws.send_json({"action": "status"})
+        assert ws.receive_json()["type"] == "status"
+
+
+def test_ws_regenerate_queue_full_sends_error_with_user_id(session_store):
+    app = create_app(services={"inference": FakeInference(accept=False), "session": session_store})
+
+    with TestClient(app) as c:
+        sid = _new_session(c)
+        user_id, reply_id = _seed_turn(session_store, sid)
+        with c.websocket_connect(_ws_url(sid)) as ws:
+            ws.receive_json()  # snapshot
+            ws.send_json({"action": "regenerate", "message_id": reply_id})
+            err = ws.receive_json()
+            ws.send_json({"action": "status"})
+            status_evt = ws.receive_json()
+
+    assert err["type"] == "error"
+    assert "queue full" in err["message"]
+    assert err["message_id"] == user_id
+    assert status_evt["type"] == "status"
+
+
+def _queue_full_until_released(svc, monkeypatch) -> dict:
+    """The real enqueue sees a full queue while state["full"] is True."""
+    state = {"full": True}
+    accept = svc._queue.put_nowait
+
+    def put_nowait(job):
+        if state["full"]:
+            raise Full
+        accept(job)
+
+    monkeypatch.setattr(svc._queue, "put_nowait", put_nowait)
+    return state
+
+
+def _capture_prompts(svc, monkeypatch) -> list:
+    prompts: list = []
+
+    def chat(messages, **kw):
+        prompts.append([(m["role"], m["content"]) for m in messages])
+        return "again reply"
+
+    monkeypatch.setattr(svc.client, "chat", chat)
+    return prompts
+
+
+def test_ws_regenerate_queue_full_keeps_user_turn_in_next_prompt(
+    stub_client, stub_svc, session_store, monkeypatch
+):
+    sid = _new_session(stub_client)
+    user_id, reply_id = _seed_turn(session_store, sid)
+    full = _queue_full_until_released(stub_svc, monkeypatch)
+    prompts = _capture_prompts(stub_svc, monkeypatch)
+
+    with stub_client.websocket_connect(_ws_url(sid)) as ws:
+        ws.receive_json()  # snapshot
+        ws.send_json({"action": "regenerate", "message_id": reply_id})
+        err = ws.receive_json()
+        assert err["type"] == "error"
+        assert err["message_id"] == user_id
+        assert session_store.get_message(sid, user_id)["status"] == "completed"
+
+        full["full"] = False
+        ws.send_json({"action": "user_message", "text": "again"})
+        ws.receive_json()  # entry
+        ws.receive_json()  # reply
+        ws.receive_json()  # done
+
+    assert prompts
+    assert ("user", "hi") in prompts[-1]
+    assert ("assistant", "stub reply") in prompts[-1]
+
+
+# T-62
+def test_ws_failed_regenerate(stub_client, stub_svc, session_store, monkeypatch):
+    sid = _new_session(stub_client)
+    with stub_client.websocket_connect(_ws_url(sid)) as ws:
+        user_id, reply_id = _one_turn(ws)
+
+        def failing_chat(messages, **kw):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(stub_svc.client, "chat", failing_chat)
+        ws.send_json({"action": "regenerate", "message_id": reply_id})
+        ws.receive_json()  # user entry
+        err = ws.receive_json()
+
+    assert err == {"type": "error", "message_id": user_id, "message": "boom"}
+    reply = session_store.get_message(sid, reply_id)
+    assert reply["content"] == "stub reply"
+
+
+# T-63
+def test_ws_snapshot_shows_rest_correction(stub_client, stub_svc):
+    sid = _new_session(stub_client)
+    with stub_client.websocket_connect(_ws_url(sid)) as ws:
+        _, reply_id = _one_turn(ws)
+
+    resp = stub_client.patch(
+        f"/api/v1/sessions/{sid}/messages/{reply_id}", json={"content": "edited"}, headers=AUTH
+    )
+    assert resp.status_code == 200
+
+    with stub_client.websocket_connect(_ws_url(sid)) as ws:
+        snap = ws.receive_json()
+
+    entry = next(e for e in snap["entries"] if e["id"] == reply_id)
+    assert entry["content"] == "edited"
+    assert entry["canon"] is True
+    assert entry["meta"]["revisions"][0]["content"] == "stub reply"

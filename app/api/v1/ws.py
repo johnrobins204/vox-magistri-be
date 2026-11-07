@@ -19,7 +19,14 @@ from fastapi.encoders import jsonable_encoder
 from app.config import get_settings
 from app.deps import get_inference_service, get_session_store
 from app.services.logger import get_logger
-from app.services.messages import MAX_INPUT_CHARS, build_snapshot, submit_user_message
+from app.services.messages import (
+    MAX_INPUT_CHARS,
+    CorrectionError,
+    build_snapshot,
+    find_reply,
+    regenerate_reply,
+    submit_user_message,
+)
 
 logger = get_logger(__name__)
 
@@ -64,14 +71,6 @@ async def _wait_for_terminal(
         await asyncio.sleep(WS_POLL_INTERVAL_SECONDS)
 
 
-def _find_reply(store, session_id: str, user_message_id: str) -> dict[str, Any] | None:
-    for m in store.list_messages(session_id):
-        reply_to = (m.get("meta") or {}).get("reply_to")
-        if m.get("role") == "assistant" and reply_to == user_message_id:
-            return copy.deepcopy(m)
-    return None
-
-
 async def _handle_user_message(
     ws: WebSocket, store, inference, session_id: str, data: dict[str, Any]
 ) -> None:
@@ -108,33 +107,67 @@ async def _handle_user_message(
         await _send_error(ws, "Inference queue full; try again later", message_id=message["id"])
         return
 
-    final = await _wait_for_terminal(
-        store, session_id, message["id"], _reply_timeout_seconds(inference)
-    )
+    await _await_reply(ws, store, inference, session_id, message)
+
+
+async def _handle_regenerate(
+    ws: WebSocket, store, inference, session_id: str, data: dict[str, Any]
+) -> None:
+    # Same validation-first shape as user_message; the worker revises the reply in place.
+    if inference is None:
+        await _send_error(ws, "Inference service unavailable")
+        return
+    message_id = data.get("message_id")
+    if not isinstance(message_id, str) or not message_id:
+        await _send_error(ws, "message_id is required")
+        return
+
+    try:
+        user, queued = regenerate_reply(
+            store=store, inference=inference, session_id=session_id, reply_id=message_id
+        )
+    except CorrectionError as exc:
+        await _send_error(ws, exc.detail)
+        return
+
+    if not queued:
+        await _send_error(ws, "Inference queue full; try again later", message_id=user["id"])
+        return
+
+    await ws_send(ws, {"type": "entry", "entry": user})
+    await _await_reply(ws, store, inference, session_id, user)
+
+
+async def _await_reply(
+    ws: WebSocket, store, inference, session_id: str, user_message: dict[str, Any]
+) -> None:
+    """Wait for the worker to finish `user_message`; then send its reply and `done`, or `error`."""
+    user_id = user_message["id"]
+    final = await _wait_for_terminal(store, session_id, user_id, _reply_timeout_seconds(inference))
     if final is None:
-        await _send_error(ws, "Timed out waiting for reply", message_id=message["id"])
+        await _send_error(ws, "Timed out waiting for reply", message_id=user_id)
         return
 
     status = final["status"]
     if status == "completed":
-        reply = _find_reply(store, session_id, message["id"])
+        reply = find_reply(store, session_id, user_id)
         if reply is None:
             logger.error(
                 "ws.reply.missing",
-                extra={"session_id": session_id, "message_id": message["id"]},
+                extra={"session_id": session_id, "message_id": user_id},
             )
-            await _send_error(ws, "Reply not found", message_id=message["id"])
+            await _send_error(ws, "Reply not found", message_id=user_id)
             return
         await ws_send(ws, {"type": "entry", "entry": reply})
         await ws_send(
             ws,
-            {"type": "done", "message_id": message["id"], "reply_id": reply["id"]},
+            {"type": "done", "message_id": user_id, "reply_id": reply["id"]},
         )
     elif status == "error":
         error_text = (final.get("meta") or {}).get("error") or "Inference failed"
-        await _send_error(ws, error_text, message_id=message["id"])
+        await _send_error(ws, error_text, message_id=user_id)
     elif status == "cancelled":
-        await _send_error(ws, "cancelled", message_id=message["id"])
+        await _send_error(ws, "cancelled", message_id=user_id)
 
 
 @router.websocket("/sessions/{session_id}")
@@ -167,6 +200,8 @@ async def ws_session(
             action = data.get("action")
             if action == "user_message":
                 await _handle_user_message(ws, session_store, inference, session_id, data)
+            elif action == "regenerate":
+                await _handle_regenerate(ws, session_store, inference, session_id, data)
             elif action == "status":
                 queue_position = None
                 estimated_wait = None

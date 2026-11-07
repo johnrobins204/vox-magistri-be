@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createSession, getIntelStatus, listMessages } from './lib/api'
+import { createSession, getIntelStatus, listMessages, updateMessage } from './lib/api'
 import { openSessionSocket, type SessionSocket } from './lib/ws'
+import { isCanon } from './lib/corrections'
 import { CharacterCreator } from './components/CharacterCreator'
 import { CharacterPanel } from './components/CharacterPanel'
 import { Composer } from './components/Composer'
@@ -180,6 +181,27 @@ function App() {
     [sendText],
   )
 
+  const changeMessage = async (message: Message, changes: { content?: string; canon?: boolean }) => {
+    if (!sessionId) return
+    try {
+      const updated = await updateMessage(sessionId, message.id, changes)
+      setMessages((existing) => upsertMessage(existing, updated))
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : 'Failed to update the message')
+    }
+  }
+
+  const toggleCanon = (message: Message) => changeMessage(message, { canon: !isCanon(message) })
+
+  const editMessage = (message: Message, text: string) => changeMessage(message, { content: text })
+
+  const regenerate = (message: Message) => {
+    if (!socketRef.current || socketStatus !== 'open') return
+    setErrorText('')
+    setIsSending(true)
+    socketRef.current.sendRegenerate(message.id)
+  }
+
   const startNewSession = async (hero: Character | null = sendableHero(roster, activeCharacterId)) => {
     try {
       setErrorText('')
@@ -276,7 +298,13 @@ function App() {
         <CharacterPanel character={character} />
 
         <section className="panel thread">
-          <NarrativeLog messages={messages} isSending={isSending} />
+          <NarrativeLog
+            messages={messages}
+            isSending={isSending}
+            onToggleCanon={toggleCanon}
+            onEdit={editMessage}
+            onRegenerate={regenerate}
+          />
         </section>
 
         <DiceTray onRoll={rollDice} disabled={socketStatus !== 'open' || isSending} />

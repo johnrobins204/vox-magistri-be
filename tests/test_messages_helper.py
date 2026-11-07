@@ -123,3 +123,21 @@ def test_build_snapshot_unknown_session_is_none():
     assert build_snapshot(store, "nope") is None
     assert build_snapshot(store, "1") is None
     assert store.get_session("nope") is None
+
+
+def test_create_payload_cannot_set_canon_or_revisions():
+    store = _store_with_session("s1")
+
+    msg, created, _queued = submit_user_message(
+        store=store,
+        inference=FakeInference(),
+        session_id="s1",
+        payload={**_payload("hi"), "canon": False, "meta": {"revisions": ["x"]}},
+    )
+
+    assert created is True
+    assert msg["canon"] is True
+    assert "revisions" not in msg["meta"]
+    stored = store.list_messages("s1")[0]
+    assert stored["canon"] is True
+    assert "revisions" not in stored["meta"]

@@ -61,6 +61,16 @@ class SessionStore(Protocol):
     def update_message_status(
         self, session_id: str, message_id: str, status: str, meta: dict[str, Any] | None = None
     ) -> None: ...
+    def update_message(
+        self,
+        session_id: str,
+        message_id: str,
+        *,
+        content: str | None = None,
+        canon: bool | None = None,
+        meta: dict[str, Any] | None = None,
+        reason: str = "edit",
+    ) -> dict[str, Any]: ...
 
 
 class InferenceService(Protocol):

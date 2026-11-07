@@ -21,6 +21,7 @@ from app.intelligence.prompt_builders import (
 from app.intelligence.tool_handler import detect_tool
 from app.reference.species import Species
 from app.services.logger import get_logger
+from app.services.messages import find_reply
 
 logger = get_logger(__name__)
 MAX_QUEUE_SIZE = 20
@@ -357,7 +358,25 @@ class OllamaInferenceService:
         text: str,
         meta: dict | None = None,
     ) -> str:
-        """Append the reply as a new assistant message linked by meta.reply_to; exceptions propagate so the worker marks the job as error."""
+        """
+        Write the reply for a user message: revise the existing reply in place (regenerate,
+        PAT-ARCH-010), else append a new assistant message linked by meta.reply_to. Exceptions
+        propagate so the worker marks the job as error.
+        """
+        existing = find_reply(store, session_id, user_message_id)
+        if existing is not None:
+            store.update_message(
+                session_id, existing["id"], content=text, meta=meta, reason="regenerate"
+            )
+            logger.info(
+                "reply.revised",
+                extra={
+                    "session_id": session_id,
+                    "message_id": user_message_id,
+                    "reply_id": existing["id"],
+                },
+            )
+            return existing["id"]
         reply_id = str(uuid4())
         store.create_message(
             session_id,

@@ -1434,3 +1434,68 @@ button.ghost:hover:enabled {
     max-height: 30vh;
   }
 }
+
+/* ---------- Message corrections (SPEC-0016) ---------- */
+
+.non-canon {
+  opacity: 0.55;
+}
+
+.edited-badge {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+
+button.canon-toggle {
+  font-size: 0.68rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.command-echo button.canon-toggle {
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+
+.bubble-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+button.correction-action {
+  font-size: 0.74rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.edit-form {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.edit-form textarea {
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  font-family: var(--narrative);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+
+.edit-form textarea:focus {
+  outline: none;
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(200, 164, 110, 0.12);
+}
