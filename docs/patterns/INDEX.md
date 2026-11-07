@@ -12,3 +12,20 @@
 | PAT-ARCH-008 | architecture | Schema migrations: ordered `user_version` ladder in the store constructor | accepted | Base schema frozen at v1; additive steps in one append-only `(version, table, column, ddl)` list applied on open, each in an explicit transaction with a `table_info` idempotency guard and a `user_version` bump; never downgrade; old-file-DB test per step; non-additive changes need an ADR (ADR-0008). |
 | PAT-ARCH-009 | architecture | Reference-grounded LLM tools: deterministic selection, bounded excerpt budget, flagged training fallback | accepted | Tools read only the in-memory catalog; a pure stdlib selector (name-weighted, threshold, edition tie-break) packs whole entries in rank order within one chars setting, never truncating; the top entry over budget, no match or an empty catalog means training mode; `meta.source` is `<dataset>` or `training` with an always-present ids list; the training reply gets a fixed disclaimer; one-shot pure builder with no narrator voice; counts-only logs; no shared code until a second grounded tool (ADR-0009). |
 | PAT-CODE-001 | code | Centralized logging via app.services.logger | accepted | Use `get_logger(__name__)` from `app/services/logger.py` everywhere; no stdlib `logging.getLogger` or `print()` for app logging. |
+
+## Mechanically enforced (do not open the pattern to re-check these rules)
+
+`tests/test_patterns.py` fails with a one-line message when these are broken. Open the
+pattern file only when designing something new in that area.
+
+| Pattern | Enforced rule | Test |
+|---|---|---|
+| PAT-CODE-001 | no `getLogger()` call or `print()` in `app/` (except `logger.py`, `tst.py`) | `test_pat_code_001_*` |
+| PAT-ARCH-001 | routers in `app/api/` never import `sqlite3`, `repos`, `build_services` | `test_pat_arch_001_*` |
+| PAT-ARCH-002 | `sqlite3` imported only in `app/services/repos.py` | `test_pat_arch_002_*` |
+| PAT-ARCH-003 | `prompt_builders.py` imports no store, HTTP client, `app.deps` or `sqlite3` | `test_pat_arch_003_*` |
+| PAT-ARCH-004 / tool contract | each tool module has `NAME` and `run`; no store imports; no `dnd_data` or `app/reference` paths | `test_pat_arch_004_*` |
+| PAT-ARCH-008 | `_MIGRATIONS` versions contiguous from 2; every step is `ALTER TABLE t ADD COLUMN c` | `test_pat_arch_008_*` |
+| doc budgets | specs from SPEC-0015 under 20,000 bytes; ADRs from 0010 under 10,000 bytes | `test_new_*_stay_within_budget` |
+
+Not enforced (needs judgement): PAT-ARCH-005, 006, 007, 009 and the semantic parts of 001–004.

@@ -31,19 +31,19 @@ narration/adjudication; the client is a separate React app (not in this repo).
 - Runtime deps: `requirements.txt`. Dev deps (pytest, ruff, black): `requirements-dev.txt` — install with `pip install -r requirements-dev.txt`.
 - Tests: `pytest` (config in `pyproject.toml`, tests live in `tests/`). Use the `app`/`client` fixtures in `tests/conftest.py` (builds a real app with `:memory:` SQLite repos, no network/Ollama required).
 - Lint/format: `ruff check app tests` and `black app tests`.
-- CI (`.github/workflows/ci.yml`) runs `ruff check`, `black --check` and `pytest`; run the same locally before declaring work done.
+- CI (`.github/workflows/ci.yml`) runs `ruff check`, `black --check` and `pytest`; run the same locally before declaring work done with `scripts/gate.sh` (same three steps, quiet on success).
 - `dupe-scan.sh` was retired; after large refactors, eyeball `git ls-files` for accidentally duplicated basenames under different folders (a recurring issue in this repo's history).
 
 ## Coworking workflow (requirements → architecture → spec → implement → wrap-up)
 For any non-trivial requirement, need, or desired outcome, use the **Coworking
-Orchestrator** custom agent instead of free-form changes. It runs four stages:
-restate the requirement in RFC 2119 language (logged in
-`docs/requirements/LOG.md`) → backlog entry in `.github/BACKLOG.json` (written
-only by the **Backlog Manager Subagent**) → architecture review via the **Senior Architect**
+Orchestrator** custom agent instead of free-form changes. It runs three steps:
+restate the requirement in RFC 2119 language and log it (`scripts/backlog.py add`
+writes the `docs/requirements/LOG.md` row and the `.github/BACKLOG.json` entry) →
+architecture review via the **Senior Architect**
 agent (decides if an ADR is needed, writes it under `docs/adr/` with a weighted
 rubric from `docs/constraints.md`) → spec via the **Spec Writer** agent
 (test-spec-first, then self-contained work packages, under `docs/specs/`).
-Every stage MUST consult `docs/patterns/INDEX.md` before producing new
+Every step MUST consult `docs/patterns/INDEX.md` before producing new
 architecture, specs, or code — new patterns can be authored freely at
 `status: proposed`, but changing an `accepted` pattern requires the architect
 plus explicit human sign-off. `docs/constraints.md` is the standing charter:
@@ -51,8 +51,26 @@ this is a solo, part-time hobby project — prefer the smallest edit, avoid
 speculative abstraction, and don't scope-creep toward production hardening.
 
 After the spec: the **Implementer** agent executes one work package at a time,
-test-first, then the **Session Cleanup Agent** runs the gate (pytest/ruff/black),
+test-first, then the **Session Cleanup Agent** runs the gate (`scripts/gate.sh`),
 verifies against the spec, updates the backlog and stages changes with a drafted
 commit message — you review and commit. Orchestrators offer these as handoff
 buttons; `/new-req` and `/wrap-up` prompts start the first and last stage.
+
+## Token-lean workflow rules
+Context size per model call is the main cost, so keep it small:
+- Never read or hand-edit `.github/BACKLOG.json` or `docs/requirements/LOG.md`; use
+  `python scripts/backlog.py` (`next-id`, `list`, `show`, `add`, `set`, `task`,
+  `add-task`, `followup`). Its schema is enforced by `tests/test_backlog_schema.py`.
+- Never read a whole spec to implement or verify one work package: use
+  `python scripts/spec_slice.py SPEC-NNNN [WP-n | --list]`. New specs stay under
+  20,000 bytes and new ADRs under 10,000 bytes (enforced in `tests/test_patterns.py`).
+- Pattern rules that can be checked live in `tests/test_patterns.py` and are listed
+  in the INDEX "Mechanically enforced" table; do not open those pattern docs just to
+  re-check a rule. Prefer adding a check to the linter over adding prose.
+- Run the gate with `scripts/gate.sh` (quiet on success). While iterating, run only
+  the tests you touched: `scripts/gate.sh tests/test_x.py -k name`.
+- Do not open `docs/specs/`, `docs/adr/`, `docs/from_consultant/`, `dnd_data/` or
+  `app/reference/*.json` unless the task names them; they are large and rarely needed.
+- Subagents get ids and file paths, not pasted document contents, and return short
+  summaries, not diffs or passing logs.
 

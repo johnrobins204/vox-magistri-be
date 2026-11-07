@@ -25,3 +25,7 @@ producing new design or code for this project.
    why it doesn't fit before proposing a new one.
 3. If none exists, author a new pattern file from [TEMPLATE.md](./TEMPLATE.md) and
    add a row to `INDEX.md` with `status: proposed`.
+4. Prefer a check over prose: if a pattern has a rule a script can verify (imports,
+   names, file layout, sizes), add it to `tests/test_patterns.py` and list it in the
+   INDEX "Mechanically enforced" table. Agents do not need to open a pattern just to
+   re-check a rule that is enforced there.

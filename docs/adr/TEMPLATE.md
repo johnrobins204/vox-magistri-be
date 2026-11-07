@@ -10,8 +10,10 @@ superseded_by: null
 # <Decision Title>
 
 ## Context
-What is the requirement and why does it force a decision? Link the requirement
-restatement (`docs/requirements/LOG.md`) and any applicable pattern entries.
+Why the requirement forces a decision, in a few lines. Link the requirement
+(`docs/requirements/LOG.md`, do not copy it) and applicable pattern ids. Keep the
+whole ADR under 10,000 bytes (`tests/test_patterns.py` enforces this for new ADRs):
+tables over prose, no quoted source code.
 
 ## Decision Drivers
 List the rubric dimensions in play (start from `docs/constraints.md`, add any
@@ -33,8 +35,8 @@ Each cell MUST carry a one-line justification grounded in real facts about this
 codebase (file references, measured constraints) — not unsupported preference.
 
 ## Decision Outcome
-Chosen option and why it won on the weighted rubric. State explicitly what was
-traded away.
+Chosen option and why it won on the weighted rubric (a short paragraph). State
+explicitly what was traded away.
 
 ## Consequences
 - Positive:

@@ -23,8 +23,9 @@ decide, with evidence, whether it needs an Architecture Decision Record.
 ## Approach
 1. Read `docs/constraints.md` for the standing rubric dimensions and
    non-negotiables.
-2. Read `docs/patterns/INDEX.md`; open any pattern entries that look relevant
-   (architecture category primarily, but note spec/code entries too).
+2. Read `docs/patterns/INDEX.md`; open only the pattern entries whose summary
+   bears on the design (the INDEX lists which rules `tests/test_patterns.py`
+   already enforces; do not open a pattern just to re-check those rules).
 3. Decide ADR necessity using the triggers in `docs/adr/README.md`. State your
    reasoning explicitly — which trigger(s) fired or why none did.
 4. If no ADR is required: report that decision with the reasoning, and stop
@@ -39,17 +40,21 @@ decide, with evidence, whether it needs an Architecture Decision Record.
      behavior) — not vibes.
    - Compute a weighted total and select the option that wins on the rubric.
    - Write the ADR to `docs/adr/NNNN-slug.md` using `docs/adr/TEMPLATE.md`,
-     `status: proposed`.
+     `status: proposed`. Keep it under 10,000 bytes (`tests/test_patterns.py`
+     enforces this): findings as a short table, no quoted source code, no
+     restating the requirement.
 6. If you create or would need to change a pattern: create new ones directly at
    `status: proposed` in the right `docs/patterns/<category>/` folder and add a
-   row to `docs/patterns/INDEX.md`. For changes to an `accepted` pattern, write
+   row to `docs/patterns/INDEX.md`. If the pattern has a mechanically checkable
+   rule, add the check to `tests/test_patterns.py` and list it in the INDEX
+   "Mechanically enforced" table. For changes to an `accepted` pattern, write
    up the proposed change but do not apply it — flag it for human sign-off.
 
 ## Output Format
-Return, in order:
+Return, in order (keep it under 25 lines; the caller passes paths on, not text):
 1. ADR-required decision (yes/no) and the one-line reasoning.
-2. If yes: path to the ADR file, the chosen option, and the weighted rubric
-   table reproduced inline.
+2. If yes: path to the ADR file and the chosen option with its weighted total
+   (the full rubric lives in the ADR, do not reproduce it).
 3. Any pattern files created or flagged for human sign-off, with their ids.
 4. An explicit question asking the human to confirm/accept the ADR and any new
    patterns before they move from `proposed` to `accepted`.

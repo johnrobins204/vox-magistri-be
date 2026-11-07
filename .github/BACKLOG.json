@@ -591,6 +591,24 @@
         "Recall/context risks from SPEC-0014 section 4: selection is lexical, so paraphrased questions fall back to training mode. Ollama num_ctx is 4096 but the client sends no num_ctx; if the installed default is 2,048 tokens, set prompts.rules_budget_chars to about 3,000.",
         "Docs: docs/patterns/INDEX.md gained a PAT-ARCH-009 accepted row, and PAT-ARCH-006 and the REQ-0018 note were amended with human approval; the human should confirm these are in the same commit or a separate docs commit."
       ]
+    },
+    {
+      "id": "REQ-0025",
+      "title": "Token-lean coworking workflow: backlog/spec-slice/gate scripts and pattern linter",
+      "status": "completed",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review: not needed (tooling/docs only)",
+        "[COMPLETE] Spec drafting: skipped (direct implementation authorized by human)",
+        "[COMPLETE] Implementation: scripts/backlog.py, spec_slice.py, gate.sh, tests/test_patterns.py, agent and doc updates; gate green (pytest 443 passed)"
+      ],
+      "follow_ups": [
+        "Measure token use over the next sprint and compare with the REQ-0024 baseline (about 6.6M input tokens in one orchestrated run); consider moving the Senior Architect from Opus to Sonnet if ADR quality holds."
+      ]
     }
   ]
 }

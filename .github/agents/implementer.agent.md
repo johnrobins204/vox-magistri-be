@@ -24,19 +24,24 @@ package, the spec's Test Spec, and the files the package lists.
   (`get_logger`, settings namespaces, services as plain dicts).
 
 ## Approach
-1. Read the named spec, the single work package you were given, and
-   `docs/patterns/INDEX.md` (open patterns that apply, e.g. PAT-CODE-001).
+1. Read only your slice: `./venv-dnd-server/bin/python scripts/spec_slice.py SPEC-NNNN WP-n`
+   (front matter, Test Spec for this package, the package). Do not open the
+   whole spec. Skim `docs/patterns/INDEX.md`; open a pattern only if it is not
+   in the "Mechanically enforced" table and applies to your files.
 2. Write or update the tests the Test Spec assigns to this package first; run
-   them and confirm they fail for the expected reason.
+   only those (`scripts/gate.sh tests/test_x.py`) and confirm they fail for the
+   expected reason.
 3. Implement the minimum change that satisfies the package's acceptance criteria.
-4. Run the gate, using the repo venv (`./venv-dnd-server/bin/...`):
-   `pytest -q`, `ruff check app tests`, `black --check app tests`.
-   Fix failures caused by your change; report unrelated pre-existing failures.
+4. Run the full gate once, at the end: `scripts/gate.sh` (pytest, ruff, black;
+   prints one line per passing step and full output only on failure; the pattern
+   linter `tests/test_patterns.py` runs inside pytest). Fix failures caused by
+   your change; report unrelated pre-existing failures.
 5. Stop after this one package, even if more remain.
 
 ## Output Format
+Keep it short; the caller does not need the diff or passing logs.
 - Work package implemented (spec id + number)
 - Files changed
-- Gate results (pytest / ruff / black), with failing output if any
-- Acceptance criteria, each marked met / not met with evidence
+- Gate results (the gate's own summary lines, with failing output only if any)
+- Acceptance criteria, each marked met / not met with a one-line evidence pointer
 - Anything blocked or discovered that should become a backlog follow-up
