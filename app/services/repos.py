@@ -5,6 +5,7 @@ import sqlite3
 import threading
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
 from app.services.logger import get_logger
 
@@ -13,8 +14,19 @@ logger = get_logger(__name__)
 INTERRUPTED_ERROR = "interrupted by server restart"
 
 # Append-only (PAT-ARCH-008): (version, table, column, ddl). Never edit an entry.
-_MIGRATIONS: list[tuple[int, str, str, str]] = [
+# column None = CREATE TABLE IF NOT EXISTS step, guarded by sqlite_master (ADR-0010).
+_MIGRATIONS: list[tuple[int, str, str | None, str]] = [
     (2, "sessions", "character", "ALTER TABLE sessions ADD COLUMN character TEXT"),
+    (
+        3,
+        "world_entities",
+        None,
+        "CREATE TABLE IF NOT EXISTS world_entities (id TEXT PRIMARY KEY, "
+        "session_id TEXT REFERENCES sessions(id), kind TEXT NOT NULL, name TEXT NOT NULL, "
+        "aliases TEXT NOT NULL DEFAULT '[]', notes TEXT NOT NULL DEFAULT '', "
+        "status TEXT NOT NULL DEFAULT 'canon', created_at TEXT NOT NULL, "
+        "updated_at TEXT NOT NULL)",
+    ),
 ]
 
 
@@ -38,6 +50,24 @@ def _message_from_row(row: sqlite3.Row) -> dict[str, Any]:
         "created_at": _parse_ts(row["created_at"]),
         "updated_at": _parse_ts(row["updated_at"]),
     }
+
+
+def _entity_from_row(row: sqlite3.Row) -> dict[str, Any]:
+    return {
+        "id": row["id"],
+        "session_id": row["session_id"],
+        "kind": row["kind"],
+        "name": row["name"],
+        "aliases": json.loads(row["aliases"]),
+        "notes": row["notes"],
+        "status": row["status"],
+        "created_at": _parse_ts(row["created_at"]),
+        "updated_at": _parse_ts(row["updated_at"]),
+    }
+
+
+# Operator-editable fields of a world entity (SPEC-0015). id/session_id/timestamps are not.
+_ENTITY_EDITABLE = frozenset({"name", "kind", "aliases", "notes", "status"})
 
 
 class SqliteSessionStore:
@@ -97,9 +127,16 @@ class SqliteSessionStore:
                 continue
             try:
                 self._conn.execute("BEGIN")
-                columns = {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}
-                if column not in columns:
-                    self._conn.execute(ddl)
+                if column is None:
+                    exists = self._conn.execute(
+                        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
+                    ).fetchone()
+                    if exists is None:
+                        self._conn.execute(ddl)
+                else:
+                    columns = {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}
+                    if column not in columns:
+                        self._conn.execute(ddl)
                 self._conn.execute(f"PRAGMA user_version = {int(version)}")
                 self._conn.commit()
             except Exception:
@@ -248,6 +285,123 @@ class SqliteSessionStore:
                     (status, meta_text, _now().isoformat(), session_id, message_id),
                 )
 
+    def create_entity(
+        self,
+        *,
+        name: str,
+        kind: str = "other",
+        aliases: list[str] | None = None,
+        notes: str = "",
+        status: str = "canon",
+        session_id: str | None = None,
+    ) -> dict[str, Any]:
+        entity_id = str(uuid4())
+        aliases_text = json.dumps(aliases or [])
+        now = _now()
+        with self._lock:
+            with self._conn:
+                if session_id is not None:
+                    exists = self._conn.execute(
+                        "SELECT 1 FROM sessions WHERE id = ?", (session_id,)
+                    ).fetchone()
+                    if exists is None:
+                        raise KeyError(session_id)
+                self._conn.execute(
+                    "INSERT INTO world_entities (id, session_id, kind, name, aliases, notes, "
+                    "status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        entity_id,
+                        session_id,
+                        str(kind),
+                        name,
+                        aliases_text,
+                        notes,
+                        str(status),
+                        now.isoformat(),
+                        now.isoformat(),
+                    ),
+                )
+        return {
+            "id": entity_id,
+            "session_id": session_id,
+            "kind": str(kind),
+            "name": name,
+            "aliases": json.loads(aliases_text),
+            "notes": notes,
+            "status": str(status),
+            "created_at": now,
+            "updated_at": now,
+        }
+
+    def get_entity(self, entity_id: str) -> dict[str, Any]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM world_entities WHERE id = ?", (entity_id,)
+            ).fetchone()
+            if row is None:
+                raise KeyError(entity_id)
+            return _entity_from_row(row)
+
+    def list_entities(
+        self,
+        session_id: str | None = None,
+        *,
+        status: str | None = None,
+        kind: str | None = None,
+    ) -> list[dict[str, Any]]:
+        clauses: list[str] = []
+        params: list[Any] = []
+        if session_id is not None:
+            # Global (NULL-scope) entities are visible in every session.
+            clauses.append("(session_id IS NULL OR session_id = ?)")
+            params.append(session_id)
+        if status is not None:
+            clauses.append("status = ?")
+            params.append(status)
+        if kind is not None:
+            clauses.append("kind = ?")
+            params.append(kind)
+        where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT * FROM world_entities{where} ORDER BY updated_at DESC, id ASC",
+                params,
+            ).fetchall()
+            return [_entity_from_row(r) for r in rows]
+
+    def update_entity(self, entity_id: str, changes: dict[str, Any]) -> dict[str, Any]:
+        unknown = set(changes) - _ENTITY_EDITABLE
+        if unknown:
+            raise ValueError(f"world entity fields not editable: {sorted(unknown)}")
+        values: dict[str, Any] = dict(changes)
+        if "aliases" in values:
+            values["aliases"] = json.dumps(values["aliases"] or [])
+        if "kind" in values:
+            values["kind"] = str(values["kind"])
+        if "status" in values:
+            values["status"] = str(values["status"])
+        values["updated_at"] = _now().isoformat()
+        assignments = ", ".join(f"{column} = ?" for column in values)
+        with self._lock:
+            with self._conn:
+                cursor = self._conn.execute(
+                    f"UPDATE world_entities SET {assignments} WHERE id = ?",
+                    [*values.values(), entity_id],
+                )
+                if cursor.rowcount == 0:
+                    raise KeyError(entity_id)
+                row = self._conn.execute(
+                    "SELECT * FROM world_entities WHERE id = ?", (entity_id,)
+                ).fetchone()
+            return _entity_from_row(row)
+
+    def delete_entity(self, entity_id: str) -> None:
+        with self._lock:
+            with self._conn:
+                cursor = self._conn.execute("DELETE FROM world_entities WHERE id = ?", (entity_id,))
+                if cursor.rowcount == 0:
+                    raise KeyError(entity_id)
+
     def close(self) -> None:
         with self._lock:
             self._conn.close()
@@ -270,7 +424,8 @@ def _sqlite_path(database_url: str) -> str:
 
 
 def make_default_repos(database_url: str = "sqlite:///:memory:") -> dict[str, Any]:
-    return {"session": SqliteSessionStore(_sqlite_path(database_url))}
+    store = SqliteSessionStore(_sqlite_path(database_url))
+    return {"session": store, "world": store}
 
 
 def seed_sample_data(repos: dict[str, Any]) -> None:

@@ -1,7 +1,7 @@
 ---
 id: PAT-ARCH-005
 category: architecture
-status: proposed
+status: accepted
 supersedes: null
 superseded_by: null
 ---

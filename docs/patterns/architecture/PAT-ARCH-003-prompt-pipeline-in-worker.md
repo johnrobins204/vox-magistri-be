@@ -45,8 +45,10 @@ may keep returning a single string.
    `settings.prompts.dm_voice.*` and `settings.prompts.verbosity_default`, plus, when the
    session has one, a character section built by `build_character_section` from
    `SessionStore.get_character` (ADR-0008). The pipeline
-   needs no campaign context. A campaign section is added only when a real campaign
-   source exists (REQ-0015). There is no speculative optional parameter before then.
+   needs no campaign context. A world section is added by `build_world_section` over
+   `WorldStore.list_entities` (ADR-0010, REQ-0026): canon entities selected within a
+   settings chars budget, never truncated. A campaign section is added only when a real
+   campaign source exists (REQ-0015). There is no speculative optional parameter before then.
 4. **Config files load robustly, once.** The voice config is read once when
    `OllamaInferenceService` is constructed. A missing file, invalid JSON, or a
    non-string value is logged with `get_logger(__name__)` at WARNING (PAT-CODE-001),
@@ -58,7 +60,7 @@ may keep returning a single string.
    job, including its assistant reply, has finished when the next job runs. Transports
    and `app/services/messages.py` keep enqueueing `prompt=content`. The
    `InferenceService` and `SessionStore` Protocols do not change, except that the worker
-   also calls `get_character` (ADR-0008).
+   also calls `get_character` (ADR-0008) and `WorldStore.list_entities` (ADR-0010).
    Slash-command jobs (`/name args`, [PAT-ARCH-004](./PAT-ARCH-004-slash-tools-in-worker.md))
    skip the chat builder and run the tool instead.
 6. **The client has two entry points and one HTTP path.**

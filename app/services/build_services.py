@@ -22,6 +22,7 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
     """
 
     session_store = repos.get("session")
+    world_store = repos.get("world")
 
     settings = get_settings()
 
@@ -37,7 +38,10 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
     }
 
     inference = OllamaInferenceService(
-        settings, tool_service=tool_service, species=reference["species"]
+        settings,
+        tool_service=tool_service,
+        species=reference["species"],
+        world_store=world_store,
     )
     tool_service.default_context["inference"] = inference
     tool_service.default_context["reference"] = reference
@@ -47,4 +51,5 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
         "tool": tool_service,
         "inference": inference,
         "reference": reference,
+        "world": world_store,
     }

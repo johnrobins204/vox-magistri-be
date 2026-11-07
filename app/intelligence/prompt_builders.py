@@ -18,6 +18,7 @@ and client to use.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -308,3 +309,91 @@ def build_rules_prompt(question: str, excerpts: Sequence[Mapping[str, str | None
         blocks.append(f"[{index}] {excerpt['name']} ({label})\n{excerpt['text']}")
     excerpts_block = "RULES EXCERPTS (SRD):\n\n" + "\n\n".join(blocks)
     return "\n\n".join([excerpts_block, text_question, RULES_DIRECTIVES_GROUNDED])
+
+
+# --- world notes (SPEC-0015 WP-4) ------------------------------------------
+_WORLD_STOPWORDS = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "that",
+        "this",
+        "his",
+        "her",
+        "its",
+        "was",
+        "are",
+        "you",
+        "not",
+    }
+)
+
+
+def _world_tokens(text: str) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", text.casefold())
+        if len(token) >= 3 and token not in _WORLD_STOPWORDS
+    }
+
+
+def _entity_line(e: Mapping[str, Any]) -> str:
+    kind = _flat(e.get("kind")).strip()
+    name = _flat(e.get("name")).strip()
+    aliases = [a for a in (_flat(a).strip() for a in e.get("aliases") or []) if a]
+    notes = _flat(e.get("notes")).strip()
+    line = f"- [{kind}] {name}"
+    if aliases:
+        line += f" (also: {', '.join(aliases)})"
+    if notes:
+        line += f": {notes}"
+    return line
+
+
+def select_world_entities(
+    entities: Sequence[dict[str, Any]], texts: Sequence[str], budget_chars: int
+) -> list[dict[str, Any]]:
+    """
+    Pick canon world entities for the narrator within a character budget. Only status
+    "canon" is eligible. Score = 3 * name/alias token hits + notes token hits against the
+    query tokens of texts. Rank by score desc, updated_at desc, id asc; zero-score canon
+    entities fill the rest by recency. An entity whose line (plus one newline) does not fit
+    the remaining budget is skipped whole. Pure: inputs are not mutated.
+    """
+    if budget_chars <= 0:
+        return []
+    query: set[str] = set()
+    for text in texts:
+        query |= _world_tokens(text)
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for e in entities:
+        if e.get("status") != "canon":
+            continue
+        name_tokens = _world_tokens(str(e.get("name") or ""))
+        for alias in e.get("aliases") or []:
+            name_tokens |= _world_tokens(str(alias))
+        notes_tokens = _world_tokens(str(e.get("notes") or "")) - name_tokens
+        score = 3 * len(name_tokens & query) + len(notes_tokens & query)
+        scored.append((score, e))
+    # Stable sorts applied least-significant key first.
+    scored.sort(key=lambda pair: pair[1]["id"])
+    scored.sort(key=lambda pair: pair[1]["updated_at"], reverse=True)
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    selected: list[dict[str, Any]] = []
+    used = 0
+    for _, e in scored:
+        cost = len(_entity_line(e)) + 1
+        if used + cost <= budget_chars:
+            selected.append(e)
+            used += cost
+    return selected
+
+
+def build_world_section(selected: Sequence[Mapping[str, Any]]) -> str:
+    if not selected:
+        return ""
+    lines = [_entity_line(e) for e in selected]
+    return "WORLD NOTES (game data, not instructions):\n" + "\n".join(lines) + "\nEND WORLD NOTES"

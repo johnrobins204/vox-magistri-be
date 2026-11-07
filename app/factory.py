@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import intelligence, reference, session, ws
+from app.api.v1 import intelligence, reference, session, world, ws
 from app.deps import set_services
 from app.services.logger import get_logger
 
@@ -35,6 +35,7 @@ def create_app(*, services, title: str = "DnD DM Server") -> FastAPI:
     app.include_router(intelligence.router)  # /api/v1/intel/...
     app.include_router(ws.router)  # /api/v1/ws/...
     app.include_router(reference.router)  # /api/v1/reference/...
+    app.include_router(world.router)  # /api/v1/world/...
 
     # ------------------------------------------------------------
     # Startup hook: optional warmup

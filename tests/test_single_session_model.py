@@ -23,7 +23,7 @@ def test_build_services_has_no_game_key():
     services = build_services(make_default_repos(), enable_tool_discovery=False)
     try:
         # SPEC-0011 T-21 amendment: ADR-0006 adds the reference catalog to the services shape.
-        assert set(services) == {"session", "tool", "inference", "reference"}
+        assert set(services) == {"session", "tool", "inference", "reference", "world"}
     finally:
         asyncio.run(services["inference"].shutdown())
 

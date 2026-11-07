@@ -1,6 +1,45 @@
 # app/type_defs.py
 from collections.abc import AsyncGenerator
+from enum import StrEnum
 from typing import Any, Protocol
+
+
+class EntityKind(StrEnum):
+    NPC = "npc"
+    PLACE = "place"
+    FACTION = "faction"
+    QUEST = "quest"
+    ITEM = "item"
+    OTHER = "other"
+
+
+class EntityStatus(StrEnum):
+    CANON = "canon"
+    PENDING = "pending"
+    REJECTED = "rejected"
+
+
+class WorldStore(Protocol):
+    def create_entity(
+        self,
+        *,
+        name: str,
+        kind: str = "other",
+        aliases: list[str] | None = None,
+        notes: str = "",
+        status: str = "canon",
+        session_id: str | None = None,
+    ) -> dict[str, Any]: ...
+    def get_entity(self, entity_id: str) -> dict[str, Any]: ...
+    def list_entities(
+        self,
+        session_id: str | None = None,
+        *,
+        status: str | None = None,
+        kind: str | None = None,
+    ) -> list[dict[str, Any]]: ...
+    def update_entity(self, entity_id: str, changes: dict[str, Any]) -> dict[str, Any]: ...
+    def delete_entity(self, entity_id: str) -> None: ...
 
 
 class SessionStore(Protocol):

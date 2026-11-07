@@ -158,7 +158,7 @@
       "title": "Real, non-blocking streaming and honest inference health",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-11-01",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -175,7 +175,8 @@
         "Central design question: worker thread to WebSocket token path, either an in-memory channel or incremental store writes.",
         "Missing artifact: no WS contract doc exists (docs/api/ does not exist); the token, done and cancel events must be documented in the spec.",
         "Cancellation mid-stream is in scope. ADR expected.",
-        "Size sketch: client stream method M; worker token channel M; WS token, done and cancel events M; frontend token accumulation S; WS contract doc S. Rough LOC: backend 200-300, frontend 80-120, tests 110-150."
+        "Size sketch: client stream method M; worker token channel M; WS token, done and cancel events M; frontend token accumulation S; WS contract doc S. Rough LOC: backend 200-300, frontend 80-120, tests 110-150.",
+        "2026-11-07 priorities assessment (owner-approved): DEFERRED. Owner says local-compute latency (RTX 3070) is acceptable; stream is hard-coded False in app/intelligence/client.py and the WebSocket 'stream' emits one chunk after the whole reply. Revisit if long replies hurt play."
       ]
     },
     {
@@ -217,7 +218,7 @@
       "title": "Make the existing dev token real and browser-compatible (auth, WebSocket auth, CORS from settings)",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -229,7 +230,8 @@
       "follow_ups": [
         "Tier: P1, frontend blocker. Evidence (probed): any Bearer value is accepted (wrong token returned 202); auth.local_dev_token and auth.enable_auth are unused; POST /sessions and all /intel/* are unauthenticated; ws.py has no auth; /api/v1/stream requires an Authorization header, which browsers cannot send on a WebSocket; CORS origins are hard-coded and ignore settings.server.allowed_origins (Origin :3000 gets 400).",
         "Charter guard: dev-level only. No hardening beyond making the existing token and settings honest and usable from a browser.",
-        "Depends on: REQ-0004. ADR likely: yes (WS auth approach is a cross-cutting convention)."
+        "Depends on: REQ-0004. ADR likely: yes (WS auth approach is a cross-cutting convention).",
+        "2026-11-07 priorities assessment (owner-approved): DEFERRED. Local hobby use; the Charter says no auth hardening beyond sane defaults. Revisit only for remote or shared play."
       ]
     },
     {
@@ -260,7 +262,7 @@
       "title": "Startup and config correctness (main.py honors settings, lifespan, loud config errors)",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -271,7 +273,8 @@
       ],
       "follow_ups": [
         "Tier: P2. Evidence: main.py hard-codes host/port/log_dir and ignores settings.server/logging/app.seed_sample_data; reload=True is passed with an app object (uvicorn needs an import string, so reload does not work); inference shutdown runs twice (uvicorn lifespan plus manual); @app.on_event is deprecated; get_settings swallows invalid JSON and returns defaults, reads settings.json relative to CWD, and treats every env var as a possible override; get_namespace uses deprecated .dict(); restart.sh uses a bare 'python' and pkill -f uvicorn.",
-        "Depends on: none. ADR likely: no."
+        "Depends on: none. ADR likely: no.",
+        "2026-11-07 priorities assessment (owner-approved): DEFERRED. Startup and config correctness; revisit if setup friction appears or someone else must run the app."
       ]
     },
     {
@@ -279,7 +282,7 @@
       "title": "Repository hygiene and dead-code cleanup",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -290,7 +293,8 @@
       ],
       "follow_ups": [
         "Tier: P2. Evidence: app/tst.py is an import-time smoke script inside the package (convert to a test or move to scripts/); corpus.txt (152K) is tracked despite being in .gitignore; untracked keys.txt/all_files.txt/dupes.txt; duplicate pack_py.sh; app/intelligence/prompts.py has a broken import; stub modules quest_guide.py/world_guide.py/writer.py; duplicate 'router =' and unused imports in session.py; four separate in-memory repo implementations.",
-        "Depends on: REQ-0004, REQ-0005 (decides which in-memory repos survive). ADR likely: no."
+        "Depends on: REQ-0004, REQ-0005 (decides which in-memory repos survive). ADR likely: no.",
+        "2026-11-07 priorities assessment (owner-approved): DEFERRED, low value. Repository hygiene; do opportunistically."
       ]
     },
     {
@@ -298,7 +302,7 @@
       "title": "MVP test coverage with a fake-Ollama fixture (message flow, worker, WS, auth, prompts)",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -310,7 +314,8 @@
       "follow_ups": [
         "Tier: P1, runs alongside the P0/P1 items. Evidence: 15 tests; none cover the message to worker to completion flow, the WebSocket, inference_service, prompt_builders or auth.",
         "Scope: a shared FakeOllama fixture (no network, per tests.instructions.md), an end-to-end create-session, post-message, poll, read test, and WS tests. Each REQ above still owns its own tests.",
-        "Depends on: REQ-0003. ADR likely: no."
+        "Depends on: REQ-0003. ADR likely: no.",
+        "2026-11-07 priorities assessment (owner-approved): DEFERRED and largely overtaken: tests/ has 440+ tests with a real-app fixture. Re-scope to a fake-Ollama worker and WebSocket end-to-end check if gaps are found."
       ]
     },
     {
@@ -318,7 +323,7 @@
       "title": "Backfill the pattern library and refresh agent instructions",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -330,7 +335,8 @@
       "follow_ups": [
         "Tier: P2. Evidence: docs/patterns/INDEX.md holds one code pattern and no architecture or spec patterns, though constraint 4 requires reusable patterns to be recorded. Undocumented but in use: service-locator DI (deps.py), settings namespaces, tool module contract, dict-or-attr service access, store Protocols.",
         "Scope: author patterns at status proposed only; update .github/copilot-instructions.md 'Known gaps' as items close. Do not change accepted patterns without sign-off.",
-        "Depends on: none (best done after REQ-0004/0005). ADR likely: no."
+        "Depends on: none (best done after REQ-0004/0005). ADR likely: no.",
+        "2026-11-07 priorities assessment (owner-approved): PARTLY DONE by REQ-0025 (token-lean workflow, tests/test_patterns.py, INDEX enforcement table). Remaining: backfill spec-category patterns. Low priority."
       ]
     },
     {
@@ -338,7 +344,7 @@
       "title": "Minimal campaign domain for the DM (campaign, party characters, active quest, scene) feeding the prompt context",
       "status": "backlog",
       "created_at": "2026-10-11",
-      "updated_at": "2026-10-11",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -351,7 +357,8 @@
         "Tier: P2 (needed once chat works end to end). Evidence: a DM server with no campaign, character or quest state. prompting.CampaignContext and the build_*_prompt functions exist but have no data source; data/models.py has the rich schema but is unwired.",
         "Scope: the smallest slice of campaign/character/quest/scene needed to ground the DM prompt, plus CRUD endpoints. Not the 30-table schema.",
         "Depends on: REQ-0005, REQ-0006. ADR likely: yes (domain boundary and storage shape).",
-        "Dependency note 2026-11-01: REQ-0020 is the first carve-out of this item (character on the session feeding the prompt); REQ-0021 and REQ-0022 build on it."
+        "Dependency note 2026-11-01: REQ-0020 is the first carve-out of this item (character on the session feeding the prompt); REQ-0021 and REQ-0022 build on it.",
+        "2026-11-07 priorities assessment (owner-approved): RE-SCOPED. The 'campaign, quest, scene feeding the prompt' goal is now delivered through world memory: REQ-0026 (entity store, slice A), REQ-0028 (detection and approval queue), REQ-0029 (frontend panel), REQ-0030 (LLM extraction, recap). REQ-0026 uses a nullable session_id (NULL = the single implicit campaign) so a real campaign model can be added later. Do not start REQ-0015 as written; revisit only for a campaign or scene model that world memory does not cover."
       ]
     },
     {
@@ -501,7 +508,7 @@
       "title": "The tale remembers: persistent rolling summary of turns that leave the recent-turn window (slice 3)",
       "status": "backlog",
       "created_at": "2026-11-01",
-      "updated_at": "2026-11-01",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -516,7 +523,8 @@
         "Latency: the worker shares one _ollama_lock across all Ollama calls, so a summary call can delay the next turn. The spec MUST decide when and how it runs and state the bounded delay.",
         "Known risk: summary quality on an 8B model is unknown. The spec needs a playtest checkpoint before the trigger is fixed.",
         "ADR optional; the architect decides at its turn. The Game Diary frontend is not changed in this slice.",
-        "Size sketch: summary column and repos S; summary prompt builder S; worker summarization trigger M; builder integration S; e2e test M. Rough LOC: backend 130-180, frontend 0, tests 80-100."
+        "Size sketch: summary column and repos S; summary prompt builder S; worker summarization trigger M; builder integration S; e2e test M. Rough LOC: backend 130-180, frontend 0, tests 80-100.",
+        "2026-11-07 priorities assessment (owner-approved): REQ-0030 (world memory slice C) absorbs the rolling summary and the game-night recap; keep this item as the home of its latency and playtest follow-ups and do not execute it separately."
       ]
     },
     {
@@ -524,7 +532,7 @@
       "title": "The dice are mine: /roll and /attack use the session character's modifiers (slice 4)",
       "status": "backlog",
       "created_at": "2026-11-01",
-      "updated_at": "2026-11-01",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -540,7 +548,8 @@
         "Help text MUST state that proficiency and spell attacks are out of scope. No HP tracking; the stored character is not mutated.",
         "Contract: .github/instructions/tools.instructions.md and PAT-ARCH-004. No ADR expected.",
         "Frontend weapon picker in the dice tray is a separate small WP.",
-        "Size sketch: attack tool M; weapon lookup S; ability heuristic S; frontend picker M; e2e test M. Rough LOC: backend 100-150, frontend 50-80, tests 60-100."
+        "Size sketch: attack tool M; weapon lookup S; ability heuristic S; frontend picker M; e2e test M. Rough LOC: backend 100-150, frontend 50-80, tests 60-100.",
+        "2026-11-07 priorities assessment (owner-approved): PRIORITY 2. Small, independent, low risk; can run while REQ-0026 awaits ADR acceptance. Unblocks REQ-0032 (initiative tracker)."
       ]
     },
     {
@@ -548,7 +557,7 @@
       "title": "Pydantic v2 idiom cleanup in schemas, session route and config (carry-over from REQ-0010)",
       "status": "backlog",
       "created_at": "2026-11-01",
-      "updated_at": "2026-11-01",
+      "updated_at": "2026-11-07",
       "adr_id": null,
       "spec_path": null,
       "tasks": [
@@ -562,7 +571,8 @@
         "Scope: class Config, orm_mode and schema_extra in app/schemas/v1.py (9-10 blocks) become ConfigDict(json_schema_extra=...); payload.dict() in app/api/v1/session.py and ns.dict() in app/config.py become model_dump().",
         "Acceptance: the startup UserWarning 'Valid config keys have changed in V2' no longer appears; no API behaviour change.",
         "DROPPED from REQ-0010: the single error-shape part (including /intel tool-invoke errors) requires amending accepted ADR-0004 and PAT-ARCH-004 (human sign-off gates G-3 and G-4 in SPEC-0010).",
-        "Sequencing: app/api/v1/session.py is also touched by REQ-0020; land REQ-0023 after REQ-0020 or rebase carefully."
+        "Sequencing: app/api/v1/session.py is also touched by REQ-0020; land REQ-0023 after REQ-0020 or rebase carefully.",
+        "2026-11-07 priorities assessment (owner-approved): Low priority carry-over; do opportunistically when touching schemas for REQ-0026."
       ]
     },
     {
@@ -570,7 +580,7 @@
       "title": "Rules consult slash tool (/rules) answering from the SRD rules reference catalog, not the narrator voice",
       "status": "in_progress",
       "created_at": "2026-11-01",
-      "updated_at": "2026-11-01",
+      "updated_at": "2026-11-07",
       "adr_id": "ADR-0009",
       "spec_path": "docs/specs/SPEC-0014-rules-consult-tool.md",
       "tasks": [
@@ -589,7 +599,8 @@
         "Ingest ordering: _load_documents now runs before build_records for all datasets (scripts/ingest_open5e.py around line 447). Only the exception order changes for the weapons and conditions datasets.",
         "Brittle test: tests/test_rules_wiring.py around line 39 hard-codes 68 species; derive the count from the dataset instead.",
         "Recall/context risks from SPEC-0014 section 4: selection is lexical, so paraphrased questions fall back to training mode. Ollama num_ctx is 4096 but the client sends no num_ctx; if the installed default is 2,048 tokens, set prompts.rules_budget_chars to about 3,000.",
-        "Docs: docs/patterns/INDEX.md gained a PAT-ARCH-009 accepted row, and PAT-ARCH-006 and the REQ-0018 note were amended with human approval; the human should confirm these are in the same commit or a separate docs commit."
+        "Docs: docs/patterns/INDEX.md gained a PAT-ARCH-009 accepted row, and PAT-ARCH-006 and the REQ-0018 note were amended with human approval; the human should confirm these are in the same commit or a separate docs commit.",
+        "2026-11-07 priorities assessment (owner-approved): Finish before closing: the 10-question live smoke run is at 4 of 10, and T-37 needs the all-records caplog check. Small; do between world-memory stages."
       ]
     },
     {
@@ -608,6 +619,166 @@
       ],
       "follow_ups": [
         "Measure token use over the next sprint and compare with the REQ-0024 baseline (about 6.6M input tokens in one orchestrated run); consider moving the Senior Architect from Opus to Sonnet if ADR quality holds."
+      ]
+    },
+    {
+      "id": "REQ-0026",
+      "title": "World memory, slice A: persisted typed world entities, operator CRUD, bounded DM prompt injection",
+      "status": "completed",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": "ADR-0010",
+      "spec_path": "docs/specs/SPEC-0015-world-entity-store.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review",
+        "[COMPLETE] Spec drafting",
+        "[COMPLETE] Implementation: SPEC-0015 WP-1..WP-7 (gate: pytest 484 passed, ruff clean, black clean; code review no blocking findings)"
+      ],
+      "follow_ups": [
+        "2026-11-07 priorities assessment (owner-approved): PRIORITY 1 (world memory). Sequence: REQ-0026, then REQ-0027 (operator controls: not-canon), then REQ-0028 (detection and approval queue), REQ-0029 (frontend panel), REQ-0030 (LLM extraction, summary, recap). REQ-0022 and REQ-0031 can interleave.",
+        "Log exception class name in the world.unavailable warning (currently ids only; SPEC-0015 WP-6)",
+        "Move UtcDatetime from app/schemas/world.py into app/schemas/v1.py when that module adopts PAT-ARCH-005",
+        "Store-level kind/status are not enum-validated in SqliteSessionStore (API validates at the edge; by design per WP-3)",
+        "docs/api/openapi.json snapshot and its drift test (SPEC-0010 T-44) do not exist; T-44 is n/a for REQ-0026",
+        "Add a test: a /roll slash job with budget > 0 never calls list_entities (review gap; behaviour correct by structure)"
+      ]
+    },
+    {
+      "id": "REQ-0027",
+      "title": "Operator controls: regenerate or edit a narrator reply, and mark a message not canon (retcon)",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Priority 3 of the 2026-11-07 priorities assessment (owner-approved). Sequenced BEFORE the world-memory approval queue so extraction never queues retconned facts.",
+        "Interacts with REQ-0026: entities already carry a non-canon exclusion; this item adds the message-level equivalent. Likely needs an additive messages column (PAT-ARCH-008). Owner asked for regenerate/edit and retcon, not a hide-and-reveal flow.",
+        "Frontend work is in scope only as the minimum UI to use the controls; ADR optional, architect decides.",
+        "Sequencing: ships before REQ-0028 so the approval queue never mines non-canon messages."
+      ]
+    },
+    {
+      "id": "REQ-0028",
+      "title": "World memory, slice B: mention detection after each reply and an approval queue for new entities",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Depends on REQ-0026 (entity store with the canon/pending/rejected vocabulary, so no destructive migration) and SHOULD follow the operator-controls item so non-canon messages are never mined.",
+        "Design intent (owner, 2026-11-07): the DM generates content, low-latency post-processing extracts nouns and key details, classifies them to an existing entity, and puts new entities in a persistence approval queue so the world is built on the fly. This slice does the deterministic half: alias-matching to existing entities and capitalised-phrase candidates.",
+        "Risk: false-positive candidates (sentence-initial words, common nouns). Spec needs a stoplist and a playtest checkpoint.",
+        "Replaces the manual-only world flow from REQ-0026; absorbs the NPC and quest tracker request."
+      ]
+    },
+    {
+      "id": "REQ-0029",
+      "title": "World panel in the frontend: browse and edit entities, review the pending approval queue",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Depends on REQ-0026 (API) and REQ-0028 for the queue half; the entity browse and edit half can ship right after REQ-0026. Frontend lives in frontend/ (React); follow the existing CharacterPanel and SpeciesBrowser components.",
+        "REQ-0026 deliberately ships API only (Swagger /docs is the interim operator UI)."
+      ]
+    },
+    {
+      "id": "REQ-0030",
+      "title": "World memory, slice C: optional small-model extraction, rolling summary and session recap",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Absorbs and supersedes REQ-0021 (rolling summary); keep REQ-0021 for its latency and playtest follow-ups, which still apply: the worker shares one _ollama_lock, so a summary call can delay the next turn.",
+        "Risk: the owner's GPU is an RTX 3070 8 GB; a second resident model may cause load swaps. Spec needs a measured latency checkpoint before any LLM extraction is made default-on.",
+        "Depends on REQ-0026 and REQ-0028."
+      ]
+    },
+    {
+      "id": "REQ-0031",
+      "title": "/monster consult tool: stat blocks and encounter lookup from the reference creatures catalog",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Priority 4 of the 2026-11-07 assessment. Reuses the PAT-ARCH-009 selector and the /rules tool shape; tests/test_creatures_budget_measurement.py already measures creature size, so the budget evidence exists.",
+        "A second grounded tool now exists as a call site: PAT-ARCH-009 says to extract shared selection code at the second tool. The architect MUST decide that extraction here (small, tested).",
+        "Encounter building (CR budgets) is a later increment; start with single stat block lookup."
+      ]
+    },
+    {
+      "id": "REQ-0032",
+      "title": "Initiative and combat tracker",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Priority 6 of the 2026-11-07 assessment. Depends on REQ-0022. Likely needs an additive sessions column or a world-store table (architect decides; consider reusing the REQ-0026 migration step type). Mostly frontend work."
+      ]
+    },
+    {
+      "id": "REQ-0033",
+      "title": "Better /rules recall for paraphrased questions",
+      "status": "backlog",
+      "created_at": "2026-11-07",
+      "updated_at": "2026-11-07",
+      "adr_id": null,
+      "spec_path": null,
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[PENDING] Architecture review",
+        "[PENDING] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": [
+        "Priority 7 (deferred) from the 2026-11-07 assessment; carry-over of the REQ-0024 follow-up that selection is lexical. Candidate cheap fixes: alias and synonym expansion in the reference data, stem matching."
       ]
     }
   ]

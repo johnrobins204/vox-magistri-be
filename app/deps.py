@@ -44,6 +44,11 @@ def get_reference():
     return s.get("reference") if isinstance(s, dict) else getattr(s, "reference", None)
 
 
+def get_world_store():
+    s = get_services()
+    return s.get("world") if isinstance(s, dict) else getattr(s, "world", None)
+
+
 # existing set_services/get_* functions...
 
 

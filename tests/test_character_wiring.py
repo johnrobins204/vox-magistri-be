@@ -78,7 +78,7 @@ def test_build_services_loads_reference_before_inference():
         assert len(inference._species_by_id) == len(services["reference"]["species"]) == 68
         assert "elf" in inference._species_by_id
         assert services["tool"].default_context["reference"] is services["reference"]
-        assert set(services) == {"session", "tool", "inference", "reference"}
+        assert set(services) == {"session", "tool", "inference", "reference", "world"}
     finally:
         asyncio.run(inference.shutdown())
 

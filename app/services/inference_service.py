@@ -14,7 +14,9 @@ from app.intelligence.prompt_builders import (
     build_character_section,
     build_chat_messages,
     build_system_prompt,
+    build_world_section,
     load_voice_configs,
+    select_world_entities,
 )
 from app.intelligence.tool_handler import detect_tool
 from app.reference.species import Species
@@ -46,7 +48,13 @@ class OllamaInferenceService:
     - WebSocket: direct streaming via generate_tokens
     """
 
-    def __init__(self, settings, tool_service=None, species: list[Species] | None = None):
+    def __init__(
+        self,
+        settings,
+        tool_service=None,
+        species: list[Species] | None = None,
+        world_store=None,
+    ):
         # settings must provide ollama.base_url and ollama.model
         self.client = OllamaClient(
             base_url=settings.ollama.base_url,
@@ -63,6 +71,9 @@ class OllamaInferenceService:
         self._max_field_len = settings.app.max_field_len
         # Character species lookup (SPEC-0013 D2): built once here, never per job.
         self._species_by_id: dict[str, Species] = {s.id: s for s in (species or [])}
+        # Canon world entities for the narrator (SPEC-0015 WP-6); None or budget 0 disables it.
+        self._world_store = world_store
+        self._world_budget: int = settings.world.entity_budget_chars
 
         # Job queue and worker control
         self._queue: Queue[InferenceJob] = Queue(maxsize=MAX_QUEUE_SIZE)
@@ -236,6 +247,8 @@ class OllamaInferenceService:
                         max_turns=self._max_turns,
                         max_field_len=self._max_field_len,
                     )
+                    if self._world_store is not None and self._world_budget > 0:
+                        messages = self._inject_world(messages, job)
                     logger.info(
                         "prompt.built",
                         extra={
@@ -286,6 +299,36 @@ class OllamaInferenceService:
                 self._queue.task_done()
 
         logger.info("Inference worker loop exiting")
+
+    def _inject_world(
+        self, messages: list[dict[str, str]], job: InferenceJob
+    ) -> list[dict[str, str]]:
+        """Append the canon world section to the system message (SPEC-0015 WP-6). Fail-soft."""
+        try:
+            entities = self._world_store.list_entities(job.session_id)
+        except Exception:
+            logger.warning(
+                "world.unavailable",
+                extra={"session_id": job.session_id, "message_id": job.message_id},
+            )
+            entities = []
+        selected = select_world_entities(
+            entities, [m["content"] for m in messages[1:]], self._world_budget
+        )
+        section = build_world_section(selected)
+        if not section:
+            return messages
+        messages[0] = {"role": "system", "content": messages[0]["content"] + "\n\n" + section}
+        logger.info(
+            "world.injected",
+            extra={
+                "session_id": job.session_id,
+                "message_id": job.message_id,
+                "candidates": len(entities),
+                "selected": len(selected),
+            },
+        )
+        return messages
 
     # ------------------------------------------------------------
     # Store helpers (best-effort, no strict schema assumptions)

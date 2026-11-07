@@ -74,6 +74,8 @@ class WorldSettings(BaseModel):
     default_modes: list[str] = Field(
         default_factory=lambda: ["Clarify", "Expand", "Connect", "Challenge"]
     )
+    # Counts only the canon entity text placed in the narrator prompt. 0 = no entity injection.
+    entity_budget_chars: int = Field(default=1500, ge=0)
 
 
 class DatabaseSettings(BaseModel):

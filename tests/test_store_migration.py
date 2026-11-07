@@ -53,6 +53,22 @@ def _make_v1_db(path, extra_statements=()):
         conn.execute("PRAGMA user_version = 1")
 
 
+def _make_v2_db(path, extra_statements=()):
+    _make_v1_db(
+        path, extra_statements=("ALTER TABLE sessions ADD COLUMN character TEXT", *extra_statements)
+    )
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute("PRAGMA user_version = 2")
+
+
+WORLD_ENTITIES_DDL = (
+    "CREATE TABLE IF NOT EXISTS world_entities (id TEXT PRIMARY KEY, session_id TEXT REFERENCES "
+    "sessions(id), kind TEXT NOT NULL, name TEXT NOT NULL, aliases TEXT NOT NULL DEFAULT '[]', "
+    "notes TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'canon', created_at TEXT NOT "
+    "NULL, updated_at TEXT NOT NULL)"
+)
+
+
 def _raw_version(path):
     with closing(sqlite3.connect(path)) as conn:
         return conn.execute("PRAGMA user_version").fetchone()[0]
@@ -81,13 +97,13 @@ def test_t01_v1_file_db_keeps_rows_and_gains_character_column(tmp_path, caplog):
     assert "character" in _raw_columns(path, "sessions")
     with closing(sqlite3.connect(path)) as conn:
         assert conn.execute("SELECT character FROM sessions WHERE id='s-old'").fetchone() == (None,)
-    assert _raw_version(path) == 2
+    assert _raw_version(path) == 3
 
     records = _migrated_records(caplog)
     assert len(records) == 1
     assert records[0].levelno == logging.INFO
     assert records[0].__dict__["from"] == 1
-    assert records[0].to == 2
+    assert records[0].to == 3
 
 
 def test_t02_reopen_migrated_file_is_a_noop(tmp_path, caplog):
@@ -102,7 +118,7 @@ def test_t02_reopen_migrated_file_is_a_noop(tmp_path, caplog):
     finally:
         store.close()
 
-    assert _raw_version(path) == 2
+    assert _raw_version(path) == 3
     assert _migrated_records(caplog) == []
 
 
@@ -113,11 +129,11 @@ def test_t03_fresh_file_db_reaches_version_2(tmp_path, caplog):
         SqliteSessionStore(path).close()
 
     assert "character" in _raw_columns(path, "sessions")
-    assert _raw_version(path) == 2
+    assert _raw_version(path) == 3
     records = _migrated_records(caplog)
     assert len(records) == 1
     assert records[0].__dict__["from"] == 0
-    assert records[0].to == 2
+    assert records[0].to == 3
 
 
 def test_t04_half_applied_step_is_skipped_without_error(tmp_path):
@@ -126,24 +142,24 @@ def test_t04_half_applied_step_is_skipped_without_error(tmp_path):
 
     SqliteSessionStore(path).close()
 
-    assert _raw_version(path) == 2
+    assert _raw_version(path) == 3
     assert _raw_columns(path, "sessions").count("character") == 1
 
 
 def test_t05_failing_step_rolls_back_and_raises(tmp_path, monkeypatch):
     path = str(tmp_path / "broken.db")
-    bogus = (3, "sessions", "bogus", "ALTER TABLE no_such_table ADD COLUMN x TEXT")
+    bogus = (4, "sessions", "bogus", "ALTER TABLE no_such_table ADD COLUMN x TEXT")
     monkeypatch.setattr(repos_module, "_MIGRATIONS", [*repos_module._MIGRATIONS, bogus])
 
     with pytest.raises(sqlite3.OperationalError):
         SqliteSessionStore(path)
 
-    assert _raw_version(path) == 2
+    assert _raw_version(path) == 3
     assert "bogus" not in _raw_columns(path, "sessions")
 
     monkeypatch.undo()
     SqliteSessionStore(path).close()
-    assert _raw_version(path) == 2
+    assert _raw_version(path) == 3
 
 
 def test_t06_newer_schema_is_never_lowered(tmp_path, caplog):
@@ -164,3 +180,66 @@ def test_t06_newer_schema_is_never_lowered(tmp_path, caplog):
         and r.getMessage() == "store.schema_newer_than_code"
     ]
     assert len(warnings) == 1
+
+
+def _table_exists(path, table):
+    with closing(sqlite3.connect(path)) as conn:
+        return conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)
+        ).fetchone()
+
+
+def test_fresh_store_has_world_table():
+    store = SqliteSessionStore(":memory:")
+    try:
+        columns = [row[1] for row in store._conn.execute("PRAGMA table_info(world_entities)")]
+        version = store._conn.execute("PRAGMA user_version").fetchone()[0]
+    finally:
+        store.close()
+
+    assert len(columns) == 9
+    assert version == 3
+
+
+@pytest.mark.parametrize("make_db", [_make_v1_db, _make_v2_db], ids=["v1", "v2"])
+def test_v1_and_v2_files_upgrade(tmp_path, caplog, make_db):
+    path = str(tmp_path / "old.db")
+    make_db(path)
+    assert not _table_exists(path, "world_entities")
+
+    with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+        store = SqliteSessionStore(path)
+    try:
+        assert [m["id"] for m in store.list_messages("s-old")] == ["m-old"]
+    finally:
+        store.close()
+
+    assert len(_raw_columns(path, "world_entities")) == 9
+    with closing(sqlite3.connect(path)) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM world_entities").fetchone() == (0,)
+    assert _raw_version(path) == 3
+    assert len(_migrated_records(caplog)) == 1
+
+    caplog.clear()
+    SqliteSessionStore(path).close()
+    assert _raw_version(path) == 3
+    assert _migrated_records(caplog) == []
+
+
+def test_table_step_is_idempotent(tmp_path):
+    path = str(tmp_path / "half.db")
+    _make_v2_db(
+        path,
+        extra_statements=(
+            WORLD_ENTITIES_DDL,
+            "INSERT INTO world_entities (id, session_id, kind, name, created_at, updated_at) "
+            "VALUES ('e-1', 's-old', 'npc', 'Mira', '2026-01-01T00:00:00+00:00', "
+            "'2026-01-01T00:00:00+00:00')",
+        ),
+    )
+
+    SqliteSessionStore(path).close()
+
+    assert _raw_version(path) == 3
+    with closing(sqlite3.connect(path)) as conn:
+        assert conn.execute("SELECT id, name FROM world_entities").fetchall() == [("e-1", "Mira")]

@@ -130,7 +130,11 @@ def test_pat_arch_008_migration_ladder_is_contiguous_and_additive():
     assert ladder, "_MIGRATIONS ladder not found"
     assert [step[0] for step in ladder] == list(range(2, 2 + len(ladder)))
     for _, table, column, ddl in ladder:
-        assert ddl.upper().startswith(f"ALTER TABLE {table} ADD COLUMN {column}".upper())
+        if column is None:
+            assert ddl.startswith(f"CREATE TABLE IF NOT EXISTS {table} (")
+        else:
+            assert ddl.upper().startswith(f"ALTER TABLE {table} ADD COLUMN {column}".upper())
+    assert ladder[1][:3] == (3, "world_entities", None)
 
 
 # Doc budgets: keep agent-read documents small. Older files are grandfathered.
