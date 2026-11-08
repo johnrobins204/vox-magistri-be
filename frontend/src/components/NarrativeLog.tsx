@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Message } from '../types'
+import type { Message, WorldEntity } from '../types'
 import { canCorrect, isCanon, isEdited } from '../lib/corrections'
 import { isAdmin, replyIndex } from '../lib/kind'
+import { segmentText } from '../lib/mentions'
 import { AdminCard, CanonToggle } from './AdminCard'
 
 interface NarrativeLogProps {
   messages: Message[]
+  entities: WorldEntity[]
   isSending: boolean
   narrativeOnly: boolean
   onToggleCanon: (message: Message) => void
@@ -59,13 +61,14 @@ function RollCard({ message, onToggleCanon }: { message: Message; onToggleCanon:
 
 interface BubbleProps {
   message: Message
+  entities: WorldEntity[]
   isSending: boolean
   onToggleCanon: (message: Message) => void
   onEdit: (message: Message, text: string) => void
   onRegenerate: (message: Message) => void
 }
 
-function Bubble({ message, isSending, onToggleCanon, onEdit, onRegenerate }: BubbleProps) {
+function Bubble({ message, entities, isSending, onToggleCanon, onEdit, onRegenerate }: BubbleProps) {
   const isDm = message.role === 'assistant'
   const correctable = canCorrect(message)
   const [editing, setEditing] = useState(false)
@@ -109,7 +112,21 @@ function Bubble({ message, isSending, onToggleCanon, onEdit, onRegenerate }: Bub
           </div>
         </div>
       ) : (
-        <p>{message.content ?? ''}</p>
+        <p>
+          {segmentText(message.content ?? '', entities).map((seg, i) =>
+            seg.entity ? (
+              <span
+                key={i}
+                className={`entity-mark entity-mark-${seg.entity.status}`}
+                title={`${seg.entity.name} · ${seg.entity.kind} · ${seg.entity.status}`}
+              >
+                {seg.text}
+              </span>
+            ) : (
+              seg.text
+            ),
+          )}
+        </p>
       )}
       <div className="bubble-actions">
         {correctable && !editing ? (
@@ -135,6 +152,7 @@ function Bubble({ message, isSending, onToggleCanon, onEdit, onRegenerate }: Bub
 
 export function NarrativeLog({
   messages: all,
+  entities,
   isSending,
   narrativeOnly,
   onToggleCanon,
@@ -154,12 +172,14 @@ export function NarrativeLog({
     if (expanded || messages.length === 0) {
       return { visible: messages, hiddenCount: 0 }
     }
-    // Walk backwards counting player turns: a non-admin user row with no tool reply.
+    // Walk backwards counting player turns: a user row with no tool reply (side-chat
+    // included) or whose reply is a /narrate. Other tool commands never start a turn.
     let turns = 0
     let cut = messages.length
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i]
-      const isTurnStart = m.role === 'user' && !isAdmin(m) && !hasTool(replies.get(m.id))
+      const reply = replies.get(m.id)
+      const isTurnStart = m.role === 'user' && (!hasTool(reply) || reply?.meta?.tool === 'narrate')
       if (isTurnStart) {
         turns += 1
         if (turns > VISIBLE_TURNS) {
@@ -195,7 +215,7 @@ export function NarrativeLog({
         </button>
       ) : null}
       {visible.length === 0 && !isSending ? (
-        <p className="empty">The table is quiet. Describe your first move.</p>
+        <p className="empty">The table is quiet. Use /narrate to describe your first move.</p>
       ) : (
         visible.map((message) => {
           if (isAdmin(message)) {
@@ -229,6 +249,7 @@ export function NarrativeLog({
             <Bubble
               key={message.id}
               message={message}
+              entities={entities}
               isSending={isSending}
               onToggleCanon={onToggleCanon}
               onEdit={onEdit}

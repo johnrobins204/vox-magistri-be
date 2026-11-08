@@ -483,6 +483,38 @@ button.ghost:hover:enabled {
   overflow-wrap: anywhere;
 }
 
+/* Entity mentions (ADR-0016, SPEC-0022): outline only, so wrapping and line height do not shift. */
+.entity-mark {
+  border-radius: 3px;
+  outline-offset: 2px;
+  animation: entity-box-in 0.6s ease-out 1 both;
+}
+
+.entity-mark-canon {
+  outline: 1px solid var(--brass-bright);
+}
+
+.entity-mark-pending {
+  outline: 1px dashed var(--brass);
+}
+
+/* Draw-in runs once per mount; the end state is the status class's static outline. */
+@keyframes entity-box-in {
+  from {
+    outline-color: transparent;
+    outline-offset: 0.45em;
+  }
+  to {
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entity-mark {
+    animation: none;
+  }
+}
+
 .status-tag {
   font-size: 0.66rem;
   font-family: var(--mono);

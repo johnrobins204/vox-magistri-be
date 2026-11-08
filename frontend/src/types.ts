@@ -50,6 +50,27 @@ export interface MessageListResp {
   messages: Message[]
 }
 
+export type EntityKind = 'npc' | 'place' | 'faction' | 'quest' | 'item' | 'other'
+export type EntityStatus = 'canon' | 'pending' | 'rejected'
+
+/** Wire shape of a world entity row from GET /api/v1/world/entities (SPEC-0022). */
+export interface WorldEntity {
+  id: string
+  session_id: string | null
+  kind: EntityKind
+  name: string
+  aliases: string[]
+  notes: string
+  status: EntityStatus
+  evidence: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WorldEntityListResp {
+  entities: WorldEntity[]
+}
+
 export interface Species {
   id: string
   name: string

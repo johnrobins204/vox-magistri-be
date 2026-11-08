@@ -43,7 +43,7 @@ def slash_env(monkeypatch):
 
 # T-1
 def test_message_kind_classifies_none_and_tool_names():
-    assert message_kind(None) == NARRATIVE
+    assert message_kind(None) == ADMIN
     assert message_kind("narrate") == NARRATIVE
     for name in ("rules", "monster", "help", "zzz"):
         assert message_kind(name) == ADMIN
@@ -64,10 +64,10 @@ def test_submit_user_message_sets_kind_and_strips_client_value(session_store):
     inference = FakeInference()
     cases = [
         ({"content": "/rules grapple"}, ADMIN),
-        ({"content": "hello"}, NARRATIVE),
+        ({"content": "hello"}, ADMIN),
         ({"content": "/narrate x"}, NARRATIVE),
         ({"content": "/nope"}, ADMIN),
-        ({"content": "hello", "meta": {"kind": "admin"}}, NARRATIVE),
+        ({"content": "hello", "meta": {"kind": "narrative"}}, ADMIN),
     ]
     for payload, _ in cases:
         submit_user_message(
@@ -87,7 +87,7 @@ def test_slash_and_chat_rows_and_replies_carry_kind(slash_env):
     by_content = {m["content"]: m for m in msgs if m["role"] == "user"}
     assert by_content["/rules x"]["meta"]["kind"] == ADMIN
     assert by_content["/narrate a storm"]["meta"]["kind"] == NARRATIVE
-    assert by_content["hello"]["meta"]["kind"] == NARRATIVE
+    assert by_content["hello"]["meta"]["kind"] == ADMIN
     nope = by_content["/nope hi"]
     assert nope["status"] == "error"
     assert nope["meta"]["kind"] == ADMIN

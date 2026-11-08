@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createSession, getIntelStatus, getWeapons, listMessages, updateMessage } from './lib/api'
+import { createSession, getIntelStatus, getWeapons, getWorldEntities, listMessages, updateMessage } from './lib/api'
 import { openSessionSocket, type SessionSocket } from './lib/ws'
 import { isCanon } from './lib/corrections'
 import { CharacterCreator } from './components/CharacterCreator'
@@ -14,7 +14,7 @@ import { loadActiveId, loadRoster, removeCharacter, resolveActive, saveActiveId,
 import { loadNarrativeOnly, saveNarrativeOnly } from './lib/preferences'
 import type { Character } from './lib/character'
 import type { MenuAction } from './components/Menu'
-import type { Message, WsEvent, Weapon } from './types'
+import type { Message, WsEvent, Weapon, WorldEntity } from './types'
 
 const SESSION_STORAGE_KEY = 'vox.session_id'
 
@@ -35,6 +35,7 @@ function upsertMessage(messages: Message[], nextMessage: Message): Message[] {
 function App() {
   const [sessionId, setSessionId] = useState<string>('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [entities, setEntities] = useState<WorldEntity[]>([])
   const [draft, setDraft] = useState<string>('')
   const [socketStatus, setSocketStatus] = useState<'connecting' | 'open' | 'closed'>('connecting')
   const [queuePosition, setQueuePosition] = useState<number | null>(null)
@@ -120,6 +121,7 @@ function App() {
     if (!sessionId) return
     let mounted = true
     setSocketStatus('connecting')
+    setEntities([])
 
     const load = async () => {
       try {
@@ -131,7 +133,17 @@ function App() {
         setErrorText(error instanceof Error ? error.message : 'Failed to load messages')
       }
     }
+    // Entity marks are decoration: on failure keep the current list, no banner, no log.
+    const loadEntities = async () => {
+      try {
+        const result = await getWorldEntities(sessionId)
+        if (mounted) setEntities(result.entities)
+      } catch {
+        // Keep the current list; the log renders plain text for unknown names.
+      }
+    }
     void load()
+    void loadEntities()
 
     const socket = openSessionSocket(sessionId, {
       onOpen: () => mounted && setSocketStatus('open'),
@@ -162,6 +174,7 @@ function App() {
             ),
           )
           setIsSending(false)
+          void loadEntities()
         } else if (event.type === 'error') {
           setErrorText(event.message)
           setIsSending(false)
@@ -338,6 +351,7 @@ function App() {
           </label>
           <NarrativeLog
             messages={messages}
+            entities={entities}
             isSending={isSending}
             narrativeOnly={narrativeOnly}
             onToggleCanon={toggleCanon}

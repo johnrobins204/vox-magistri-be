@@ -24,9 +24,9 @@ apply to prompt building (PAT-ARCH-003) or slash tools (PAT-ARCH-004). Decided i
    or extra thread until a second step needs one.
 2. **Fail-soft.** The step has its own `try/except`, logs a warning and never changes any
    message status.
-3. **What is mined.** Chat replies and `/narrate` replies only (`meta.tool` absent or
-   `narrate`; other tools' output is never mined), and only when the reply is canon
-   (PAT-ARCH-010 rule 5).
+3. **What is mined.** `/narrate` replies only (`meta.tool == narrate`; plain-chat side-chat
+   replies and other tools' output are never mined, ADR-0017), and only when the reply is
+   canon (PAT-ARCH-010 rule 5).
 4. **Pure detection.** Matching and proposal logic lives in
    `app/intelligence/world_mentions.py`: stdlib only, no store, HTTP or model client; the
    worker does all I/O. (Enforced in `tests/test_patterns.py`.)

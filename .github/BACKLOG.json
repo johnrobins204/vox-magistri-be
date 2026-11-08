@@ -866,6 +866,38 @@
         "[PENDING] Implementation"
       ],
       "follow_ups": []
+    },
+    {
+      "id": "REQ-0036",
+      "title": "Bounding-box animation for previously identified entities in chat",
+      "status": "in_progress",
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "adr_id": "ADR-0016",
+      "spec_path": "docs/specs/SPEC-0022-entity-mention-marks.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review",
+        "[COMPLETE] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": []
+    },
+    {
+      "id": "REQ-0037",
+      "title": "Plain chat becomes DM side-chat with tool guidance (not narration)",
+      "status": "in_progress",
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "adr_id": "ADR-0017",
+      "spec_path": "docs/specs/SPEC-0023-plain-chat-side-chat.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review",
+        "[COMPLETE] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": []
     }
   ]
 }

@@ -40,8 +40,9 @@ def detect_tool(payload: str | None) -> tuple[str | None, str | None]:
 
 
 def message_kind(tool_name: str | None) -> MessageKind:
-    """Plain chat (None) and narrative tools are narrative; every other command is admin."""
-    if tool_name is None or tool_name in NARRATIVE_TOOLS:
+    """Narrative tools (narrate, attack, roll) are narrative. Plain chat (None) is DM side-chat
+    (admin), as is every other command; only the narrative tools feed the story log."""
+    if tool_name is not None and tool_name in NARRATIVE_TOOLS:
         return MessageKind.NARRATIVE
     return MessageKind.ADMIN
 

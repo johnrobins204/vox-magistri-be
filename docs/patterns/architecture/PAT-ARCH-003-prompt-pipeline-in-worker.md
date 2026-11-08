@@ -41,7 +41,11 @@ may keep returning a single string.
    are also skipped, before the `max_turns` slice (ADR-0015). They are oldest first, and each `content` is
    cut with `_truncate(..., max_field_len)`. `max_turns <= 0` means no history. Do not
    rely on `lst[-0:]`, which returns the whole list.
-3. **The system message comes from configuration only.** It combines a built-in DM role
+3. **The system message comes from configuration only.** There are two (ADR-0017): the
+   narrator message, used for `/narrate`, and the side-chat message, used for plain text
+   (a veteran-DM out-of-fiction role sentence, the `dm_analysis` voice text and one
+   `TOOL_GUIDE` constant, with no VOICE line; built once in `__init__` by a pure builder).
+   The narrator message combines a built-in DM role
    sentence, the `dm_voice` style sentence from
    `app/intelligence/voice_configs/voice_configs.json`, and a voice line from
    `settings.prompts.dm_voice.*` and `settings.prompts.verbosity_default`, plus, when the
@@ -63,8 +67,10 @@ may keep returning a single string.
    and `app/services/messages.py` keep enqueueing `prompt=content`. The
    `InferenceService` and `SessionStore` Protocols do not change, except that the worker
    also calls `get_character` (ADR-0008) and `WorldStore.list_entities` (ADR-0010).
-   Slash-command jobs (`/name args`, [PAT-ARCH-004](./PAT-ARCH-004-slash-tools-in-worker.md))
-   skip the chat builder and run the tool instead.
+   `/narrate args` jobs use the chat builder with the narrator message and `args` as the
+   current text (ADR-0017). Other slash-command jobs
+   ([PAT-ARCH-004](./PAT-ARCH-004-slash-tools-in-worker.md)) skip the chat builder and run
+   the tool instead.
 6. **The client has two entry points and one HTTP path.**
    `OllamaClient.chat(messages, *, model=None) -> str` sends the `/api/chat` request.
    `generate(prompt, *, model=None)` is a one-line wrapper,

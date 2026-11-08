@@ -22,8 +22,9 @@ operator-mutable column (PAT-ARCH-010); kind is write-once.
 ## Solution
 1. `meta.kind` is a `MessageKind` StrEnum value (`narrative` | `admin`, `app/type_defs.py`)
    and a reserved meta key (`RESERVED_META_KEYS`), so clients cannot set it.
-2. It is computed once, at write time, by one helper beside `detect_tool`: no tool and tools
-   in the single `NARRATIVE_TOOLS` set are narrative; every other tool name is admin.
+2. It is computed once, at write time, by one helper beside `detect_tool`: tools in the
+   single `NARRATIVE_TOOLS` set are narrative; every other tool name is admin, and so is no
+   tool at all: plain chat is the admin side-chat (ADR-0017).
 3. Both rows of a slash command (the user command and its reply) carry the same kind;
    regenerate refreshes it with `meta.tool`.
 4. Readers use `meta.kind` only, never `content`; a missing key means narrative.
@@ -32,7 +33,8 @@ operator-mutable column (PAT-ARCH-010); kind is write-once.
 
 ## Consequences
 - No migration; values are documented in `docs/api/websocket.md`, not OpenAPI.
-- Rows written before ADR-0015 are narrative; there is no backfill.
+- Rows written before ADR-0015 are narrative; there is no backfill. Plain-chat rows written
+  before ADR-0017 keep their stored kind (narrative).
 - `NARRATIVE_TOOLS` is for classification only; world mining (PAT-ARCH-012) keeps its own
   narrate-only guard and MUST NOT reuse it.
 - Mechanical checks (e.g. `kind` in `RESERVED_META_KEYS`, no `startsWith('/')` in

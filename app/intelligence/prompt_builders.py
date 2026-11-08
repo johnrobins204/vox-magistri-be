@@ -186,6 +186,45 @@ def build_system_prompt(prompts: PromptSettings, voice_configs: dict[str, str]) 
     return "\n\n".join(parts)
 
 
+# --- player side-chat (SPEC-0023 WP-2) -------------------------------------
+SIDECHAT_ROLE_PROMPT = (
+    "You are a veteran Dungeon Master acting as an out-of-fiction advisor to the player. "
+    "Answer questions about rules, the table and the next practical step in plain language. "
+    "Do not narrate, role-play or describe scenes; if the player wants the story to move on, "
+    "point them to /narrate."
+)
+
+TOOL_GUIDE = "\n".join(
+    [
+        "TOOLS (suggest one when it fits; the player types it):",
+        "- /narrate <what happens>: the player wants the story to move on. "
+        "E.g. \"I want to see what the goblins do next\" -> /narrate the goblins ambush the wagon.",
+        "- /rules <rules question naming the rule, e.g. grapple>: the player asks how a rule works. "
+        "E.g. \"How does grappling work?\" -> /rules grapple",
+        "- /monster <name> [2014|2024]: the player asks about a creature's stats. "
+        "E.g. \"What can an owlbear do?\" -> /monster owlbear 2024",
+        "- /attack <weapon> [vs <AC>]: the player is making an attack. "
+        "E.g. \"I swing my longsword at AC 15\" -> /attack longsword vs 15",
+        "- /roll [NdM+K]: the player needs dice rolled without an attack. "
+        "E.g. \"Roll 2d6 plus 3\" -> /roll 2d6+3",
+    ]
+)
+
+
+def build_sidechat_system_prompt(voice_configs: dict[str, str]) -> str:
+    """
+    Player side-chat system message: the side-chat role sentence, then the dm_analysis config
+    text (only when it is a non-empty str), then the tool guide. Joined with a blank line.
+    No voice line. Pure: no I/O, never raises.
+    """
+    parts = [SIDECHAT_ROLE_PROMPT]
+    analysis = voice_configs.get("dm_analysis") if isinstance(voice_configs, Mapping) else None
+    if isinstance(analysis, str) and analysis:
+        parts.append(analysis)
+    parts.append(TOOL_GUIDE)
+    return "\n\n".join(parts)
+
+
 _ABILITY_ORDER = ("STR", "DEX", "CON", "INT", "WIS", "CHA")
 
 

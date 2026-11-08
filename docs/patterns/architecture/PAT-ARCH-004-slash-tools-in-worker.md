@@ -37,7 +37,10 @@ two-step narrate/adjudicate flow.
    WARNING.
 3. **Dispatch.** `submit_user_message` enqueues as usual. The worker calls
    `detect_tool(job.prompt)`. On a match it invokes the tool instead of building a chat
-   request. On success it writes the result with `_append_reply` as
+   request, except `/narrate` with non-empty args: the worker routes it to the
+   PAT-ARCH-003 chat pipeline (narrator system message, args as the current text) and the
+   reply meta stays `{tool, kind, reply_to}` (ADR-0017); the module stays for discovery, the
+   picker and REST `invoke`, which remains one-shot. On success it writes the result with `_append_reply` as
    `role='assistant'` and `meta = {**tool_meta, "reply_to", "tool": NAME}`, then marks the user
    message `completed`; replies also carry `meta.kind` (PAT-ARCH-013). On failure it marks the user message `error` with `meta.error`. No new
    role or status.

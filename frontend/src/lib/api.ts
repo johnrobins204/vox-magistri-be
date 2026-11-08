@@ -10,6 +10,7 @@ import type {
   ToolListResp,
   Weapon,
   WeaponListResp,
+  WorldEntityListResp,
 } from '../types'
 
 function authHeaders(): HeadersInit {
@@ -57,6 +58,14 @@ export async function listMessages(sessionId: string): Promise<MessageListResp> 
   // Backend currently returns a bare array; SPEC-0010 will wrap it in {"messages": [...]}.
   const body = await parseJson<MessageListResp | MessageListResp['messages']>(response)
   return Array.isArray(body) ? { messages: body } : body
+}
+
+export async function getWorldEntities(sessionId: string): Promise<WorldEntityListResp> {
+  const url = `${getApiBaseUrl()}/api/v1/world/entities?session_id=${encodeURIComponent(sessionId)}`
+  const response = await fetch(url, {
+    headers: authHeaders(),
+  })
+  return parseJson<WorldEntityListResp>(response)
 }
 
 export async function updateMessage(
