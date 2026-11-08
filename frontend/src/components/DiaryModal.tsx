@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Message } from '../types'
+import { isAdmin, replyIndex } from '../lib/kind'
 
 interface DiaryModalProps {
   open: boolean
@@ -26,8 +27,8 @@ function isRollResult(message: Message): boolean {
   return meta?.tool === 'roll'
 }
 
-function isSlashCommand(message: Message): boolean {
-  return message.role === 'user' && (message.content ?? '').startsWith('/')
+function hasTool(message: Message | undefined): boolean {
+  return typeof message?.meta?.tool === 'string'
 }
 
 export function DiaryModal({ open, messages, sessionId, onClose }: DiaryModalProps) {
@@ -42,17 +43,25 @@ export function DiaryModal({ open, messages, sessionId, onClose }: DiaryModalPro
     return () => document.removeEventListener('keydown', onEscape)
   }, [open, onClose])
 
+  const replies = useMemo(() => replyIndex(messages), [messages])
+
   const entries = useMemo<DiaryEntry[]>(
     () =>
       messages
-        .filter((m) => !isRollResult(m) && !isSlashCommand(m) && (m.content ?? '').trim())
+        .filter(
+          (m) =>
+            !isRollResult(m) &&
+            !isAdmin(m) &&
+            !(m.role === 'user' && hasTool(replies.get(m.id))) &&
+            (m.content ?? '').trim(),
+        )
         .map((m) => ({
           id: m.id,
           speaker: m.role === 'assistant' ? 'The Dungeon Master' : 'You',
           text: m.content ?? '',
           time: toClock(m.created_at),
         })),
-    [messages],
+    [messages, replies],
   )
 
   const rollCount = useMemo(() => messages.filter(isRollResult).length, [messages])

@@ -182,6 +182,7 @@ def test_t14_empty_history_and_no_campaign_parameter():
         "current_text",
         "max_turns",
         "max_field_len",
+        "narrative_only",
     ]
 
 

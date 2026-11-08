@@ -6,9 +6,12 @@ then mark the pattern "enforced" in docs/patterns/INDEX.md.
 """
 
 import ast
+import re
 from pathlib import Path
 
 import pytest
+
+from app.services.messages import RESERVED_META_KEYS
 
 ROOT = Path(__file__).resolve().parent.parent
 APP = ROOT / "app"
@@ -112,6 +115,28 @@ def test_pat_arch_012_world_mention_detector_is_pure():
     assert not _importers(files, banned)
 
 
+def test_pat_arch_013_kind_is_a_reserved_server_meta_key():
+    # T-6 (SPEC-0021): clients cannot set meta.kind; the server computes it at save time.
+    assert "kind" in RESERVED_META_KEYS
+
+
+SLASH_TEXT_SNIFF = re.compile(r"startsWith\(['\"]/['\"]\)")
+
+
+def test_pat_arch_013_no_slash_text_sniffing():
+    # T-21 (SPEC-0021): the frontend classifies messages by meta.kind, never by a leading '/'.
+    # lib/slash.ts is the one exception: it parses the composer draft, not a message.
+    frontend_src = ROOT / "frontend" / "src"
+    allowed = frontend_src / "lib" / "slash.ts"
+    offenders = [
+        path.relative_to(ROOT).as_posix()
+        for pattern in ("*.ts", "*.tsx")
+        for path in sorted(frontend_src.rglob(pattern))
+        if path != allowed and SLASH_TEXT_SNIFF.search(path.read_text(encoding="utf-8"))
+    ]
+    assert not offenders, f"files sniff slash text (use meta.kind / replyIndex): {offenders}"
+
+
 def _tool_modules():
     return [p for p in sorted(TOOLS.glob("*.py")) if not p.name.startswith("_")]
 
@@ -130,7 +155,9 @@ def _top_level_names(path: Path) -> set[str]:
 
 @pytest.mark.parametrize("path", _tool_modules(), ids=lambda p: p.name)
 def test_pat_arch_004_tool_modules_follow_the_contract(path):
-    assert {"NAME", "run"} <= _top_level_names(path), "tool needs NAME and run()"
+    assert {"NAME", "DESCRIPTION", "run"} <= _top_level_names(
+        path
+    ), "tool needs NAME, DESCRIPTION and run()"
     bad_imports = _importers([path], ("sqlite3", "app.services.repos", "app.deps"))
     assert not bad_imports, "tools never touch the store directly"
     source = path.read_text(encoding="utf-8")

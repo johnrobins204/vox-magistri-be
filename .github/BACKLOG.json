@@ -834,6 +834,38 @@
       "follow_ups": [
         "Priority 7 (deferred) from the 2026-11-07 assessment; carry-over of the REQ-0024 follow-up that selection is lexical. Candidate cheap fixes: alias and synonym expansion in the reference data, stem matching."
       ]
+    },
+    {
+      "id": "REQ-0034",
+      "title": "Slash-command tool autocomplete popup in chat input",
+      "status": "in_progress",
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "adr_id": "ADR-0014",
+      "spec_path": "docs/specs/SPEC-0020-slash-tool-picker.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review",
+        "[COMPLETE] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": []
+    },
+    {
+      "id": "REQ-0035",
+      "title": "Separate DM/admin messages from narrative with collapsible cards and a narrative-only toggle",
+      "status": "in_progress",
+      "created_at": "2026-11-08",
+      "updated_at": "2026-11-08",
+      "adr_id": "ADR-0015",
+      "spec_path": "docs/specs/SPEC-0021-narrative-admin-messages.md",
+      "tasks": [
+        "[COMPLETE] Restate requirement",
+        "[COMPLETE] Architecture review",
+        "[COMPLETE] Spec drafting",
+        "[PENDING] Implementation"
+      ],
+      "follow_ups": []
     }
   ]
 }

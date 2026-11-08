@@ -61,7 +61,7 @@ def test_submit_forces_user_role_and_strips_reserved_meta(session_store):
     )
     assert created
     assert message["role"] == "user"
-    assert message["meta"] == {"keep": 1}
+    assert message["meta"] == {"keep": 1, "kind": "narrative"}
 
 
 def test_submit_idempotent_on_client_message_id():

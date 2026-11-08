@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Message } from '../types'
 import { canCorrect, isCanon, isEdited } from '../lib/corrections'
+import { isAdmin, replyIndex } from '../lib/kind'
+import { AdminCard, CanonToggle } from './AdminCard'
 
 interface NarrativeLogProps {
   messages: Message[]
   isSending: boolean
+  narrativeOnly: boolean
   onToggleCanon: (message: Message) => void
   onEdit: (message: Message, text: string) => void
   onRegenerate: (message: Message) => void
@@ -31,23 +34,8 @@ function rollMeta(message: Message): { expression: string; total: number } | nul
   return null
 }
 
-interface CanonToggleProps {
-  message: Message
-  onToggle: (message: Message) => void
-}
-
-function CanonToggle({ message, onToggle }: CanonToggleProps) {
-  const canon = isCanon(message)
-  return (
-    <button
-      type="button"
-      className="ghost canon-toggle"
-      title={canon ? 'Mark this entry as not canon' : 'Mark this entry as canon'}
-      onClick={() => onToggle(message)}
-    >
-      {canon ? 'Canon' : 'Not canon'}
-    </button>
-  )
+function hasTool(message: Message | undefined): boolean {
+  return typeof message?.meta?.tool === 'string'
 }
 
 function RollCard({ message, onToggleCanon }: { message: Message; onToggleCanon: (message: Message) => void }) {
@@ -145,21 +133,34 @@ function Bubble({ message, isSending, onToggleCanon, onEdit, onRegenerate }: Bub
   )
 }
 
-export function NarrativeLog({ messages, isSending, onToggleCanon, onEdit, onRegenerate }: NarrativeLogProps) {
+export function NarrativeLog({
+  messages: all,
+  isSending,
+  narrativeOnly,
+  onToggleCanon,
+  onEdit,
+  onRegenerate,
+}: NarrativeLogProps) {
+  // Display-only: admin rows stay in the chronicle, they are just not drawn here.
+  const messages = useMemo(
+    () => (narrativeOnly ? all.filter((m) => !isAdmin(m)) : all),
+    [all, narrativeOnly],
+  )
   const logRef = useRef<HTMLDivElement | null>(null)
   const [expanded, setExpanded] = useState(false)
+  const replies = useMemo(() => replyIndex(messages), [messages])
 
   const { visible, hiddenCount } = useMemo(() => {
     if (expanded || messages.length === 0) {
       return { visible: messages, hiddenCount: 0 }
     }
-    // Walk backwards counting player (non-command) messages as turn starts.
+    // Walk backwards counting player turns: a non-admin user row with no tool reply.
     let turns = 0
     let cut = messages.length
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i]
-      const isCommand = m.role === 'user' && (m.content ?? '').startsWith('/')
-      if (m.role === 'user' && !isCommand) {
+      const isTurnStart = m.role === 'user' && !isAdmin(m) && !hasTool(replies.get(m.id))
+      if (isTurnStart) {
         turns += 1
         if (turns > VISIBLE_TURNS) {
           cut = i + 1
@@ -169,7 +170,13 @@ export function NarrativeLog({ messages, isSending, onToggleCanon, onEdit, onReg
       }
     }
     return { visible: messages.slice(cut), hiddenCount: cut }
-  }, [messages, expanded])
+  }, [messages, expanded, replies])
+
+  // Admin replies whose command is rendered in the same log are shown inside its card.
+  const adminCommandIds = useMemo(
+    () => new Set(visible.filter((m) => m.role === 'user' && isAdmin(m)).map((m) => m.id)),
+    [visible],
+  )
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight })
@@ -191,14 +198,30 @@ export function NarrativeLog({ messages, isSending, onToggleCanon, onEdit, onReg
         <p className="empty">The table is quiet. Describe your first move.</p>
       ) : (
         visible.map((message) => {
+          if (isAdmin(message)) {
+            if (message.role === 'user') {
+              return (
+                <AdminCard
+                  key={message.id}
+                  command={message}
+                  reply={replies.get(message.id) ?? null}
+                  onToggleCanon={onToggleCanon}
+                />
+              )
+            }
+            const commandId = message.meta?.reply_to
+            if (typeof commandId === 'string' && adminCommandIds.has(commandId)) {
+              return null
+            }
+            return <AdminCard key={message.id} command={null} reply={message} onToggleCanon={onToggleCanon} />
+          }
           if (message.role === 'assistant' && rollMeta(message)) {
             return <RollCard key={message.id} message={message} onToggleCanon={onToggleCanon} />
           }
-          const content = message.content ?? ''
-          if (message.role === 'user' && content.startsWith('/')) {
+          if (message.role === 'user' && hasTool(replies.get(message.id))) {
             return (
               <p key={message.id} className={`command-echo${isCanon(message) ? '' : ' non-canon'}`}>
-                ⚄ {content} <CanonToggle message={message} onToggle={onToggleCanon} />
+                ⚄ {message.content ?? ''} <CanonToggle message={message} onToggle={onToggleCanon} />
               </p>
             )
           }

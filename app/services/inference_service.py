@@ -19,11 +19,12 @@ from app.intelligence.prompt_builders import (
     load_voice_configs,
     select_world_entities,
 )
-from app.intelligence.tool_handler import detect_tool
+from app.intelligence.tool_handler import detect_tool, message_kind
 from app.reference.species import Species
 from app.services.logger import get_logger
 from app.services.messages import find_reply
 from app.services.world_mining import mine_reply
+from app.type_defs import MessageKind
 
 logger = get_logger(__name__)
 MAX_QUEUE_SIZE = 20
@@ -231,10 +232,11 @@ class OllamaInferenceService:
                         job.session_id,
                         job.message_id,
                         text,
-                        meta={**result["meta"], "tool": name},
+                        meta={**result["meta"], "tool": name, "kind": message_kind(name)},
                     )
                 else:
                     history = job.store.list_messages(job.session_id)
+                    current = job.store.get_message(job.session_id, job.message_id)
                     character = job.store.get_character(job.session_id)
                     system = self._system_prompt
                     species_resolved = False
@@ -255,6 +257,9 @@ class OllamaInferenceService:
                         job.prompt,
                         max_turns=self._max_turns,
                         max_field_len=self._max_field_len,
+                        narrative_only=bool(
+                            current and (current.get("meta") or {}).get("narrative_only") is True
+                        ),
                     )
                     if self._world_store is not None and self._world_budget > 0:
                         messages = self._inject_world(messages, job)
@@ -273,7 +278,13 @@ class OllamaInferenceService:
                         text = self.client.chat(messages)
 
                     # Append the reply as a new assistant message; the user message is untouched
-                    reply_id = self._append_reply(job.store, job.session_id, job.message_id, text)
+                    reply_id = self._append_reply(
+                        job.store,
+                        job.session_id,
+                        job.message_id,
+                        text,
+                        meta={"kind": MessageKind.NARRATIVE},
+                    )
                 self._update_message_status(job.store, job.session_id, job.message_id, "completed")
 
                 duration = time.time() - start

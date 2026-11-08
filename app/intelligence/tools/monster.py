@@ -18,6 +18,7 @@ from app.services.logger import get_logger
 logger = get_logger(__name__)
 
 NAME = "monster"
+DESCRIPTION = "Look up a monster's stat block."
 
 _USAGE = "Usage: /monster <monster name> [2014|2024]"
 HELP = (

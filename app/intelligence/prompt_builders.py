@@ -246,18 +246,23 @@ def build_chat_messages(
     *,
     max_turns: int,
     max_field_len: int,
+    narrative_only: bool = False,
 ) -> list[dict[str, str]]:
     """
     Chat messages for one turn: [system, prior, current user]. Prior messages are the completed
     user/assistant messages before the current one in history (all of them if the current id is
     not found) that are canon (canon False is skipped; True, None or a missing key is kept), keeping
     the last max_turns (none when max_turns <= 0), oldest first, with contents truncated to
-    max_field_len. The current text is not truncated. Reads plain dicts only: no mutation, no I/O.
+    max_field_len. The current text is not truncated. With narrative_only (ADR-0015) rows with
+    meta.kind "admin" are skipped before the slice, so they do not count toward max_turns.
+    Reads plain dicts only: no mutation, no I/O.
     """
     prior: list[dict[str, Any]] = []
     for message in history:
         if message.get("id") == current_message_id:
             break
+        if narrative_only and (message.get("meta") or {}).get("kind") == "admin":
+            continue
         if (
             message.get("status") == "completed"
             and message.get("role") in ("user", "assistant")

@@ -19,6 +19,9 @@ export interface CharacterIn {
 
 export type Role = 'user' | 'assistant' | 'system'
 
+/** Server-owned classification in `meta.kind` (ADR-0015); absent means narrative. */
+export type MessageKind = 'narrative' | 'admin'
+
 export interface Message {
   id: string
   client_message_id: string | null
@@ -75,6 +78,16 @@ export interface Weapon {
 
 export interface WeaponListResp {
   weapons: Weapon[]
+}
+
+export interface ToolInfo {
+  name: string
+  module: string | null
+  description: string
+}
+
+export interface ToolListResp {
+  tools: ToolInfo[]
 }
 
 export interface WsSnapshotEvent {

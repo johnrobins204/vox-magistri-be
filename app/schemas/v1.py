@@ -73,6 +73,10 @@ class MessageCreateReq(BaseModel):
         ..., min_length=1, max_length=16384, description="Message text/prompt to be processed"
     )
     meta: dict[str, Any] | None = Field(None, description="Optional structured metadata")
+    narrative_only: bool = Field(
+        False,
+        description="Ask for a narrative-only reply; stored server-side as meta.narrative_only",
+    )
 
     class Config:
         schema_extra = {
@@ -81,6 +85,7 @@ class MessageCreateReq(BaseModel):
                 "role": "user",
                 "content": "Describe a goblin ambush in two sentences.",
                 "meta": {"tone": "grimdark"},
+                "narrative_only": False,
             }
         }
 
@@ -176,6 +181,7 @@ class ToolInfo(BaseModel):
 
     name: str = Field(..., description="Tool name")
     module: str | None = Field(None, description="Module path where the tool is defined")
+    description: str = Field("", description="One-line, user-facing summary of the tool")
 
 
 class ToolListResp(BaseModel):
@@ -183,15 +189,24 @@ class ToolListResp(BaseModel):
 
     tools: list[ToolInfo]
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "tools": [
-                    {"name": "narrate", "module": "intelligence.tools.narrate"},
-                    {"name": "summon", "module": "intelligence.tools.summon"},
+                    {
+                        "name": "narrate",
+                        "module": "intelligence.tools.narrate",
+                        "description": "Narrate the scene in the DM's voice.",
+                    },
+                    {
+                        "name": "summon",
+                        "module": "intelligence.tools.summon",
+                        "description": "Summon a creature into the scene.",
+                    },
                 ]
             }
         }
+    )
 
 
 class ToolInvokeReq(BaseModel):

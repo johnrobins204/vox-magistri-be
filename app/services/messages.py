@@ -7,13 +7,17 @@ import time
 from typing import Any
 from uuid import uuid4
 
+from app.intelligence.tool_handler import detect_tool, message_kind
 from app.services.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Shared by REST and WebSocket so both transports enforce the same rules.
 MAX_INPUT_CHARS = 4096
-RESERVED_META_KEYS = frozenset({"reply_to", "tool", "updated_by", "error", "revisions"})
+# `kind` is computed at save time from the slash parse (PAT-ARCH-013); clients cannot set it.
+RESERVED_META_KEYS = frozenset(
+    {"reply_to", "tool", "updated_by", "error", "revisions", "kind", "narrative_only"}
+)
 
 
 def _clean_user_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -33,6 +37,9 @@ def submit_user_message(
     `queued` is False when the inference queue rejected the job; the message stays stored.
     """
     payload = _clean_user_payload(payload)
+    payload["meta"]["kind"] = message_kind(detect_tool(payload["content"])[0])
+    if payload.get("narrative_only") is True:
+        payload["meta"]["narrative_only"] = True
 
     cid = payload.get("client_message_id")
     if cid:

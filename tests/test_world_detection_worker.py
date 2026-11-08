@@ -262,6 +262,24 @@ def test_character_and_catalog_names_not_proposed(reply_text):
         store.close()
 
 
+# T-20 (SPEC-0021 WP-3): the mining guard stays {"narrate"} for slash tools plus plain chat.
+def test_admin_and_roll_attack_turns_are_not_mined(world, make_svc, caplog):
+    caplog.set_level(logging.INFO, logger=LOGGER)
+    svc = make_svc(world_store=world, tool_service=ToolStub(F1))
+
+    for content in ("/roll 1d20", "/attack Goblin", "/rules grapple"):
+        _turn(svc, world, content)
+    assert _pending(world) == {}
+    assert _records(caplog, "world.detected") == []
+
+    _turn(svc, world, "Tell me about the tavern.")
+    assert set(_pending(world)) == F1_NAMES
+    assert len(_records(caplog, "world.detected")) == 1
+
+    _turn(svc, world, "/narrate the tavern")
+    assert len(_records(caplog, "world.detected")) == 2
+
+
 def test_build_services_wires_catalog_stoplist(session_store):
     services = build_services(
         {"session": session_store, "world": session_store}, enable_tool_discovery=False

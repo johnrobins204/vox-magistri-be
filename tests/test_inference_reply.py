@@ -70,7 +70,7 @@ def test_reply_message_is_completed_and_unlinked(svc, store, monkeypatch):
     reply = store.list_messages("s1")[1]
     assert reply["status"] == "completed"
     assert reply["client_message_id"] is None
-    assert reply["meta"] == {"reply_to": "u1"}
+    assert reply["meta"] == {"reply_to": "u1", "kind": "narrative"}
 
 
 def test_error_path_preserves_user_message(svc, store, monkeypatch):
@@ -141,7 +141,7 @@ def test_worker_writes_status_via_update_message_status(svc, store, monkeypatch)
     reply = store.list_messages("s1")[1]
     assert reply["role"] == "assistant"
     assert ("s1", reply["id"], "completed", None) in store.calls
-    assert reply["meta"] == {"reply_to": "u1"}
+    assert reply["meta"] == {"reply_to": "u1", "kind": "narrative"}
 
     user = next(m for m in store.list_messages("s1") if m["id"] == "u1")
     assert user["status"] == "completed"

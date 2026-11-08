@@ -31,6 +31,7 @@ from app.intelligence.character_mods import (
 from app.intelligence.tools import ToolError
 
 NAME = "roll"
+DESCRIPTION = "Roll dice, e.g. 2d6+3 (a bare /roll rolls 1d20)."
 
 _DEFAULT_RNG = random.Random()
 

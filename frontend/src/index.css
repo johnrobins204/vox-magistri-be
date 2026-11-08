@@ -371,7 +371,25 @@ button.ghost:hover:enabled {
 .thread {
   padding: 1.1rem;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
+}
+
+.narrative-only-toggle {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--faint);
+  cursor: pointer;
+  user-select: none;
+}
+
+.narrative-only-toggle input {
+  margin: 0;
+  accent-color: var(--brass);
 }
 
 .thread-log {
@@ -773,6 +791,45 @@ button.ghost:hover:enabled {
   background: rgba(179, 64, 46, 0.12);
   color: var(--oxblood);
   font-size: 0.85rem;
+}
+
+/* ---------- Slash picker ---------- */
+
+.slash-picker {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.slash-picker-row {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.slash-picker-row.active {
+  border-color: var(--brass);
+  background: rgba(200, 164, 110, 0.12);
+}
+
+.slash-picker-name {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--brass-bright);
+}
+
+.slash-picker-desc {
+  font-size: 0.8rem;
+  color: var(--faint);
 }
 
 /* ---------- Menu ---------- */
@@ -1534,4 +1591,36 @@ button.correction-action {
   outline: none;
   border-color: var(--brass);
   box-shadow: 0 0 0 3px rgba(200, 164, 110, 0.12);
+}
+
+/* ---------- Admin cards (ADR-0015, SPEC-0021) ---------- */
+.admin-card {
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: rgba(127, 107, 168, 0.08);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.admin-card.non-canon {
+  opacity: 0.6;
+}
+
+.admin-card header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.admin-card-toggle {
+  flex: 1;
+  text-align: left;
+  font-family: var(--mono);
+}
+
+.admin-card-body {
+  padding: 0 0.75rem 0.6rem 1.2rem;
+  color: var(--muted);
+  white-space: pre-wrap;
 }

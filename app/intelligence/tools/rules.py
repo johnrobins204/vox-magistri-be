@@ -21,6 +21,7 @@ from app.services.logger import get_logger
 logger = get_logger(__name__)
 
 NAME = "rules"
+DESCRIPTION = "Look up a rule from the rules reference."
 
 _USAGE = "Usage: /rules <your rules question>"
 TRAINING_DISCLAIMER = "Not checked against the SRD rules text."

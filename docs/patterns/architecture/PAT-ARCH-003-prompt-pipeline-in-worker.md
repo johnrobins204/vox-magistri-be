@@ -36,7 +36,9 @@ may keep returning a single string.
 2. **Order is fixed.** The list has exactly one `system` message first, then at most
    `max_turns` prior messages, then the current `user` message last. Prior messages
    are those before the current message in store order, with `status == "completed"`,
-   `canon` true (NULL counts as true, ADR-0011) and `role` in {`user`, `assistant`}. They are oldest first, and each `content` is
+   `canon` true (NULL counts as true, ADR-0011) and `role` in {`user`, `assistant`}. When the
+   current user message has `meta.narrative_only` true, prior messages with `meta.kind` admin
+   are also skipped, before the `max_turns` slice (ADR-0015). They are oldest first, and each `content` is
    cut with `_truncate(..., max_field_len)`. `max_turns <= 0` means no history. Do not
    rely on `lst[-0:]`, which returns the whole list.
 3. **The system message comes from configuration only.** It combines a built-in DM role

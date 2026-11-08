@@ -19,6 +19,11 @@ class EntityStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class MessageKind(StrEnum):
+    NARRATIVE = "narrative"
+    ADMIN = "admin"
+
+
 class WorldStore(Protocol):
     def create_entity(
         self,

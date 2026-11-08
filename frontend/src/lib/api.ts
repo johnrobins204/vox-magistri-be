@@ -6,6 +6,8 @@ import type {
   SessionCreateResp,
   Species,
   SpeciesListResp,
+  ToolInfo,
+  ToolListResp,
   Weapon,
   WeaponListResp,
 } from '../types'
@@ -93,4 +95,11 @@ export async function getWeapons(): Promise<Weapon[]> {
   const response = await fetch(url)
   const body = await parseJson<WeaponListResp>(response)
   return body.weapons
+}
+
+export async function getTools(): Promise<ToolInfo[]> {
+  const url = `${getApiBaseUrl()}/api/v1/intel/tools`
+  const response = await fetch(url)
+  const body = await parseJson<ToolListResp>(response)
+  return body.tools
 }

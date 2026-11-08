@@ -19,10 +19,13 @@ from typing import Any
 
 from app.intelligence.tools import discover_tools
 from app.services.logger import get_logger
+from app.type_defs import MessageKind
 
 logger = get_logger(__name__)
 
 TOOL_RE = re.compile(r"^/([^\s/]+)(?:\s+(.*))?$")
+# Tools whose output is story; every other tool's output is admin (SPEC-0021, ADR-0015).
+NARRATIVE_TOOLS: frozenset[str] = frozenset({"narrate", "attack", "roll"})
 
 
 def detect_tool(payload: str | None) -> tuple[str | None, str | None]:
@@ -34,6 +37,13 @@ def detect_tool(payload: str | None) -> tuple[str | None, str | None]:
     name = m.group(1).lower()
     args = m.group(2) or ""
     return name, args
+
+
+def message_kind(tool_name: str | None) -> MessageKind:
+    """Plain chat (None) and narrative tools are narrative; every other command is admin."""
+    if tool_name is None or tool_name in NARRATIVE_TOOLS:
+        return MessageKind.NARRATIVE
+    return MessageKind.ADMIN
 
 
 # cached registry

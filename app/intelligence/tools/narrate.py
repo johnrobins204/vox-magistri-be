@@ -14,6 +14,7 @@ from app.intelligence.prompt_builders import NarratorVoiceParams, build_narrator
 from app.intelligence.tools import ToolError
 
 NAME = "narrate"
+DESCRIPTION = "Describe what happens next in the story."
 
 _USAGE = "Usage: /narrate <what happens>"
 

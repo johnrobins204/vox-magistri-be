@@ -88,7 +88,8 @@ def test_worker_sends_built_message_list(svc, session_store, monkeypatch):
     assert replies[0]["role"] == "assistant"
     assert replies[0]["content"] == "reply-1"
     assert replies[0]["status"] == "completed"
-    assert replies[0]["meta"] == {"reply_to": "u1"}
+    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "narrative"}
+    assert replies[0]["status"] == "completed"
 
 
 # T-24

@@ -74,6 +74,13 @@ async def _wait_for_terminal(
 async def _handle_user_message(
     ws: WebSocket, store, inference, session_id: str, data: dict[str, Any]
 ) -> None:
+    """
+    Handle a `user_message` action.
+
+    Optional `narrative_only` (bool, default false) asks for a narrative-only reply; it is
+    stored server-side as `meta.narrative_only` on the user row. Any non-bool value is
+    rejected with an error before anything is stored.
+    """
     # Validate before anything is stored; each failure reports an error and keeps the socket.
     if inference is None:
         await _send_error(ws, "Inference service unavailable")
@@ -89,6 +96,10 @@ async def _handle_user_message(
     if client_message_id is not None and not isinstance(client_message_id, str):
         await _send_error(ws, "client_message_id must be a string")
         return
+    narrative_only = data.get("narrative_only", False)
+    if not isinstance(narrative_only, bool):
+        await _send_error(ws, "narrative_only must be a boolean")
+        return
 
     message, created, queued = submit_user_message(
         store=store,
@@ -99,6 +110,7 @@ async def _handle_user_message(
             "role": "user",
             "content": text,
             "meta": None,
+            "narrative_only": narrative_only,
         },
     )
     await ws_send(ws, {"type": "entry", "entry": message})

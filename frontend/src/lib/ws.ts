@@ -9,7 +9,7 @@ interface SessionSocketHandlers {
 }
 
 export interface SessionSocket {
-  sendUserMessage: (text: string, clientMessageId: string) => void
+  sendUserMessage: (text: string, clientMessageId: string, narrativeOnly: boolean) => void
   sendStatus: () => void
   sendRegenerate: (messageId: string) => void
   close: () => void
@@ -39,12 +39,13 @@ export function openSessionSocket(
   })
 
   return {
-    sendUserMessage: (text: string, clientMessageId: string) => {
+    sendUserMessage: (text: string, clientMessageId: string, narrativeOnly: boolean) => {
       socket.send(
         JSON.stringify({
           action: 'user_message',
           text,
           client_message_id: clientMessageId,
+          narrative_only: narrativeOnly,
         }),
       )
     },

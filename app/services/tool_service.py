@@ -9,6 +9,7 @@ Responsibilities:
 
 Tool contract (expected in each tool module):
 - NAME: str
+- DESCRIPTION: str (optional, one line, shown in the client tool picker)
 - run(args: str, context: dict) -> str | {"text": str, "meta": dict}
 
 Context built for each tool, lowest to highest precedence:
@@ -93,6 +94,18 @@ class ToolService:
                 name: getattr(self._modules.get(name), "__name__", "")
                 for name in self._registry.keys()
             }
+
+    def list_tool_descriptions(self) -> dict[str, str]:
+        """
+        Return a mapping of tool name -> one-line DESCRIPTION for every registered tool.
+        Empty string when the tool has no module, no DESCRIPTION, or a non-str DESCRIPTION.
+        """
+        with self._lock:
+            descriptions: dict[str, str] = {}
+            for name in self._registry.keys():
+                value = getattr(self._modules.get(name), "DESCRIPTION", None)
+                descriptions[name] = value.strip() if isinstance(value, str) else ""
+            return descriptions
 
     # -------------------------
     # Invocation

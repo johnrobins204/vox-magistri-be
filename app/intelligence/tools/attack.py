@@ -20,6 +20,7 @@ from app.intelligence.tools import ToolError
 from app.intelligence.tools.roll import MAX_DICE_PER_TERM, MAX_SIDES, MIN_SIDES, evaluate
 
 NAME = "attack"
+DESCRIPTION = "Make an attack with a weapon."
 
 _DEFAULT_RNG = random.Random()
 

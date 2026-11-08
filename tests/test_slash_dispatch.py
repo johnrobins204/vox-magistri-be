@@ -140,7 +140,7 @@ def test_worker_chat_holds_the_ollama_lock(svc, session_store, monkeypatch):
     replies = [m for m in session_store.list_messages("s1") if m["role"] == "assistant"]
     assert len(replies) == 1
     assert replies[0]["content"] == "worker reply"
-    assert replies[0]["meta"] == {"reply_to": "u1"}
+    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "narrative"}
     assert svc._ollama_lock.locked() is False
 
 
@@ -255,7 +255,7 @@ def test_slash_narrate_runs_in_worker_without_deadlock(slash_env):
     user, reply = msgs
     assert user["status"] == "completed"
     assert reply["content"] == "stub reply"
-    assert reply["meta"] == {"tool": "narrate", "reply_to": user["id"]}
+    assert reply["meta"] == {"tool": "narrate", "reply_to": user["id"], "kind": "narrative"}
     assert slash_env.chat_calls == [[{"role": "user", "content": _narrate_prompt("a storm")}]]
 
 
@@ -282,7 +282,7 @@ def test_non_slash_messages_use_chat_path(slash_env):
         ]
         assert len(replies) == 1
         assert replies[0]["content"] == "stub reply"
-        assert replies[0]["meta"] == {"reply_to": msg_id}
+        assert replies[0]["meta"] == {"reply_to": msg_id, "kind": "narrative"}
 
 
 # T-40
@@ -314,10 +314,10 @@ def test_without_tool_service_slash_goes_to_chat(plain_env):
     replies = [m for m in plain_env.store.list_messages("s1") if m["role"] == "assistant"]
     assert len(replies) == 1
     assert replies[0]["content"] == "stub reply"
-    assert replies[0]["meta"] == {"reply_to": "u1"}
+    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "narrative"}
 
 
-# T-41
+# T-40
 def test_worker_passes_server_context_to_tool(slash_env):
     seen: dict = {}
 
@@ -399,7 +399,7 @@ def test_ws_slash_narrate_creates_tool_reply(slash_env):
     reply = reply_evt["entry"]
     assert reply["role"] == "assistant"
     assert reply["content"] == "stub reply"
-    assert reply["meta"] == {"tool": "narrate", "reply_to": user["id"]}
+    assert reply["meta"] == {"tool": "narrate", "reply_to": user["id"], "kind": "narrative"}
     assert done == {"type": "done", "message_id": user["id"], "reply_id": reply["id"]}
     assert slash_env.chat_calls == [[{"role": "user", "content": _narrate_prompt("a storm")}]]
 
@@ -495,6 +495,7 @@ def test_rules_slash_without_catalog_answers_from_training(slash_env):
         "source": "training",
         "rule_ids": [],
         "reply_to": user["id"],
+        "kind": "admin",
     }
     assert slash_env.chat_calls == [
         [{"role": "user", "content": build_rules_prompt("what is a bonus action", [])}]
@@ -518,6 +519,7 @@ def test_rules_slash_with_catalog_answers_from_rules(slash_env):
         "source": "rules",
         "rule_ids": ["opportunity-attacks"],
         "reply_to": user["id"],
+        "kind": "admin",
     }
     assert len(slash_env.chat_calls) == 1
     assert rule.description in slash_env.chat_calls[0][-1]["content"]
@@ -540,6 +542,7 @@ def test_monster_slash_hit_renders_stat_block_without_llm(slash_env):
         "source": "creatures",
         "creature_ids": ["goblin"],
         "reply_to": user["id"],
+        "kind": "admin",
     }
     assert slash_env.chat_calls == []
 

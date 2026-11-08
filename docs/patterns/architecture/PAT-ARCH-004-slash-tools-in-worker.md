@@ -29,6 +29,8 @@ two-step narrate/adjudicate flow.
    returns `str` or `{"text": str, "meta": dict}`. A bad user input raises
    `app.intelligence.tools.ToolError`. Any other exception is a bug and propagates. Tools
    never write messages. Discovery is only via `discover_tool_modules` (ADR-0001).
+   A module also exposes `DESCRIPTION: str`, one plain-language line shown in the client tool
+   picker. `GET /api/v1/intel/tools` returns it as `description` ("" if absent).
 2. **Context.** Server-owned keys are `inference`, `repos`, `store`, `session_id`,
    `message_id`, `logger`, `rng`. `session_id`/`message_id`/`store` are set only by the worker.
    Client context can add keys, never replace these. Dropped keys are logged by name at
@@ -37,7 +39,7 @@ two-step narrate/adjudicate flow.
    `detect_tool(job.prompt)`. On a match it invokes the tool instead of building a chat
    request. On success it writes the result with `_append_reply` as
    `role='assistant'` and `meta = {**tool_meta, "reply_to", "tool": NAME}`, then marks the user
-   message `completed`. On failure it marks the user message `error` with `meta.error`. No new
+   message `completed`; replies also carry `meta.kind` (PAT-ARCH-013). On failure it marks the user message `error` with `meta.error`. No new
    role or status.
 4. **LLM access.** Tools call `context["inference"].generate(prompt)`. It and the worker's
    `client.chat` share one `_ollama_lock`, so Ollama calls never overlap.

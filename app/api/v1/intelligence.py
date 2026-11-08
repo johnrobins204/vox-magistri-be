@@ -40,7 +40,11 @@ def _tool_error(status_code: int, message: str, *, detail: str | None = None) ->
 @router.get("/tools", response_model=ToolListResp)
 def list_tools(tool_service=Depends(get_tool_service)):
     registry = tool_service.list_tools()
-    tools = [{"name": name, "module": module} for name, module in registry.items()]
+    descriptions = tool_service.list_tool_descriptions()
+    tools = [
+        {"name": name, "module": module, "description": descriptions.get(name, "")}
+        for name, module in registry.items()
+    ]
     return ToolListResp(tools=tools)
 
 

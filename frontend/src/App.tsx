@@ -11,6 +11,7 @@ import { FeatureModal, type FeatureKey } from './components/FeatureModal'
 import { NarrativeLog } from './components/NarrativeLog'
 import { SceneBar } from './components/SceneBar'
 import { loadActiveId, loadRoster, removeCharacter, resolveActive, saveActiveId, saveRoster, sendableHero, upsertCharacter } from './lib/roster'
+import { loadNarrativeOnly, saveNarrativeOnly } from './lib/preferences'
 import type { Character } from './lib/character'
 import type { MenuAction } from './components/Menu'
 import type { Message, WsEvent, Weapon } from './types'
@@ -47,6 +48,7 @@ function App() {
   const [roster, setRoster] = useState<Character[]>(() => loadRoster())
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(() => loadActiveId())
   const [weapons, setWeapons] = useState<Weapon[]>([])
+  const [narrativeOnly, setNarrativeOnly] = useState<boolean>(() => loadNarrativeOnly())
   const socketRef = useRef<SessionSocket | null>(null)
 
   const character = resolveActive(roster, activeCharacterId)
@@ -181,9 +183,9 @@ function App() {
       if (!trimmed || !socketRef.current || socketStatus !== 'open' || isSending) return
       setErrorText('')
       setIsSending(true)
-      socketRef.current.sendUserMessage(trimmed, crypto.randomUUID())
+      socketRef.current.sendUserMessage(trimmed, crypto.randomUUID(), narrativeOnly)
     },
-    [socketStatus, isSending],
+    [socketStatus, isSending, narrativeOnly],
   )
 
   const submitDraft = useCallback(() => {
@@ -322,9 +324,22 @@ function App() {
         <CharacterPanel character={character} />
 
         <section className="panel thread">
+          <label className="narrative-only-toggle">
+            <input
+              type="checkbox"
+              checked={narrativeOnly}
+              onChange={(event) => {
+                const next = event.target.checked
+                setNarrativeOnly(next)
+                saveNarrativeOnly(next)
+              }}
+            />
+            Narrative only
+          </label>
           <NarrativeLog
             messages={messages}
             isSending={isSending}
+            narrativeOnly={narrativeOnly}
             onToggleCanon={toggleCanon}
             onEdit={editMessage}
             onRegenerate={regenerate}
