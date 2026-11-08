@@ -1,7 +1,8 @@
 """World mention detection through the REST API and worker (SPEC-0019 WP-6, REQ-0028, PAT-ARCH-012).
 
 T-40 pending queue, T-41 pending not injected until approved, T-42 rejected never re-proposed.
-Chat goes through POST /api/v1/sessions/{id}/messages; assertions read the recorded system message.
+Turns go through POST /api/v1/sessions/{id}/messages as `/narrate` (SPEC-0023 WP-4): only /narrate
+replies are mined. Assertions read the recorded system message.
 No network and no Ollama: `client.chat` is a recording stub that returns `reply_text["v"]`.
 """
 
@@ -13,6 +14,7 @@ from fastapi.testclient import TestClient
 
 from app.factory import create_app
 from app.services.repos import SqliteSessionStore
+from app.services.tool_service import ToolService
 from tests.session_helpers import AUTH, make_stub_service, wait_idle
 
 F1 = (
@@ -34,7 +36,9 @@ def env(monkeypatch):
     store.create_session("s1")
     store.create_entity(name="Brightwater", status="canon")
     reply_text = {"v": F1}
-    svc = make_stub_service(world_store=store)
+    # A tool service makes "/narrate <args>" run the narrator chat pipeline (SPEC-0023 WP-4).
+    ts = ToolService(discover_on_init=True, default_context={})
+    svc = make_stub_service(tool_service=ts, world_store=store)
     chat_calls: list[list[dict]] = []
 
     def _chat(messages, **kw):
@@ -55,8 +59,8 @@ def env(monkeypatch):
     store.close()
 
 
-def _chat(env, content: str) -> None:
-    resp = env.client.post(MESSAGES, json={"content": content}, headers=AUTH)
+def _narrate(env, text: str) -> None:
+    resp = env.client.post(MESSAGES, json={"content": f"/narrate {text}"}, headers=AUTH)
     assert resp.status_code == 202, resp.text
     wait_idle(env.svc)
 
@@ -84,7 +88,7 @@ def _system(env, prompt_index: int) -> str:
 
 
 def test_chat_reply_shows_in_pending_queue(env):
-    _chat(env, "Tell me about the tavern.")
+    _narrate(env, "Tell me about the tavern.")
     reply_id = _last_reply_id(env)
 
     pending = _entities(env, status="pending")
@@ -98,8 +102,8 @@ def test_chat_reply_shows_in_pending_queue(env):
 
 
 def test_pending_not_injected_until_approved(env):
-    _chat(env, "Tell me about the tavern.")
-    _chat(env, "Tell me more.")
+    _narrate(env, "Tell me about the tavern.")
+    _narrate(env, "Tell me more.")
     assert "Rusty Anchor" not in _system(env, 1)
 
     rusty = _named(env, "Rusty Anchor")
@@ -110,18 +114,18 @@ def test_pending_not_injected_until_approved(env):
     assert resp.json()["status"] == "canon"
     assert resp.json()["kind"] == "place"
 
-    _chat(env, "And now?")
+    _narrate(env, "And now?")
     assert "Rusty Anchor" in _system(env, 2)
 
 
 def test_rejected_never_reproposed(env):
-    _chat(env, "Tell me about the tavern.")
+    _narrate(env, "Tell me about the tavern.")
     marta = _named(env, "Old Marta")
     resp = env.client.patch(f"{ENTITIES}/{marta['id']}", json={"status": "rejected"}, headers=AUTH)
     assert resp.status_code == 200, resp.text
     ids_before = {e["id"] for e in _entities(env)}
 
-    _chat(env, "Tell me more.")
+    _narrate(env, "Tell me more.")
 
     assert {e["id"] for e in _entities(env)} == ids_before
     assert not [e for e in _entities(env, status="pending") if e["name"] == "Old Marta"]
@@ -131,7 +135,7 @@ def test_rejected_never_reproposed(env):
     assert resp.status_code == 204, resp.text
     assert marta["id"] not in {e["id"] for e in _entities(env)}
 
-    _chat(env, "Anything else?")
+    _narrate(env, "Anything else?")
     third_reply_id = _last_reply_id(env)
     reproposed = _named(env, "Old Marta")
     assert reproposed["id"] != marta["id"]

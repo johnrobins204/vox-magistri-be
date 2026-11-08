@@ -15,6 +15,7 @@ from app.services.build_services import build_services
 from app.services.inference_service import OllamaInferenceService
 from app.services.messages import correct_message, find_reply, regenerate_reply, submit_user_message
 from app.services.repos import SqliteSessionStore
+from app.services.tool_service import ToolService
 from tests.session_helpers import make_stub_service, wait_idle
 
 LOGGER = "app.services.inference_service"
@@ -80,6 +81,14 @@ def make_svc(reply_text):
         asyncio.run(svc.shutdown())
 
 
+def _narrate_svc(make_svc, **kwargs):
+    """Service whose /narrate runs the real narrate tool, so its reply is `reply_text["v"]`."""
+    ts = ToolService(discover_on_init=True, default_context={})
+    svc = make_svc(tool_service=ts, **kwargs)
+    ts.default_context["inference"] = svc
+    return svc
+
+
 def _turn(svc, store, content: str) -> dict:
     message, created, queued = submit_user_message(
         store=store, inference=svc, session_id="s1", payload={"content": content}
@@ -109,7 +118,7 @@ def _records(caplog, message: str) -> list[logging.LogRecord]:
     return [r for r in caplog.records if r.name == LOGGER and r.getMessage() == message]
 
 
-def test_chat_reply_creates_pending_candidates(world, make_svc, monkeypatch, caplog):
+def test_narrate_reply_creates_pending_candidates(world, make_svc, monkeypatch, caplog):
     seen_user_statuses = []
     real_mine_reply = inference_service.mine_reply
 
@@ -121,9 +130,9 @@ def test_chat_reply_creates_pending_candidates(world, make_svc, monkeypatch, cap
 
     monkeypatch.setattr(inference_service, "mine_reply", spy)
     caplog.set_level(logging.INFO, logger=LOGGER)
-    svc = make_svc(world_store=world)
+    svc = _narrate_svc(make_svc, world_store=world)
 
-    user = _turn(svc, world, "Tell me about the tavern.")
+    user = _turn(svc, world, "/narrate the tavern")
 
     reply = _reply(world, user["id"])
     assert seen_user_statuses == [["completed"]]
@@ -168,8 +177,8 @@ def test_skipped_cases(world, make_svc, reply_text, caplog):
     caplog.set_level(logging.INFO, logger=LOGGER)
 
     # No world store: nothing is written, nothing raised.
-    svc = make_svc(world_store=None)
-    user = _turn(svc, world, "hi")
+    svc = _narrate_svc(make_svc, world_store=None)
+    user = _turn(svc, world, "/narrate hi")
     assert _reply(world, user["id"])["status"] == "completed"
     assert _pending(world) == {}
     assert _records(caplog, "world.detected") == []
@@ -177,15 +186,15 @@ def test_skipped_cases(world, make_svc, reply_text, caplog):
     assert _records(caplog, "job.failed") == []
 
     # Switch off.
-    svc = make_svc(world_store=world, world=WorldSettings(detect_mentions=False))
-    _turn(svc, world, "hi again")
+    svc = _narrate_svc(make_svc, world_store=world, world=WorldSettings(detect_mentions=False))
+    _turn(svc, world, "/narrate hi again")
     assert set(_pending(world)) == set()
     assert _records(caplog, "world.detected") == []
 
     # Non-canon reply: regenerate after the operator marks it non-canon.
     reply_text["v"] = "A quiet reply."
-    svc = make_svc(world_store=world)
-    user = _turn(svc, world, "third")
+    svc = _narrate_svc(make_svc, world_store=world)
+    user = _turn(svc, world, "/narrate third")
     reply = _reply(world, user["id"])
     correct_message(store=world, session_id="s1", message_id=reply["id"], canon=False)
     detected_before = len(_records(caplog, "world.detected"))
@@ -199,9 +208,9 @@ def test_skipped_cases(world, make_svc, reply_text, caplog):
 
 def test_detection_failure_is_fail_soft(world, make_svc, caplog):
     caplog.set_level(logging.INFO, logger=LOGGER)
-    svc = make_svc(world_store=ListEntitiesFails(world))
+    svc = _narrate_svc(make_svc, world_store=ListEntitiesFails(world))
 
-    user = _turn(svc, world, "hi")
+    user = _turn(svc, world, "/narrate hi")
 
     assert world.get_message("s1", user["id"])["status"] == "completed"
     reply = _reply(world, user["id"])
@@ -216,8 +225,8 @@ def test_detection_failure_is_fail_soft(world, make_svc, caplog):
 
 
 def test_regenerate_in_place(world, make_svc, reply_text):
-    svc = make_svc(world_store=world)
-    user = _turn(svc, world, "hi")
+    svc = _narrate_svc(make_svc, world_store=world)
+    user = _turn(svc, world, "/narrate hi")
     reply = _reply(world, user["id"])
     before = _pending(world)
     assert set(before) == F1_NAMES
@@ -247,10 +256,14 @@ def test_character_and_catalog_names_not_proposed(reply_text):
     settings = Settings(
         ollama=OllamaSettings(base_url="http://127.0.0.1:1", model="stub", timeout_seconds=1.0)
     )
-    svc = OllamaInferenceService(settings, world_store=store, mention_stoplist=["Goblin"])
+    ts = ToolService(discover_on_init=True, default_context={})
+    svc = OllamaInferenceService(
+        settings, tool_service=ts, world_store=store, mention_stoplist=["Goblin"]
+    )
+    ts.default_context["inference"] = svc
     svc.client.chat = lambda messages, **kw: reply_text["v"]
     try:
-        user = _turn(svc, store, "hi")
+        user = _turn(svc, store, "/narrate hi")
 
         assert _reply(store, user["id"])["status"] == "completed"
         pending = set(_pending(store))
@@ -262,7 +275,7 @@ def test_character_and_catalog_names_not_proposed(reply_text):
         store.close()
 
 
-# T-20 (SPEC-0021 WP-3): the mining guard stays {"narrate"} for slash tools plus plain chat.
+# T-20 (SPEC-0021 WP-3; SPEC-0023 W-5): only /narrate is mined; other slash tools are not.
 def test_admin_and_roll_attack_turns_are_not_mined(world, make_svc, caplog):
     caplog.set_level(logging.INFO, logger=LOGGER)
     svc = make_svc(world_store=world, tool_service=ToolStub(F1))
@@ -272,12 +285,21 @@ def test_admin_and_roll_attack_turns_are_not_mined(world, make_svc, caplog):
     assert _pending(world) == {}
     assert _records(caplog, "world.detected") == []
 
-    _turn(svc, world, "Tell me about the tavern.")
+    _turn(svc, world, "/narrate the tavern")
     assert set(_pending(world)) == F1_NAMES
     assert len(_records(caplog, "world.detected")) == 1
 
-    _turn(svc, world, "/narrate the tavern")
-    assert len(_records(caplog, "world.detected")) == 2
+
+# SPEC-0023 W-5: a plain side-chat reply is never mined, even with detection on.
+def test_plain_chat_reply_is_not_mined(world, make_svc, caplog):
+    caplog.set_level(logging.INFO, logger=LOGGER)
+    svc = make_svc(world_store=world)
+
+    user = _turn(svc, world, "Tell me about the tavern.")
+
+    assert _reply(world, user["id"])["meta"]["kind"] == "admin"
+    assert _pending(world) == {}
+    assert _records(caplog, "world.detected") == []
 
 
 def test_build_services_wires_catalog_stoplist(session_store):

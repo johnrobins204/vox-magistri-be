@@ -14,6 +14,7 @@ from app.intelligence.client import OllamaClient
 from app.intelligence.prompt_builders import (
     build_character_section,
     build_chat_messages,
+    build_sidechat_system_prompt,
     build_system_prompt,
     build_world_section,
     load_voice_configs,
@@ -70,8 +71,11 @@ class OllamaInferenceService:
         # Slash dispatch (SPEC-0007 WP-7); None disables it and every message uses the chat path.
         self._tool_service = tool_service
 
-        # Prompt pipeline (SPEC-0006): voice configs and prompt limits are read once, here.
-        self._system_prompt = build_system_prompt(settings.prompts, load_voice_configs())
+        # Prompt pipeline (SPEC-0006, SPEC-0023 WP-3): voice configs are read once, here, and
+        # feed both the DM system message and the player side-chat system message.
+        voice_configs = load_voice_configs()
+        self._system_prompt = build_system_prompt(settings.prompts, voice_configs)
+        self._sidechat_prompt = build_sidechat_system_prompt(voice_configs)
         self._max_turns = settings.app.max_turns
         self._max_field_len = settings.app.max_field_len
         # Character species lookup (SPEC-0013 D2): built once here, never per job.
@@ -206,9 +210,12 @@ class OllamaInferenceService:
                 name, args = (
                     detect_tool(job.prompt) if self._tool_service is not None else (None, None)
                 )
-                if name is not None:
-                    # Slash job (PAT-ARCH-004): run the tool here, outside _ollama_lock (narrate
-                    # calls generate, which takes it). No chat builder and no client.chat.
+                # /narrate with text is a narrator chat turn (SPEC-0023 WP-4); empty /narrate stays a
+                # tool call and errors with the usage text.
+                narrate = name == "narrate" and bool((args or "").strip())
+                if name is not None and not narrate:
+                    # Slash job (PAT-ARCH-004): run the tool here, outside _ollama_lock. No chat
+                    # builder and no client.chat.
                     logger.info(
                         "tool.dispatch",
                         extra={
@@ -238,7 +245,9 @@ class OllamaInferenceService:
                     history = job.store.list_messages(job.session_id)
                     current = job.store.get_message(job.session_id, job.message_id)
                     character = job.store.get_character(job.session_id)
-                    system = self._system_prompt
+                    # /narrate uses the DM narrator system message; plain chat the side-chat one.
+                    system = self._system_prompt if narrate else self._sidechat_prompt
+                    current_text = args.strip() if narrate else job.prompt
                     species_resolved = False
                     if character is not None:
                         species = self._species_by_id.get(character.get("species_id") or "")
@@ -254,7 +263,7 @@ class OllamaInferenceService:
                         system,
                         history,
                         job.message_id,
-                        job.prompt,
+                        current_text,
                         max_turns=self._max_turns,
                         max_field_len=self._max_field_len,
                         narrative_only=bool(
@@ -277,13 +286,19 @@ class OllamaInferenceService:
                     with self._ollama_lock:
                         text = self.client.chat(messages)
 
-                    # Append the reply as a new assistant message; the user message is untouched
+                    # Append the reply as a new assistant message; the user message is untouched.
+                    # Player side-chat is admin kind; /narrate is narrative and mined (SPEC-0023).
+                    reply_meta = (
+                        {"tool": "narrate", "kind": message_kind("narrate")}
+                        if narrate
+                        else {"kind": MessageKind.ADMIN}
+                    )
                     reply_id = self._append_reply(
                         job.store,
                         job.session_id,
                         job.message_id,
                         text,
-                        meta={"kind": MessageKind.NARRATIVE},
+                        meta=reply_meta,
                     )
                 self._update_message_status(job.store, job.session_id, job.message_id, "completed")
 
@@ -299,8 +314,8 @@ class OllamaInferenceService:
                         "duration": duration,
                     },
                 )
-                # Chat and /narrate replies are mined; other slash tools never are (PAT-ARCH-012).
-                if name in (None, "narrate"):
+                # Only /narrate is mined (PAT-ARCH-012); side-chat and other tools are not.
+                if name == "narrate":
                     self._detect_mentions(job, reply_id, text)
             except Exception as exc:
                 logger.exception(

@@ -9,13 +9,14 @@ import logging
 
 import pytest
 
-from app.config import AppSettings, Settings
+from app.config import AppSettings
 from app.intelligence.prompt_builders import (
-    DM_ROLE_PROMPT,
+    SIDECHAT_ROLE_PROMPT,
     _truncate,
-    build_system_prompt,
+    build_sidechat_system_prompt,
     load_voice_configs,
 )
+from app.services.messages import submit_user_message
 from tests.session_helpers import AUTH, make_stub_service, wait_idle
 
 VOICE_LINE = (
@@ -24,7 +25,7 @@ VOICE_LINE = (
 
 
 def _expected_system() -> str:
-    return build_system_prompt(Settings().prompts, load_voice_configs())
+    return build_sidechat_system_prompt(load_voice_configs())
 
 
 def _recording_chat(svc, monkeypatch) -> list[list[dict]]:
@@ -88,8 +89,46 @@ def test_worker_sends_built_message_list(svc, session_store, monkeypatch):
     assert replies[0]["role"] == "assistant"
     assert replies[0]["content"] == "reply-1"
     assert replies[0]["status"] == "completed"
-    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "narrative"}
+    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "admin"}
     assert replies[0]["status"] == "completed"
+
+
+# SPEC-0023 W-1: a plain job is answered through the side-chat system message.
+def test_plain_job_uses_sidechat_system_message(svc, session_store, monkeypatch):
+    calls = _recording_chat(svc, monkeypatch)
+    session_store.create_session("s1")
+    session_store.create_message("s1", "u1", {"role": "user", "content": "hello"})
+
+    svc.enqueue(session_id="s1", message_id="u1", prompt="hello", store=session_store)
+    wait_idle(svc)
+
+    assert calls[0][0]["content"] == build_sidechat_system_prompt(load_voice_configs())
+    assert calls[0][-1] == {"role": "user", "content": "hello"}
+
+
+# SPEC-0023 W-6: admin side-chat turns from earlier are left out when narrative_only is on.
+def test_narrative_only_drops_earlier_sidechat_turns(svc, session_store, monkeypatch):
+    calls = _recording_chat(svc, monkeypatch)
+    session_store.create_session("s1")
+    submit_user_message(
+        store=session_store,
+        inference=svc,
+        session_id="s1",
+        payload={"content": "how do I grapple?"},
+    )
+    wait_idle(svc)
+    submit_user_message(
+        store=session_store,
+        inference=svc,
+        session_id="s1",
+        payload={"content": "where now?", "narrative_only": True},
+    )
+    wait_idle(svc)
+
+    assert calls[1] == [
+        {"role": "system", "content": _expected_system()},
+        {"role": "user", "content": "where now?"},
+    ]
 
 
 # T-24
@@ -214,8 +253,8 @@ def test_service_survives_empty_voice_config(make_svc, session_store, monkeypatc
 
     system = calls[0][0]["content"]
     assert calls[0][0]["role"] == "system"
-    assert DM_ROLE_PROMPT in system
-    assert VOICE_LINE in system
+    assert SIDECHAT_ROLE_PROMPT in system
+    assert VOICE_LINE not in system
     user = next(m for m in session_store.list_messages("s1") if m["id"] == "u1")
     assert user["status"] == "completed"
 

@@ -16,14 +16,14 @@ from types import SimpleNamespace
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import get_settings
+from app.config import Settings
 from app.factory import create_app
 from app.intelligence.monster_blocks import render_stat_block
 from app.intelligence.prompt_builders import (
-    NarratorVoiceParams,
     build_monster_prompt,
-    build_narrator_prompt,
     build_rules_prompt,
+    build_system_prompt,
+    load_voice_configs,
 )
 from app.intelligence.tools.monster import TRAINING_DISCLAIMER as MONSTER_TRAINING_DISCLAIMER
 from app.intelligence.tools.rules import TRAINING_DISCLAIMER
@@ -82,16 +82,9 @@ def _by_id(messages, message_id):
     return next(m for m in messages if m["id"] == message_id)
 
 
-def _narrate_prompt(text: str) -> str:
-    p = get_settings().prompts
-    params = NarratorVoiceParams(
-        tone=p.dm_voice.tone,
-        dm_persona=p.dm_voice.persona,
-        verbosity=p.verbosity_default,
-        sensory_focus=p.dm_voice.sensory_focus,
-        consequence_level=p.dm_voice.consequence_level,
-    )
-    return build_narrator_prompt(text, params, None)
+def _narrator_system() -> str:
+    """The narrator system message the worker builds for /narrate (SPEC-0023 WP-4)."""
+    return build_system_prompt(Settings().prompts, load_voice_configs())
 
 
 WS_URL = "/api/v1/ws/sessions/s1"
@@ -140,7 +133,7 @@ def test_worker_chat_holds_the_ollama_lock(svc, session_store, monkeypatch):
     replies = [m for m in session_store.list_messages("s1") if m["role"] == "assistant"]
     assert len(replies) == 1
     assert replies[0]["content"] == "worker reply"
-    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "narrative"}
+    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "admin"}
     assert svc._ollama_lock.locked() is False
 
 
@@ -256,7 +249,37 @@ def test_slash_narrate_runs_in_worker_without_deadlock(slash_env):
     assert user["status"] == "completed"
     assert reply["content"] == "stub reply"
     assert reply["meta"] == {"tool": "narrate", "reply_to": user["id"], "kind": "narrative"}
-    assert slash_env.chat_calls == [[{"role": "user", "content": _narrate_prompt("a storm")}]]
+    assert slash_env.chat_calls == [
+        [{"role": "system", "content": _narrator_system()}, {"role": "user", "content": "a storm"}]
+    ]
+
+
+# N-2 (SPEC-0023 WP-4): /narrate after an earlier completed turn sends that turn as history.
+def test_slash_narrate_after_completed_turn_sends_history(slash_env):
+    _post(slash_env, "hello")
+    wait_idle(slash_env.svc)
+    _post(slash_env, "/narrate a storm")
+    wait_idle(slash_env.svc)
+
+    assert slash_env.chat_calls[1] == [
+        {"role": "system", "content": _narrator_system()},
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "stub reply"},
+        {"role": "user", "content": "a storm"},
+    ]
+
+
+# N-4 (SPEC-0023 WP-4): empty /narrate keeps the usage error and never reaches the chat builder.
+@pytest.mark.parametrize("content", ["/narrate", "/narrate   "])
+def test_empty_narrate_is_usage_error_without_chat(slash_env, content):
+    _post(slash_env, content)
+    wait_idle(slash_env.svc)
+
+    msgs = slash_env.store.list_messages("s1")
+    assert len(msgs) == 1
+    assert msgs[0]["status"] == "error"
+    assert msgs[0]["meta"]["error"] == "Usage: /narrate <what happens>"
+    assert slash_env.chat_calls == []
 
 
 # T-39
@@ -282,7 +305,7 @@ def test_non_slash_messages_use_chat_path(slash_env):
         ]
         assert len(replies) == 1
         assert replies[0]["content"] == "stub reply"
-        assert replies[0]["meta"] == {"reply_to": msg_id, "kind": "narrative"}
+        assert replies[0]["meta"] == {"reply_to": msg_id, "kind": "admin"}
 
 
 # T-40
@@ -314,7 +337,7 @@ def test_without_tool_service_slash_goes_to_chat(plain_env):
     replies = [m for m in plain_env.store.list_messages("s1") if m["role"] == "assistant"]
     assert len(replies) == 1
     assert replies[0]["content"] == "stub reply"
-    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "narrative"}
+    assert replies[0]["meta"] == {"reply_to": "u1", "kind": "admin"}
 
 
 # T-40
@@ -401,7 +424,9 @@ def test_ws_slash_narrate_creates_tool_reply(slash_env):
     assert reply["content"] == "stub reply"
     assert reply["meta"] == {"tool": "narrate", "reply_to": user["id"], "kind": "narrative"}
     assert done == {"type": "done", "message_id": user["id"], "reply_id": reply["id"]}
-    assert slash_env.chat_calls == [[{"role": "user", "content": _narrate_prompt("a storm")}]]
+    assert slash_env.chat_calls == [
+        [{"role": "system", "content": _narrator_system()}, {"role": "user", "content": "a storm"}]
+    ]
 
 
 # T-36

@@ -12,6 +12,7 @@ import pytest
 from app.config import Settings
 from app.intelligence.prompt_builders import (
     build_character_section,
+    build_sidechat_system_prompt,
     build_system_prompt,
     load_voice_configs,
 )
@@ -37,7 +38,7 @@ ARIA = {
 
 
 def _expected_system() -> str:
-    return build_system_prompt(Settings().prompts, load_voice_configs())
+    return build_sidechat_system_prompt(load_voice_configs())
 
 
 def _catalog() -> dict:
@@ -176,6 +177,32 @@ def test_chat_reads_character_once_and_slash_never(monkeypatch):
         wait_idle(svc)
         assert store.character_reads == 1
         assert len(chat_calls) == 1
+    finally:
+        asyncio.run(svc.shutdown())
+        store.close()
+
+
+# N-3 (SPEC-0023 WP-4): /narrate with a character: the character section follows the narrator system.
+def test_narrate_with_character_appends_section(monkeypatch):
+    ts = ToolService(discover_on_init=True, default_context={})
+    svc = make_stub_service(tool_service=ts, species=load_species())
+    calls = _recording_chat(svc, monkeypatch)
+    store = SqliteSessionStore(":memory:")
+    try:
+        store.create_session("s1", character=ARIA)
+        store.create_message("s1", "u1", {"role": "user", "content": "/narrate a storm"})
+        svc.enqueue(session_id="s1", message_id="u1", prompt="/narrate a storm", store=store)
+        wait_idle(svc)
+
+        elf = _catalog()["elf"]
+        section = build_character_section(
+            ARIA, elf.name, elf.character_creation_implications, max_field_len=240
+        )
+        assert [m["role"] for m in calls[0]] == ["system", "user"]
+        assert calls[0][0]["content"] == (
+            build_system_prompt(Settings().prompts, load_voice_configs()) + "\n\n" + section
+        )
+        assert calls[0][1] == {"role": "user", "content": "a storm"}
     finally:
         asyncio.run(svc.shutdown())
         store.close()

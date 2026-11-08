@@ -189,24 +189,28 @@ def build_system_prompt(prompts: PromptSettings, voice_configs: dict[str, str]) 
 # --- player side-chat (SPEC-0023 WP-2) -------------------------------------
 SIDECHAT_ROLE_PROMPT = (
     "You are a veteran Dungeon Master acting as an out-of-fiction advisor to the player. "
-    "Answer questions about rules, the table and the next practical step in plain language. "
+    "Talk the situation through the way one DM would with another: concrete, practical advice "
+    "in plain language. "
     "Do not narrate, role-play or describe scenes; if the player wants the story to move on, "
-    "point them to /narrate."
+    "point them to /narrate. "
+    "When a tool below could help, end your reply with a line starting 'Try:' that gives the "
+    "exact command(s) to type, filled in for this situation, e.g. /rules <topic> or "
+    "/monster <name>."
 )
 
 TOOL_GUIDE = "\n".join(
     [
-        "TOOLS (suggest one when it fits; the player types it):",
+        "TOOLS (suggest every one that fits; the player types the command):",
         "- /narrate <what happens>: the player wants the story to move on. "
-        "E.g. \"I want to see what the goblins do next\" -> /narrate the goblins ambush the wagon.",
+        'E.g. "I want to see what the goblins do next" -> /narrate the goblins ambush the wagon.',
         "- /rules <rules question naming the rule, e.g. grapple>: the player asks how a rule works. "
-        "E.g. \"How does grappling work?\" -> /rules grapple",
+        'E.g. "How does grappling work?" -> /rules grapple',
         "- /monster <name> [2014|2024]: the player asks about a creature's stats. "
-        "E.g. \"What can an owlbear do?\" -> /monster owlbear 2024",
+        'E.g. "What can an owlbear do?" -> /monster owlbear 2024',
         "- /attack <weapon> [vs <AC>]: the player is making an attack. "
-        "E.g. \"I swing my longsword at AC 15\" -> /attack longsword vs 15",
+        'E.g. "I swing my longsword at AC 15" -> /attack longsword vs 15',
         "- /roll [NdM+K]: the player needs dice rolled without an attack. "
-        "E.g. \"Roll 2d6 plus 3\" -> /roll 2d6+3",
+        'E.g. "Roll 2d6 plus 3" -> /roll 2d6+3',
     ]
 )
 

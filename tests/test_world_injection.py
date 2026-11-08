@@ -12,7 +12,7 @@ import pytest
 from app.config import Settings, WorldSettings
 from app.intelligence.prompt_builders import (
     build_character_section,
-    build_system_prompt,
+    build_sidechat_system_prompt,
     build_world_section,
     load_voice_configs,
 )
@@ -37,7 +37,7 @@ ARIA = {
 
 
 def _baseline_system() -> str:
-    return build_system_prompt(Settings().prompts, load_voice_configs())
+    return build_sidechat_system_prompt(load_voice_configs())
 
 
 def _character_section() -> str:

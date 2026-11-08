@@ -94,7 +94,7 @@ def test_slash_and_chat_rows_and_replies_carry_kind(slash_env):
     replies = {m["meta"]["reply_to"]: m for m in msgs if m["role"] == "assistant"}
     assert replies[by_content["/rules x"]["id"]]["meta"]["kind"] == ADMIN
     assert replies[by_content["/narrate a storm"]["id"]]["meta"]["kind"] == NARRATIVE
-    assert replies[by_content["hello"]["id"]]["meta"]["kind"] == NARRATIVE
+    assert replies[by_content["hello"]["id"]]["meta"]["kind"] == ADMIN
     assert nope["id"] not in replies
 
 
