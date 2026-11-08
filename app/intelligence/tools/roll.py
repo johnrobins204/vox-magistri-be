@@ -4,20 +4,30 @@
 
 Grammar (case-insensitive; whitespace only between terms, around `+` and `-`):
     expr := term (('+'|'-') term)*
-    term := dice | INT | 'adv' | 'dis'
+    term := dice | INT | 'adv' | 'dis' | ABILITY
     dice := INT? 'd' INT (('kh'|'kl') INT)?
     INT  := [0-9]{1,4}
-`adv` is `2d20kh1`, `dis` is `2d20kl1`. Blank args mean `1d20`.
+    ABILITY := 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha'
+`adv` is `2d20kh1`, `dis` is `2d20kl1`. Blank args mean `1d20`. A bare ability
+word means `1d20+<ability>`. An ability term adds the session character's
+modifier and needs that character (REQ-0022, SPEC-0017).
 
 `evaluate` is pure apart from the injected rng, which is only ever asked for
 `rng.randint(1, sides)`. Syntax is checked for the whole expression before any
-bound, and bounds before any roll.
+bound, and bounds before any roll. `run` reads the character store only when
+the expression has an ability term, after those checks.
 """
 
 import random
 import re
 from typing import Any
 
+from app.intelligence.character_mods import (
+    ABILITIES,
+    NO_CHARACTER,
+    ability_modifiers,
+    require_character,
+)
 from app.intelligence.tools import ToolError
 
 NAME = "roll"
@@ -35,34 +45,68 @@ MAX_CONSTANT = 1000
 
 _USAGE = "Invalid dice expression. Usage: /roll [NdM[kh|klK]][+/-...] (e.g. 2d6+3, adv)"
 
+HELP = (
+    "Usage: /roll [NdM[kh|klK]][+/-...], e.g. 2d6+3 or 4d6kh3. "
+    "adv rolls 2d20 and keeps the higher, dis keeps the lower. "
+    "Ability words str, dex, con, int, wis, cha add that ability's modifier from "
+    "your session character, e.g. /roll 1d20+dex (a bare ability word rolls 1d20 plus it). "
+    "Ability terms need a character on this session."
+)
+
+_ABILITY_WORDS = tuple(name.lower() for name in ABILITIES)
+
 _TERM_RE = re.compile(
     r"(?:(?P<count>[0-9]{1,4})?d(?P<sides>[0-9]{1,4})(?:(?P<mode>kh|kl)(?P<keep>[0-9]{1,4}))?"
     r"|(?P<word>adv|dis)"
+    r"|(?P<ability>" + "|".join(_ABILITY_WORDS) + r")"
     r"|(?P<const>[0-9]{1,4}))"
 )
 
 
 def run(args: str, context: dict) -> dict[str, Any]:
+    if args.strip().lower() == "help":
+        return {"text": HELP, "meta": {"tool": NAME, "help": True}}
     rng = context.get("rng")
     if rng is None:
         rng = _DEFAULT_RNG
-    return evaluate(args, rng)
+    normalized, specs = _prepare(args)
+    mods = None
+    if any(spec["kind"] == "ability" for spec in specs):
+        mods = ability_modifiers(require_character(context))
+    return _roll(normalized, specs, rng, mods)
 
 
-def evaluate(expr: str, rng: Any) -> dict[str, Any]:
+def evaluate(expr: str, rng: Any, mods: dict[str, int] | None = None) -> dict[str, Any]:
+    normalized, specs = _prepare(expr)
+    return _roll(normalized, specs, rng, mods)
+
+
+def _prepare(expr: str) -> tuple[str, list[dict[str, Any]]]:
+    """Length and syntax/bound checks. Returns (normalized expression, parsed specs)."""
     text = expr.strip()
     if len(text) > MAX_EXPR_LENGTH:
         raise ToolError(f"Expression too long (max {MAX_EXPR_LENGTH} characters)")
     text = text.lower() or DEFAULT_EXPR
+    if text in _ABILITY_WORDS:
+        text = f"{DEFAULT_EXPR}+{text}"
     normalized = re.sub(r"\s+", "", text)
+    return normalized, _parse(text)
 
-    specs = _parse(text)
+
+def _roll(
+    normalized: str,
+    specs: list[dict[str, Any]],
+    rng: Any,
+    mods: dict[str, int] | None,
+) -> dict[str, Any]:
+    if mods is None and any(spec["kind"] == "ability" for spec in specs):
+        raise ToolError(NO_CHARACTER)
 
     pieces: list[str] = []
     term_metas: list[dict[str, Any]] = []
     total = 0
     for index, spec in enumerate(specs):
-        body, meta = _roll_term(spec, rng)
+        body, meta = _roll_term(spec, rng, mods or {})
         pieces.append(body if index == 0 else f" {spec['sign']} {body}")
         term_metas.append(meta)
         total += meta["value"] if spec["sign"] == "+" else -meta["value"]
@@ -113,6 +157,9 @@ def _check_term(sign: str, match: re.Match[str]) -> dict[str, Any]:
             "lowest": match.group("word") == "dis",
         }
 
+    if match.group("ability") is not None:
+        return {"kind": "ability", "sign": sign, "ability": match.group("ability").upper()}
+
     if match.group("sides") is None:
         value = int(match.group("const"))
         if value > MAX_CONSTANT:
@@ -143,8 +190,18 @@ def _check_term(sign: str, match: re.Match[str]) -> dict[str, Any]:
     }
 
 
-def _roll_term(spec: dict[str, Any], rng: Any) -> tuple[str, dict[str, Any]]:
+def _roll_term(spec: dict[str, Any], rng: Any, mods: dict[str, int]) -> tuple[str, dict[str, Any]]:
     """Roll one validated term. Returns (text fragment, meta dict with 'value')."""
+    if spec["kind"] == "ability":
+        name = spec["ability"]
+        modifier = mods.get(name, 0)
+        return f"{name}({modifier:+d})", {
+            "sign": spec["sign"],
+            "ability": name,
+            "modifier": modifier,
+            "value": modifier,
+        }
+
     if spec["kind"] == "const":
         value = spec["value"]
         return str(value), {

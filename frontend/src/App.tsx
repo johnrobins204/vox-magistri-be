@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createSession, getIntelStatus, listMessages, updateMessage } from './lib/api'
+import { createSession, getIntelStatus, getWeapons, listMessages, updateMessage } from './lib/api'
 import { openSessionSocket, type SessionSocket } from './lib/ws'
 import { isCanon } from './lib/corrections'
 import { CharacterCreator } from './components/CharacterCreator'
@@ -13,7 +13,7 @@ import { SceneBar } from './components/SceneBar'
 import { loadActiveId, loadRoster, removeCharacter, resolveActive, saveActiveId, saveRoster, sendableHero, upsertCharacter } from './lib/roster'
 import type { Character } from './lib/character'
 import type { MenuAction } from './components/Menu'
-import type { Message, WsEvent } from './types'
+import type { Message, WsEvent, Weapon } from './types'
 
 const SESSION_STORAGE_KEY = 'vox.session_id'
 
@@ -46,14 +46,31 @@ function App() {
   const [creatorOpen, setCreatorOpen] = useState<boolean>(false)
   const [roster, setRoster] = useState<Character[]>(() => loadRoster())
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(() => loadActiveId())
+  const [weapons, setWeapons] = useState<Weapon[]>([])
   const socketRef = useRef<SessionSocket | null>(null)
 
   const character = resolveActive(roster, activeCharacterId)
+  const hasCharacter = sendableHero(roster, activeCharacterId) !== null
 
   const canSend = useMemo(
     () => socketStatus === 'open' && draft.trim().length > 0 && !isSending,
     [socketStatus, draft, isSending],
   )
+
+  // Weapon picker source: loaded once; on failure the tray simply shows no picker.
+  useEffect(() => {
+    let mounted = true
+    getWeapons()
+      .then((list) => {
+        if (mounted) setWeapons(list)
+      })
+      .catch(() => {
+        // Keep []: the dice tray works without the picker.
+      })
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // Bootstrap: intel status, then restore the stored session or create a new one.
   useEffect(() => {
@@ -177,6 +194,13 @@ function App() {
   const rollDice = useCallback(
     (expression: string) => {
       sendText(`/roll ${expression}`)
+    },
+    [sendText],
+  )
+
+  const attack = useCallback(
+    (name: string, ac: number | null) => {
+      sendText(ac === null ? `/attack ${name}` : `/attack ${name} vs ${ac}`)
     },
     [sendText],
   )
@@ -307,7 +331,13 @@ function App() {
           />
         </section>
 
-        <DiceTray onRoll={rollDice} disabled={socketStatus !== 'open' || isSending} />
+        <DiceTray
+          onRoll={rollDice}
+          disabled={socketStatus !== 'open' || isSending}
+          weapons={weapons}
+          hasCharacter={hasCharacter}
+          onAttack={attack}
+        />
       </div>
 
       {errorText ? <p className="error-banner">{errorText}</p> : null}

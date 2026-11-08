@@ -684,6 +684,42 @@ button.ghost:hover:enabled {
   border-color: var(--brass);
 }
 
+.attack-roll {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.attack-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+}
+
+.attack-row {
+  display: grid;
+  grid-template-columns: 1fr 4.2rem auto;
+  gap: 0.5rem;
+}
+
+.attack-row select,
+.attack-row input {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  min-width: 0;
+}
+
+.attack-row select:focus,
+.attack-row input:focus {
+  outline: none;
+  border-color: var(--brass);
+}
+
 /* ---------- Composer ---------- */
 
 .composer {

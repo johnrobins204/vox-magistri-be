@@ -530,16 +530,16 @@
     {
       "id": "REQ-0022",
       "title": "The dice are mine: /roll and /attack use the session character's modifiers (slice 4)",
-      "status": "backlog",
+      "status": "completed",
       "created_at": "2026-11-01",
       "updated_at": "2026-11-07",
       "adr_id": null,
-      "spec_path": null,
+      "spec_path": "docs/specs/SPEC-0017-character-aware-dice.md",
       "tasks": [
         "[COMPLETE] Restate requirement",
-        "[PENDING] Architecture review",
-        "[PENDING] Spec drafting",
-        "[PENDING] Implementation"
+        "[COMPLETE] Architecture review: not needed (fast path; no ADR trigger fires, checked by the Spec Writer)",
+        "[COMPLETE] Spec drafting: SPEC-0017 (WP-1..WP-5)",
+        "[COMPLETE] Implementation (SPEC-0017 WP-1..WP-5): gate green (634 passed, ruff, black); frontend build ok; code review no blocking findings; T-5.2 manual smoke logged as follow-up"
       ],
       "follow_ups": [
         "NORTH STAR slice 4 of 4. HARD DEPENDENCY on REQ-0020: the tool reads the character from the session.",
@@ -549,7 +549,17 @@
         "Contract: .github/instructions/tools.instructions.md and PAT-ARCH-004. No ADR expected.",
         "Frontend weapon picker in the dice tray is a separate small WP.",
         "Size sketch: attack tool M; weapon lookup S; ability heuristic S; frontend picker M; e2e test M. Rough LOC: backend 100-150, frontend 50-80, tests 60-100.",
-        "2026-11-07 priorities assessment (owner-approved): PRIORITY 2. Small, independent, low risk; can run while REQ-0026 awaits ADR acceptance. Unblocks REQ-0032 (initiative tracker)."
+        "2026-11-07 priorities assessment (owner-approved): PRIORITY 2. Small, independent, low risk; can run while REQ-0026 awaits ADR acceptance. Unblocks REQ-0032 (initiative tracker).",
+        "T-5.2 manual browser smoke of the weapon picker (character: list and Attack sends /attack; no character: Attack disabled; weapons request failing: no picker) and a live Ollama-free chat check of /roll 1d20+dex and /attack longsword vs 15 through the UI are still owed. No JS test runner exists.",
+        "Decide: keep or remove the extra damage_expression meta key on /attack and the frontend AC guard (Attack button disabled unless AC is empty or an integer 1..40). Both are unspecified additions.",
+        "/attack replies render as plain text, not roll cards: the frontend renders cards only for meta.tool == roll. Decide whether /attack gets a card.",
+        "Proficiency and spell attacks remain out of scope (stated in /attack help). Future REQ if wanted.",
+        "REQ-0032 (initiative tracker) is unblocked: it can roll initiative with /roll 1d20+dex.",
+        "MAJOR (review, spec-silent): the session character is fixed at creation. Editing the active hero with the same id updates the roster only, so /roll and /attack keep stale abilities. Decide: sync the session character on hero edit, start a new tale on ability edits, or state it in help or UI.",
+        "Minor (review): attack.py helpers _catalog, _lookup and _check_damage use bare list and untyped weapon parameters; type them list[Weapon] and Weapon.",
+        "Minor test gaps (review): AC boundaries 1 and 40 untested; third_party and id tie-breaks in attack.py _lookup untested; _DEFAULT_RNG fallback untested.",
+        "Minor (review, spec-silent): character_mods.require_character raises AttributeError if the store object lacks get_character, instead of ToolError. Low risk; real stores always have it.",
+        ".github/instructions/tools.instructions.md line 6 says tools never touch the store, which reads oddly beside the added read-only line 9. Reword line 6 in a doc follow-up; the spec allowed only one added line."
       ]
     },
     {

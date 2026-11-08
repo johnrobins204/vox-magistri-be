@@ -54,6 +54,16 @@ def test_single_discovery_path():
     assert "narrate" in registry_names
 
 
+# SPEC-0017 T-4.1
+def test_discovery_registers_attack_and_registry_matches_service():
+    tools = ToolService(discover_on_init=True).list_tools()
+
+    assert tools["attack"] == "app.intelligence.tools.attack"
+    registry_names = set(get_registry(refresh=True))
+    assert registry_names == set(ToolService(discover_on_init=True).list_tools())
+    assert "attack" in registry_names
+
+
 def test_invoke_passes_string_args_and_merged_context():
     sentinel = object()
     seen = {}

@@ -6,6 +6,8 @@ import type {
   SessionCreateResp,
   Species,
   SpeciesListResp,
+  Weapon,
+  WeaponListResp,
 } from '../types'
 
 function authHeaders(): HeadersInit {
@@ -84,4 +86,11 @@ export async function getSpecies(): Promise<Species[]> {
   const response = await fetch(url)
   const body = await parseJson<SpeciesListResp>(response)
   return body.species
+}
+
+export async function getWeapons(): Promise<Weapon[]> {
+  const url = `${getApiBaseUrl()}/api/v1/reference/weapons`
+  const response = await fetch(url)
+  const body = await parseJson<WeaponListResp>(response)
+  return body.weapons
 }

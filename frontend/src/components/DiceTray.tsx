@@ -1,18 +1,41 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { Weapon } from '../types'
 
 interface DiceTrayProps {
   onRoll: (expression: string) => void
   disabled: boolean
+  weapons?: Weapon[]
+  hasCharacter?: boolean
+  onAttack?: (name: string, ac: number | null) => void
 }
 
 const DICE = [4, 6, 8, 10, 12, 20, 100]
+const NO_WEAPONS: Weapon[] = []
 
-export function DiceTray({ onRoll, disabled }: DiceTrayProps) {
+export function DiceTray({
+  onRoll,
+  disabled,
+  weapons = NO_WEAPONS,
+  hasCharacter = false,
+  onAttack = () => {},
+}: DiceTrayProps) {
   const [count, setCount] = useState(1)
   const [modifier, setModifier] = useState(0)
   const [custom, setCustom] = useState('')
+  const [weapon, setWeapon] = useState('')
+  const [targetAc, setTargetAc] = useState('')
 
   const modSuffix = modifier === 0 ? '' : modifier > 0 ? `+${modifier}` : `${modifier}`
+
+  const weaponNames = useMemo(
+    () => [...new Set(weapons.map((w) => w.name))].sort((a, b) => a.localeCompare(b)),
+    [weapons],
+  )
+
+  // Empty AC means no `vs`; otherwise it must be a whole number 1-40.
+  const acTrimmed = targetAc.trim()
+  const acValue = acTrimmed === '' ? null : Number(acTrimmed)
+  const acValid = acValue === null || (Number.isInteger(acValue) && acValue >= 1 && acValue <= 40)
 
   const rollDie = (sides: number) => {
     onRoll(`${count}d${sides}${modSuffix}`)
@@ -24,6 +47,10 @@ export function DiceTray({ onRoll, disabled }: DiceTrayProps) {
       onRoll(expr)
       setCustom('')
     }
+  }
+
+  const attackWithWeapon = () => {
+    onAttack(weapon, acValue)
   }
 
   return (
@@ -97,6 +124,46 @@ export function DiceTray({ onRoll, disabled }: DiceTrayProps) {
           Roll
         </button>
       </div>
+
+      {weapons.length > 0 ? (
+        <div className="attack-roll">
+          <span className="attack-label">Attack</span>
+          <div className="attack-row">
+            <select
+              value={weapon}
+              onChange={(event) => setWeapon(event.target.value)}
+              disabled={disabled}
+              aria-label="Weapon"
+            >
+              <option value="">Weapon</option>
+              {weaponNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min={1}
+              max={40}
+              step={1}
+              value={targetAc}
+              onChange={(event) => setTargetAc(event.target.value)}
+              placeholder="AC"
+              aria-label="Target AC"
+              disabled={disabled}
+            />
+            <button
+              type="button"
+              onClick={attackWithWeapon}
+              disabled={disabled || !hasCharacter || !weapon || !acValid}
+              title={hasCharacter ? 'Attack with the selected weapon' : 'Needs a character'}
+            >
+              Attack
+            </button>
+          </div>
+        </div>
+      ) : null}
     </aside>
   )
 }
