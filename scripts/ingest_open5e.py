@@ -34,6 +34,7 @@ DEFAULT_DOCUMENTS = [SRD_2014, SRD_2024]
 
 DOCUMENT_ALLOWLIST: dict[str, list[str]] = {
     "conditions": DEFAULT_DOCUMENTS,
+    "creatures": DEFAULT_DOCUMENTS,
     "rules": DEFAULT_DOCUMENTS,
     "weapons": DEFAULT_DOCUMENTS,
 }
@@ -75,8 +76,43 @@ PROJECTION: dict[str, tuple[str, ...]] = {
         "is_simple",
         "is_improvised",
     ),
+    "creatures": (
+        "id",
+        "name",
+        "edition",
+        "source",
+        "publisher",
+        "third_party",
+        "source_key",
+        "size",
+        "type",
+        "alignment",
+        "armor_class",
+        "armor_detail",
+        "hit_points",
+        "hit_dice",
+        "speed",
+        "ability_scores",
+        "saving_throws",
+        "skill_bonuses",
+        "damage_vulnerabilities",
+        "damage_resistances",
+        "damage_immunities",
+        "condition_immunities",
+        "passive_perception",
+        "senses",
+        "languages",
+        "cr",
+        "experience_points",
+        "traits",
+        "actions",
+        "bonus_actions",
+        "reactions",
+        "legendary_actions",
+    ),
 }
 CONSUMERS: dict[str, str] = {
+    "creatures": "/monster tool (REQ-0031)",
     "rules": "/rules tool (REQ-0024)",
     "weapons": "GET /api/v1/reference/weapons",
 }
@@ -115,7 +151,89 @@ def _weapon_fields(raw: dict) -> dict:
     }
 
 
-_DATASET_FIELDS: dict[str, Callable[[dict], dict]] = {"weapons": _weapon_fields}
+_SPEED_FIELDS = ("walk", "burrow", "climb", "fly", "swim")
+_SENSE_FIELDS = ("blindsight", "darkvision", "tremorsense", "truesight")
+_ACTION_LISTS = {
+    "ACTION": "actions",
+    "BONUS_ACTION": "bonus_actions",
+    "REACTION": "reactions",
+    "LEGENDARY_ACTION": "legendary_actions",
+}
+
+
+def _usage_label(limits: dict) -> str:
+    kind, param = limits["type"], limits["param"]
+    if kind == "PER_DAY":
+        return f"{param}/Day"
+    if kind == "RECHARGE_ON_ROLL":
+        return f"Recharge {param}" if param >= 6 else f"Recharge {param}-6"
+    return f"{kind.replace('_', ' ').title()} {param}"
+
+
+def _action_item(raw: dict) -> dict:
+    item: dict = {"name": raw["name"], "desc": raw["desc"]}
+    if raw.get("usage_limits") is not None:
+        item["usage"] = _usage_label(raw["usage_limits"])
+    if raw["action_type"] == "LEGENDARY_ACTION" and raw.get("legendary_action_cost") is not None:
+        item["cost"] = raw["legendary_action_cost"]
+    return item
+
+
+def _action_lists(actions: list[dict]) -> dict[str, list[dict]]:
+    lists: dict[str, list[dict]] = {field: [] for field in _ACTION_LISTS.values()}
+    # order_in_statblock is null on some upstream actions; those sort after the ordered ones.
+    ordered = sorted(
+        actions,
+        key=lambda a: (a["order_in_statblock"] is None, a["order_in_statblock"] or 0),
+    )
+    for action in ordered:
+        field = _ACTION_LISTS.get(action["action_type"])
+        if field is None:
+            raise ValueError(f"unknown action_type {action['action_type']!r} on {action['name']!r}")
+        lists[field].append(_action_item(action))
+    return lists
+
+
+def _non_null(values: dict) -> dict:
+    return {k: v for k, v in values.items() if v is not None}
+
+
+def _positive_ints(values: dict, keys: tuple[str, ...]) -> dict:
+    return {k: values[k] for k in keys if type(values.get(k)) is int and values[k] > 0}
+
+
+def _creature_fields(raw: dict) -> dict:
+    resist = raw["resistances_and_immunities"]
+    return {
+        "size": raw["size"]["name"],
+        "type": raw["type"]["name"],
+        "alignment": raw["alignment"] or "",
+        "armor_class": raw["armor_class"],
+        "armor_detail": raw["armor_detail"] or "",
+        "hit_points": raw["hit_points"],
+        "hit_dice": raw["hit_dice"] or "",
+        "speed": _positive_ints(raw["speed"], _SPEED_FIELDS),
+        "ability_scores": dict(raw["ability_scores"]),
+        "saving_throws": _non_null(raw["saving_throws"]),
+        "skill_bonuses": _non_null(raw["skill_bonuses"]),
+        "damage_vulnerabilities": resist["damage_vulnerabilities_display"] or "",
+        "damage_resistances": resist["damage_resistances_display"] or "",
+        "damage_immunities": resist["damage_immunities_display"] or "",
+        "condition_immunities": resist["condition_immunities_display"] or "",
+        "passive_perception": raw["passive_perception"],
+        "senses": _non_null({s: raw[f"{s}_range"] for s in _SENSE_FIELDS}),
+        "languages": raw["languages"]["as_string"] or "",
+        "cr": float(raw["challenge_rating"]),
+        "experience_points": raw["experience_points"],
+        "traits": [{"name": t["name"], "desc": t["desc"]} for t in raw["traits"]],
+        **_action_lists(raw["actions"]),
+    }
+
+
+_DATASET_FIELDS: dict[str, Callable[[dict], dict]] = {
+    "creatures": _creature_fields,
+    "weapons": _weapon_fields,
+}
 
 
 def _flatten(raw: dict, dataset: str) -> dict:
@@ -359,6 +477,27 @@ def measure(
     }
 
 
+def measure_projection(dataset: str, entries: list[dict]) -> dict:
+    """Size a dataset's projection for each SRD allowlist without writing anything (SPEC-0018).
+
+    Both SRDs are used when their projection fits MAX_BYTES, otherwise 2024 only.
+    """
+
+    def measure_for(allowlist: list[str]) -> dict:
+        records = build_records(dataset, entries, allowlist=allowlist)
+        return {"entries": len(records), "bytes": len(render(records).encode("utf-8"))}
+
+    both = measure_for(DEFAULT_DOCUMENTS)
+    fits = both["bytes"] <= MAX_BYTES
+    return {
+        "both": both,
+        SRD_2014: measure_for([SRD_2014]),
+        SRD_2024: measure_for([SRD_2024]),
+        "fits_both": fits,
+        "allowlist": list(DEFAULT_DOCUMENTS) if fits else [SRD_2024],
+    }
+
+
 def _load_reserved(out_path: Path) -> dict[str, str]:
     """source_key -> id from the previously committed file, so those ids never move."""
     if not out_path.exists():
@@ -480,6 +619,13 @@ def ingest(
 
 
 def main() -> None:
+    if sys.argv[1:2] == ["--measure"]:
+        if len(sys.argv) != 3:
+            raise SystemExit("usage: python -m scripts.ingest_open5e --measure <dataset>")
+        dataset = sys.argv[2]
+        entries = json.loads((SNAPSHOT_DIR / f"{dataset}.json").read_text(encoding="utf-8"))
+        print(json.dumps(measure_projection(dataset, entries), indent=2))
+        return
     if not (SNAPSHOT_DIR / DOCUMENTS_FILE).exists():
         raise SystemExit(f"missing dnd_data/{DOCUMENTS_FILE}; run python -m scripts.sync_open5e")
     datasets = sys.argv[1:] or sorted(CONSUMERS)

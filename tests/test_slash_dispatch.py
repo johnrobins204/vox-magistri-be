@@ -18,16 +18,20 @@ from fastapi.testclient import TestClient
 
 from app.config import get_settings
 from app.factory import create_app
+from app.intelligence.monster_blocks import render_stat_block
 from app.intelligence.prompt_builders import (
     NarratorVoiceParams,
+    build_monster_prompt,
     build_narrator_prompt,
     build_rules_prompt,
 )
+from app.intelligence.tools.monster import TRAINING_DISCLAIMER as MONSTER_TRAINING_DISCLAIMER
 from app.intelligence.tools.rules import TRAINING_DISCLAIMER
 from app.reference.rules import Rule
 from app.services.build_services import build_services
 from app.services.repos import SqliteSessionStore, make_default_repos
 from app.services.tool_service import ToolService
+from tests.creature_fixtures import make_creature
 from tests.session_helpers import AUTH, make_stub_service, wait_idle
 
 JOIN_TIMEOUT = 5.0
@@ -517,3 +521,49 @@ def test_rules_slash_with_catalog_answers_from_rules(slash_env):
     }
     assert len(slash_env.chat_calls) == 1
     assert rule.description in slash_env.chat_calls[0][-1]["content"]
+
+
+# SPEC-0018 T-29: /monster on a catalog hit renders the stat block; no LLM call.
+def test_monster_slash_hit_renders_stat_block_without_llm(slash_env):
+    goblin = make_creature("Goblin", "5.5e", id="goblin")
+    slash_env.ts.default_context["reference"] = {"creatures": [goblin]}
+    _post(slash_env, "/monster goblin")
+    wait_idle(slash_env.svc)
+
+    msgs = slash_env.store.list_messages("s1")
+    assert [m["role"] for m in msgs] == ["user", "assistant"]
+    user, reply = msgs
+    assert user["status"] == "completed"
+    assert reply["content"] == render_stat_block(goblin)
+    assert reply["meta"] == {
+        "tool": "monster",
+        "source": "creatures",
+        "creature_ids": ["goblin"],
+        "reply_to": user["id"],
+    }
+    assert slash_env.chat_calls == []
+
+
+# SPEC-0018 T-30: /monster on a true miss answers from training, flagged; a near miss is an error.
+def test_monster_slash_miss_answers_from_training_and_typo_is_error(slash_env):
+    goblin = make_creature("Goblin", "5.5e", id="goblin")
+    slash_env.ts.default_context["reference"] = {"creatures": [goblin]}
+
+    _post(slash_env, "/monster Zorbax")
+    wait_idle(slash_env.svc)
+
+    msgs = slash_env.store.list_messages("s1")
+    assert [m["role"] for m in msgs] == ["user", "assistant"]
+    user, reply = msgs
+    assert user["status"] == "completed"
+    assert reply["content"] == "stub reply\n\n" + MONSTER_TRAINING_DISCLAIMER
+    assert reply["meta"]["source"] == "training"
+    assert slash_env.chat_calls == [[{"role": "user", "content": build_monster_prompt("Zorbax")}]]
+
+    _post(slash_env, "/monster gobln")
+    wait_idle(slash_env.svc)
+
+    typo_user = slash_env.store.list_messages("s1")[-1]
+    assert typo_user["role"] == "user"
+    assert typo_user["status"] == "error"
+    assert len(slash_env.chat_calls) == 1

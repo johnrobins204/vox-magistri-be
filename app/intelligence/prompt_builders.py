@@ -315,6 +315,27 @@ def build_rules_prompt(question: str, excerpts: Sequence[Mapping[str, str | None
     return "\n\n".join([excerpts_block, text_question, RULES_DIRECTIVES_GROUNDED])
 
 
+# --- monster training lookup (SPEC-0018 WP-7) ------------------------------
+MONSTER_DIRECTIVES_TRAINING = "\n".join(
+    [
+        "DIRECTIVES:",
+        "- Give a D&D 5e stat block for the monster above, in plain text, from your general "
+        "knowledge: AC, HP, speed, ability scores, skills, senses, languages, CR, and its traits, "
+        "actions, reactions and legendary actions where it has them.",
+        "- If you do not know this monster, say so plainly instead of inventing a stat block.",
+        "- Do not narrate, role-play or describe the scene.",
+    ]
+)
+
+
+def build_monster_prompt(name: str) -> str:
+    """
+    One-shot monster training prompt: the monster name, then the training directives.
+    No narrator voice. Pure: no I/O, no logging, no mutation of the input.
+    """
+    return f"MONSTER: {name.strip()}\n\n" + MONSTER_DIRECTIVES_TRAINING
+
+
 # --- world notes (SPEC-0015 WP-4) ------------------------------------------
 _WORLD_STOPWORDS = frozenset(
     {

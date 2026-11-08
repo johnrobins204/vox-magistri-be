@@ -23,10 +23,12 @@ prompt (the PAT-ARCH-003 carve-out). Decided in
 
 It does not apply to:
 - the chat pipeline (PAT-ARCH-003 rules 1-5);
-- structured lookups that need no LLM, such as `/attack` reading weapon stats (REQ-0022).
+- structured lookups that need no LLM, such as `/attack` reading weapon stats (REQ-0022);
+- the rendering of a matched entry by a tool that prints it with code (PAT-ARCH-011, ADR-0012):
+  such a tool applies only rules 1 and 4-7, to its training fallback.
 
-There is one call site so far. Do not extract shared code until a second grounded tool exists
-(constraints.md 2).
+There is one call site of the keyword selector so far. Do not extract shared code until a
+second tool uses the keyword selector (constraints.md 2).
 
 ## Solution
 1. **Read the in-memory catalog only.** Use `context.get("reference", {}).get("<dataset>")`.

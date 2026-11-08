@@ -19,6 +19,7 @@ from app.reference.rules import Rule
 from app.services.build_services import build_services
 from app.services.repos import make_default_repos
 from app.services.tool_service import ToolService, UnknownToolError
+from tests.creature_fixtures import make_creature
 
 
 def test_discovery_registers_narrate():
@@ -509,3 +510,29 @@ def test_invoke_drops_client_reference_and_uses_server_catalog():
     assert result["text"] == "Provoked."
     assert len(fake.prompts) == 1
     assert rule.description in fake.prompts[0]
+
+
+# SPEC-0018 T-27
+def test_discovery_registers_monster_and_registry_matches_service():
+    tools = ToolService(discover_on_init=True).list_tools()
+
+    assert tools["monster"] == "app.intelligence.tools.monster"
+    registry_names = set(get_registry(refresh=True))
+    assert registry_names == set(ToolService().list_tools())
+    assert {"roll", "narrate", "rules", "monster"} <= registry_names
+
+
+# SPEC-0018 T-28
+def test_invoke_monster_drops_client_reference_and_uses_server_catalog():
+    goblin = make_creature("Goblin", "5.5e", id="goblin")
+    fake = FakeInference()
+    svc = ToolService(
+        default_context={"inference": fake, "reference": {"creatures": [goblin]}},
+        discover_on_init=True,
+    )
+
+    # The client's empty catalog is untrusted; the server catalog must answer the lookup.
+    result = svc.invoke("monster", "goblin", client_context={"reference": {"creatures": []}})
+
+    assert result["meta"]["creature_ids"] == ["goblin"]
+    assert fake.prompts == []

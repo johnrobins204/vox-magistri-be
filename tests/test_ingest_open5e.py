@@ -216,7 +216,7 @@ def test_t19_failed_budget_writes_nothing(tmp_path, monkeypatch):
 
 
 def test_t20_dataset_without_consumer_is_rejected(tmp_path):
-    snapshot = _write_snapshot(tmp_path / "snap", "creatures", [])
+    snapshot = _write_snapshot(tmp_path / "snap", "no_such_dataset", [])
 
     with pytest.raises(ValueError):
-        ingest_open5e.ingest("creatures", snapshot, tmp_path / "creatures.json")
+        ingest_open5e.ingest("no_such_dataset", snapshot, tmp_path / "out.json")
