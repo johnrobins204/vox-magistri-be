@@ -188,6 +188,29 @@ def test_openapi_world_routes(client):
             assert set(schema["enum"]) == {m.value for m in enum}, (model, name)
 
 
+# T-06 (SPEC-0019 WP-2)
+def test_entity_resp_exposes_evidence_read_only(session_store):
+    app = create_app(services={"session": session_store, "world": session_store})
+    evidence = {"source": "reply", "message_id": "m1", "snippet": "Rusty Anchor"}
+    with TestClient(app) as c:
+        api_id = _create(c, name="Aldric")["id"]
+        stored_id = session_store.create_entity(name="Rusty Anchor", evidence=evidence)["id"]
+
+        assert c.get(f"{ENTITIES}/{api_id}", headers=AUTH).json()["evidence"] is None
+        assert c.get(f"{ENTITIES}/{stored_id}", headers=AUTH).json()["evidence"] == evidence
+        listed = c.get(ENTITIES, headers=AUTH).json()["entities"]
+        assert {e["id"]: e["evidence"] for e in listed} == {api_id: None, stored_id: evidence}
+
+        assert c.post(ENTITIES, json={"name": "A", "evidence": {}}, headers=AUTH).status_code == 422
+        url = f"{ENTITIES}/{api_id}"
+        assert c.patch(url, json={"evidence": {}}, headers=AUTH).status_code == 422
+
+        spec = c.get("/openapi.json").json()["components"]["schemas"]
+    assert "evidence" in spec["WorldEntityResp"]["properties"]
+    assert "evidence" not in spec["WorldEntityCreateReq"]["properties"]
+    assert "evidence" not in spec["WorldEntityPatchReq"]["properties"]
+
+
 def test_world_store_missing(session_store):
     app = create_app(services={"session": session_store})
     with TestClient(app) as c:

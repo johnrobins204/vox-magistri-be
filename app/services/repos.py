@@ -29,6 +29,7 @@ _MIGRATIONS: list[tuple[int, str, str | None, str]] = [
         "updated_at TEXT NOT NULL)",
     ),
     (4, "messages", "canon", "ALTER TABLE messages ADD COLUMN canon INTEGER DEFAULT 1"),
+    (5, "world_entities", "evidence", "ALTER TABLE world_entities ADD COLUMN evidence TEXT"),
 ]
 
 
@@ -64,13 +65,14 @@ def _entity_from_row(row: sqlite3.Row) -> dict[str, Any]:
         "aliases": json.loads(row["aliases"]),
         "notes": row["notes"],
         "status": row["status"],
+        "evidence": None if row["evidence"] is None else json.loads(row["evidence"]),
         "created_at": _parse_ts(row["created_at"]),
         "updated_at": _parse_ts(row["updated_at"]),
     }
 
 
 # Operator-editable fields of a world entity (SPEC-0015). id/session_id/timestamps are not.
-_ENTITY_EDITABLE = frozenset({"name", "kind", "aliases", "notes", "status"})
+_ENTITY_EDITABLE = frozenset({"name", "kind", "aliases", "notes", "status", "evidence"})
 
 
 class SqliteSessionStore:
@@ -347,9 +349,11 @@ class SqliteSessionStore:
         notes: str = "",
         status: str = "canon",
         session_id: str | None = None,
+        evidence: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         entity_id = str(uuid4())
         aliases_text = json.dumps(aliases or [])
+        evidence_text = None if evidence is None else json.dumps(evidence)
         now = _now()
         with self._lock:
             with self._conn:
@@ -361,7 +365,8 @@ class SqliteSessionStore:
                         raise KeyError(session_id)
                 self._conn.execute(
                     "INSERT INTO world_entities (id, session_id, kind, name, aliases, notes, "
-                    "status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "status, evidence, created_at, updated_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         entity_id,
                         session_id,
@@ -370,6 +375,7 @@ class SqliteSessionStore:
                         aliases_text,
                         notes,
                         str(status),
+                        evidence_text,
                         now.isoformat(),
                         now.isoformat(),
                     ),
@@ -382,6 +388,7 @@ class SqliteSessionStore:
             "aliases": json.loads(aliases_text),
             "notes": notes,
             "status": str(status),
+            "evidence": None if evidence_text is None else json.loads(evidence_text),
             "created_at": now,
             "updated_at": now,
         }
@@ -433,6 +440,10 @@ class SqliteSessionStore:
             values["kind"] = str(values["kind"])
         if "status" in values:
             values["status"] = str(values["status"])
+        if "evidence" in values:
+            values["evidence"] = (
+                None if values["evidence"] is None else json.dumps(values["evidence"])
+            )
         values["updated_at"] = _now().isoformat()
         assignments = ", ".join(f"{column} = ?" for column in values)
         with self._lock:

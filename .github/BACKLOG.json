@@ -689,22 +689,39 @@
     {
       "id": "REQ-0028",
       "title": "World memory, slice B: mention detection after each reply and an approval queue for new entities",
-      "status": "backlog",
+      "status": "completed",
       "created_at": "2026-11-07",
       "updated_at": "2026-11-07",
-      "adr_id": null,
-      "spec_path": null,
+      "adr_id": "ADR-0013",
+      "spec_path": "docs/specs/SPEC-0019-world-mention-detection.md",
       "tasks": [
         "[COMPLETE] Restate requirement",
-        "[PENDING] Architecture review",
-        "[PENDING] Spec drafting",
-        "[PENDING] Implementation"
+        "[COMPLETE] Architecture review: ADR-0013 (accepted: worker hook after completion, evidence column v5), PAT-ARCH-012 (accepted)",
+        "[COMPLETE] Spec drafting: SPEC-0019 (WP-1..WP-7)",
+        "[COMPLETE] Implementation: SPEC-0019 WP-1..WP-7 done; reviewer gaps M1 (bare comma/colon counted as sentence start) and m1 (closing single quote read as possessive) fixed with regression tests; gate pytest 913 passed, ruff and black clean; v2->v5 verified on a COPY of dnd.db (rows preserved, evidence NULL; dnd.db hash unchanged; backup dnd.pre-req0028.db)",
+        "[PENDING] Playtest gate M-1: human labels detect_replay output; default-on stays only if real >= 50% and <= 1.5 candidates per reply"
       ],
       "follow_ups": [
         "Depends on REQ-0026 (entity store with the canon/pending/rejected vocabulary, so no destructive migration) and SHOULD follow the operator-controls item so non-canon messages are never mined.",
         "Design intent (owner, 2026-11-07): the DM generates content, low-latency post-processing extracts nouns and key details, classifies them to an existing entity, and puts new entities in a persistence approval queue so the world is built on the fly. This slice does the deterministic half: alias-matching to existing entities and capitalised-phrase candidates.",
         "Risk: false-positive candidates (sentence-initial words, common nouns). Spec needs a stoplist and a playtest checkpoint.",
-        "Replaces the manual-only world flow from REQ-0026; absorbs the NPC and quest tracker request."
+        "Replaces the manual-only world flow from REQ-0026; absorbs the NPC and quest tracker request.",
+        "2026-11-07 sign-off: /narrate replies ARE mined (ADR D1 and PAT-ARCH-012 rule 3 amended); new candidates campaign-wide (session_id NULL); playtest gate before default-on: >=50% real candidates and <=1.5 per reply on a COPY of dnd.db, otherwise tune stoplist/cap first (SPEC-0019 WP-7, manual item M-1).",
+        "Replay dry run (23 replies, 12 candidates, mean 0.52, max 3; orchestrator labels about 9 of 12 real). Likely false positives: 'Owner' from a quoted sign; 'Paws' fragment of 'Paws & Claws' (ampersand joiner); 'Cozy Cottage' marginal.",
+        "make_stub_service has no mention_stoplist parameter; T-36 builds the service directly. Add the kwarg to the test helper.",
+        "Pending rows are not dropped when their source reply is later marked non-canon or revised. Operator decides.",
+        "mine_reply reads list_entities(session_id), which excludes other sessions' scoped rows (single-session today). A rejected row scoped to another session can be re-proposed (reviewer m2). Fix before multi-session.",
+        "OPEN GAP (blocks COMPLETE): _sentence_start in app/intelligence/world_mentions.py treats any capitalised word after an unquoted comma or colon as sentence-initial. Spec rule 5 allows only an opening quote after , or :. Under-proposes single-word names, e.g. 'The inn, Marta said.' Fix and add an unquoted-comma regression case in tests/test_world_mentions.py.",
+        "OPEN GAP (blocks COMPLETE): the trailing-apostrophe lookahead in _WORD (world_mentions.py) admits a closing single quote: 'Harl' The Captain' yields candidate \"Harl' The Captain\". Require s before the apostrophe, update spec rule 2, add a regression case.",
+        "JsonFormatter drops record extras, so world.detected counts never reach the log sink. Already logged on REQ-0031; see there.",
+        "No frontend for the queue yet: REQ-0029 (list status=pending, PATCH to canon or rejected) and a pending count in the snapshot or a WS event.",
+        "detect_replay prints pydantic deprecation warnings to stderr.",
+        "detect_replay: a corrupt meta JSON raises ValueError instead of returning 2 (reviewer NIT, scripts/detect_replay.py).",
+        "Detector cost is O(runs x stoplist) on the single worker thread. Precompute contiguous sub-tuples; no timing test yet (reviewer m3).",
+        "SPEC-0019 T-18 example (11 title words) cannot yield a candidate under the 4-word run limit. Fix the spec wording; tests already use 2-word runs.",
+        "Manual smoke with live Ollama is still owed: a chat reply and a /narrate reply create pending rows visible at GET /api/v1/world/entities?status=pending.",
+        "Pre-merge checks not yet run by the orchestrator (execute policy). Human to run on a COPY of dnd.db: upgrade to schema v5 with rows kept and evidence NULL; dnd.db sha256 still 6ca160511b1745ee...; python -m scripts.detect_replay <copy> and record the M-1 labels.",
+        "M-1 input (orchestrator labelling, not the human's): replay on a copy of dnd.db: 23 replies, 13 candidates, mean 0.57/reply, about 9 of 12 earlier candidates real (Phandolin, Elara, Waterdeep, Street of Lanterns, Avenue of the Faun, Sweet Haven, Harpers' Haven...); likely false: 'Owner', 'Paws' (ampersand joiner), 'Cozy Cottage' marginal. Human still to confirm before relying on default-on (world.detect_mentions is currently true in settings.json)."
       ]
     },
     {

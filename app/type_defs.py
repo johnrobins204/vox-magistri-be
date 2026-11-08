@@ -29,6 +29,7 @@ class WorldStore(Protocol):
         notes: str = "",
         status: str = "canon",
         session_id: str | None = None,
+        evidence: dict[str, Any] | None = None,
     ) -> dict[str, Any]: ...
     def get_entity(self, entity_id: str) -> dict[str, Any]: ...
     def list_entities(

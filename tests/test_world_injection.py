@@ -136,7 +136,11 @@ def test_scope(make_svc, session_store, monkeypatch):
 def test_budget_zero_skips(make_svc, monkeypatch):
     store = _SpyWorldStore(":memory:")
     ts = ToolService(discover_on_init=True, default_context={})
-    svc = make_svc(tool_service=ts, world_store=store, world=WorldSettings(entity_budget_chars=0))
+    svc = make_svc(
+        tool_service=ts,
+        world_store=store,
+        world=WorldSettings(entity_budget_chars=0, detect_mentions=False),
+    )
     ts.default_context["inference"] = svc
     calls = _recording_chat(svc, monkeypatch)
     try:

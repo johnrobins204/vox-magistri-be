@@ -265,7 +265,7 @@ def test_schema_created_on_open(tmp_path):
     finally:
         raw.close()
     assert {"sessions", "messages"} <= tables
-    assert version == 4
+    assert version == 5
 
     reopened = SqliteSessionStore(path)
     try:

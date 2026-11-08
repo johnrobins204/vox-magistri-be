@@ -82,10 +82,10 @@ Sensitivity: B beats C while Coverage is weighted Medium or higher (94 vs 92 at 
 ## Consequences
 - Positive: instant, exact blocks; offline tests (literal entries, stubbed `generate`); attribution already in place (F4).
 - Negative: two reply paths; about 1 MB more in git; hand-written formatting.
-- Risks: size unmeasured until WP-1; a loose typo cutoff sends homebrew names to "Did you mean"; the 5.5e default may surprise a 2014 table (filter token).
+- Risks: size was unmeasured when decided; WP-1 measured both SRDs at 1,452,161 B (656 entries), under the 2 MB cap, so both ship. A loose typo cutoff sends homebrew names to "Did you mean"; the 5.5e default may surprise a 2014 table (filter token).
 
 ## Pattern Impact
 - Uses PAT-ARCH-004, 006, 007 unchanged, and PAT-ARCH-003's one-shot builder carve-out.
 - **Creates PAT-ARCH-011** (accepted 2026-11-07): structured reference lookup tools.
-- **PAT-ARCH-009 (accepted), amendment signed off 2026-11-07 and applied:** (a) Context: a tool that renders a matched entry deterministically (PAT-ARCH-011) applies only rules 1, 5, 6 and 7, to its training fallback; (b) "no shared code until a second grounded tool" became "until a second tool uses the keyword selector".
+- **PAT-ARCH-009 (accepted), amendment signed off 2026-11-07 and applied:** (a) Context: a tool that renders a matched entry deterministically (PAT-ARCH-011) applies only rules 1 and 4-7, to its training fallback; (b) "no shared code until a second grounded tool" became "until a second tool uses the keyword selector".
 - **REQ-0031 wording, signed off 2026-11-07 and applied in the LOG:** "selected deterministically within a settings-held chars budget" became "looked up deterministically by name and rendered without an LLM, with a flagged training fallback only when no SRD name matches".

@@ -10,6 +10,7 @@ from app.reference.species import load_species
 from app.reference.weapons import WEAPONS_PATH, Weapon
 from app.services.inference_service import OllamaInferenceService
 from app.services.tool_service import ToolService
+from app.services.world_mining import catalog_stoplist
 
 
 def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) -> dict[str, Any]:
@@ -44,6 +45,7 @@ def build_services(repos: dict[str, Any], enable_tool_discovery: bool = True) ->
         tool_service=tool_service,
         species=reference["species"],
         world_store=world_store,
+        mention_stoplist=catalog_stoplist(reference),
     )
     tool_service.default_context["inference"] = inference
     tool_service.default_context["reference"] = reference

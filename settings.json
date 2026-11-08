@@ -43,7 +43,9 @@
   "world": {
     "enable_world_guidance": true,     
     "default_modes": ["Clarify", "Expand", "Connect", "Challenge"],
-    "entity_budget_chars": 1500
+    "entity_budget_chars": 1500,
+    "detect_mentions": true,
+    "max_candidates_per_reply": 3
   },
 
   "database": {

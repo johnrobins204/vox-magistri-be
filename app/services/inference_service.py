@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from queue import Empty, Full, Queue
 from typing import Any
@@ -22,6 +23,7 @@ from app.intelligence.tool_handler import detect_tool
 from app.reference.species import Species
 from app.services.logger import get_logger
 from app.services.messages import find_reply
+from app.services.world_mining import mine_reply
 
 logger = get_logger(__name__)
 MAX_QUEUE_SIZE = 20
@@ -55,6 +57,7 @@ class OllamaInferenceService:
         tool_service=None,
         species: list[Species] | None = None,
         world_store=None,
+        mention_stoplist: Iterable[str] | None = None,
     ):
         # settings must provide ollama.base_url and ollama.model
         self.client = OllamaClient(
@@ -75,6 +78,10 @@ class OllamaInferenceService:
         # Canon world entities for the narrator (SPEC-0015 WP-6); None or budget 0 disables it.
         self._world_store = world_store
         self._world_budget: int = settings.world.entity_budget_chars
+        # Post-reply mention detection (SPEC-0019 WP-5): switch, candidate cap, stop list.
+        self._detect: bool = settings.world.detect_mentions
+        self._max_candidates: int = settings.world.max_candidates_per_reply
+        self._mention_stoplist: frozenset[str] = frozenset(mention_stoplist or ())
 
         # Job queue and worker control
         self._queue: Queue[InferenceJob] = Queue(maxsize=MAX_QUEUE_SIZE)
@@ -218,11 +225,12 @@ class OllamaInferenceService:
                             "message_id": job.message_id,
                         },
                     )
-                    self._append_reply(
+                    text = result["text"]
+                    reply_id = self._append_reply(
                         job.store,
                         job.session_id,
                         job.message_id,
-                        result["text"],
+                        text,
                         meta={**result["meta"], "tool": name},
                     )
                 else:
@@ -265,7 +273,7 @@ class OllamaInferenceService:
                         text = self.client.chat(messages)
 
                     # Append the reply as a new assistant message; the user message is untouched
-                    self._append_reply(job.store, job.session_id, job.message_id, text)
+                    reply_id = self._append_reply(job.store, job.session_id, job.message_id, text)
                 self._update_message_status(job.store, job.session_id, job.message_id, "completed")
 
                 duration = time.time() - start
@@ -280,6 +288,9 @@ class OllamaInferenceService:
                         "duration": duration,
                     },
                 )
+                # Chat and /narrate replies are mined; other slash tools never are (PAT-ARCH-012).
+                if name in (None, "narrate"):
+                    self._detect_mentions(job, reply_id, text)
             except Exception as exc:
                 logger.exception(
                     "job.failed",
@@ -330,6 +341,48 @@ class OllamaInferenceService:
             },
         )
         return messages
+
+    def _detect_mentions(self, job: InferenceJob, reply_id: str, text: str) -> None:
+        """Mine a finished reply into pending world rows (SPEC-0019 WP-5). Fail-soft: never raises
+        and never changes a message status. Counts only in logs (PAT-ARCH-012 rule 6)."""
+        if self._world_store is None or not self._detect:
+            return
+        started = time.perf_counter()
+        try:
+            reply = job.store.get_message(job.session_id, reply_id)
+            if reply is None or not reply["canon"]:
+                return
+            character = job.store.get_character(job.session_id)
+            stoplist = set(self._mention_stoplist)
+            if character is not None and character.get("name"):
+                stoplist.add(character["name"])
+            counts = mine_reply(
+                self._world_store,
+                session_id=job.session_id,
+                reply_id=reply_id,
+                text=text,
+                stoplist=stoplist,
+                max_candidates=self._max_candidates,
+            )
+            logger.info(
+                "world.detected",
+                extra={
+                    "session_id": job.session_id,
+                    "message_id": job.message_id,
+                    "reply_id": reply_id,
+                    **counts,
+                    "duration_ms": int((time.perf_counter() - started) * 1000),
+                },
+            )
+        except Exception as exc:
+            logger.warning(
+                "world.detect_failed",
+                extra={
+                    "session_id": job.session_id,
+                    "message_id": job.message_id,
+                    "error": str(exc),
+                },
+            )
 
     # ------------------------------------------------------------
     # Store helpers (best-effort, no strict schema assumptions)

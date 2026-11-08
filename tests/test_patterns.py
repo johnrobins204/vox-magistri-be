@@ -95,6 +95,23 @@ def test_pat_arch_003_prompt_builders_are_pure():
     assert not _importers([APP / "intelligence" / "prompt_builders.py"], banned)
 
 
+WORLD_MENTIONS = APP / "intelligence" / "world_mentions.py"
+
+
+def test_pat_arch_012_world_mention_detector_is_pure():
+    # Vacuous until REQ-0028 creates the module (ADR-0013 fixes this path).
+    banned = (
+        "sqlite3",
+        "httpx",
+        "requests",
+        "app.services",
+        "app.intelligence.client",
+        "app.deps",
+    )
+    files = [WORLD_MENTIONS] if WORLD_MENTIONS.exists() else []
+    assert not _importers(files, banned)
+
+
 def _tool_modules():
     return [p for p in sorted(TOOLS.glob("*.py")) if not p.name.startswith("_")]
 

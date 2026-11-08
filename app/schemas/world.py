@@ -1,6 +1,6 @@
 # app/schemas/world.py
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import (
     AfterValidator,
@@ -68,6 +68,8 @@ class WorldEntityResp(BaseModel):
     aliases: list[str]
     notes: str
     status: EntityStatus
+    # Read-only: set by the mention worker, never accepted from create/patch bodies.
+    evidence: dict[str, Any] | None = None
     created_at: UtcDatetime
     updated_at: UtcDatetime
 

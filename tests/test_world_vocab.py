@@ -30,6 +30,19 @@ def test_world_settings_budget():
     assert defaults.default_modes == ["Clarify", "Expand", "Connect", "Challenge"]
 
 
+# T-05
+def test_detection_settings_defaults():
+    defaults = WorldSettings()
+    assert defaults.detect_mentions is True
+    assert defaults.max_candidates_per_reply == 3
+    assert WorldSettings(max_candidates_per_reply=0).max_candidates_per_reply == 0
+    with pytest.raises(pydantic.ValidationError):
+        WorldSettings(max_candidates_per_reply=-1)
+    data = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))
+    assert data["world"]["detect_mentions"] is True
+    assert data["world"]["max_candidates_per_reply"] == 3
+
+
 # T-03
 def test_settings_json_world_budget():
     data = json.loads((ROOT / "settings.json").read_text(encoding="utf-8"))

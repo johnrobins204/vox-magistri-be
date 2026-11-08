@@ -3,6 +3,8 @@
 Stores are ":memory:" or a file under tmp_path; every store is closed.
 """
 
+import sqlite3
+from contextlib import closing
 from datetime import timedelta
 
 import pytest
@@ -17,6 +19,7 @@ ENTITY_KEYS = {
     "aliases",
     "notes",
     "status",
+    "evidence",
     "created_at",
     "updated_at",
 }
@@ -126,6 +129,41 @@ def test_list_order_updated_desc_then_id_asc(store):
         assert earlier["updated_at"] >= later["updated_at"]
         if earlier["updated_at"] == later["updated_at"]:
             assert earlier["id"] < later["id"]
+
+
+def test_entity_evidence_round_trip(tmp_path):
+    path = str(tmp_path / "evidence.db")
+    evidence = {"source": "reply", "message_id": "m1", "snippet": "Rusty Anchor"}
+    first = SqliteSessionStore(path)
+    try:
+        created = first.create_entity(name="Rusty Anchor", evidence=evidence)
+        plain = first.create_entity(name="Plain")
+        assert created["evidence"] == evidence
+        assert plain["evidence"] is None
+        assert first.get_entity(created["id"]) == created
+
+        updated = first.update_entity(created["id"], {"evidence": {"source": "edit"}})
+        assert updated["evidence"] == {"source": "edit"}
+        assert updated["updated_at"] > created["updated_at"]
+        assert first.get_entity(created["id"])["evidence"] == {"source": "edit"}
+
+        first.update_entity(created["id"], {"evidence": evidence})
+    finally:
+        first.close()
+
+    second = SqliteSessionStore(path)
+    try:
+        assert second.get_entity(created["id"])["evidence"] == evidence
+        assert second.get_entity(plain["id"])["evidence"] is None
+        second.update_entity(created["id"], {"evidence": None})
+        assert second.get_entity(created["id"])["evidence"] is None
+    finally:
+        second.close()
+
+    with closing(sqlite3.connect(path)) as conn:
+        assert conn.execute(
+            "SELECT evidence FROM world_entities WHERE id = ?", (created["id"],)
+        ).fetchone() == (None,)
 
 
 def test_delete_and_persistence(tmp_path):

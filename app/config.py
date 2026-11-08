@@ -76,6 +76,9 @@ class WorldSettings(BaseModel):
     )
     # Counts only the canon entity text placed in the narrator prompt. 0 = no entity injection.
     entity_budget_chars: int = Field(default=1500, ge=0)
+    detect_mentions: bool = Field(default=True)
+    # Caps proposed (pending) entities per reply. 0 = propose nothing.
+    max_candidates_per_reply: int = Field(default=3, ge=0)
 
 
 class DatabaseSettings(BaseModel):
