@@ -847,9 +847,14 @@
         "[COMPLETE] Restate requirement",
         "[COMPLETE] Architecture review",
         "[COMPLETE] Spec drafting",
-        "[PENDING] Implementation"
+        "[IN_PROGRESS] Implementation"
       ],
-      "follow_ups": []
+      "follow_ups": [
+        "Defect (SPEC-0020 WP-6, T-23): Composer.tsx dismissedFor is not cleared when the draft changes, so after Escape, deleting the draft and retyping the same \"/\" keeps the picker closed. T-23 says it stays closed only until the draft text changes. Clear dismissedFor on any draft change.",
+        "Robustness (SPEC-0020 WP-6): Composer.tsx select(matches[activeIndex]) can receive undefined in the render between a query change and the reset effect. Guard the lookup or reset activeIndex in the change handler.",
+        "Spec drift: SPEC-0020 WP-5 names App.css; the picker styles live in index.css (imported by main.tsx). Correct the spec.",
+        "Manual browser checklist (SPEC-0020 T-15..T-26 interaction rows) not automated: frontend has no test runner. npm run build passes. Walk the checklist with the backend running."
+      ]
     },
     {
       "id": "REQ-0035",
@@ -863,14 +868,19 @@
         "[COMPLETE] Restate requirement",
         "[COMPLETE] Architecture review",
         "[COMPLETE] Spec drafting",
-        "[PENDING] Implementation"
+        "[IN_PROGRESS] Implementation"
       ],
-      "follow_ups": []
+      "follow_ups": [
+        "Test gap (SPEC-0021 WP-2 acceptance): no test that replaying the same client_message_id with narrative_only true stores and enqueues nothing. Add it to tests/test_message_kind.py. Code path (messages.py submit_user_message) reads correct.",
+        "Spec drift: SPEC-0021 WP-1, WP-3 mining guard and T-1, T-3, T-4, T-20 still say plain chat is narrative. SPEC-0023 WP-1/WP-3 (ADR-0017) made plain chat admin and mining narrate-only. Amend SPEC-0021 with a supersession note or correct the criteria.",
+        "Hygiene: hasTool is duplicated in DiaryModal.tsx and NarrativeLog.tsx (move to lib/kind.ts). NarrativeLog.tsx has a line of 111 chars (project limit 100). Spec drift: SPEC-0021 WP-4/WP-5 name App.css; styles live in index.css.",
+        "Manual browser checklist (SPEC-0021 M-1..M-10, walked in WP-6) not automated: frontend has no test runner. npm run build passes. Walk the checklist with the backend running."
+      ]
     },
     {
       "id": "REQ-0036",
       "title": "Bounding-box animation for previously identified entities in chat",
-      "status": "in_progress",
+      "status": "completed",
       "created_at": "2026-11-08",
       "updated_at": "2026-11-08",
       "adr_id": "ADR-0016",
@@ -879,9 +889,12 @@
         "[COMPLETE] Restate requirement",
         "[COMPLETE] Architecture review",
         "[COMPLETE] Spec drafting",
-        "[PENDING] Implementation"
+        "[COMPLETE] Implementation"
       ],
-      "follow_ups": []
+      "follow_ups": [
+        "Manual browser checklist (SPEC-0022 T1.1, T3.x, T4.x visual rows) not automated: frontend has no test runner. npm run build passes. Walk the checklist with the backend running.",
+        "Parity note: the server casefolds text before tokenising (world_mentions.py) while the client matches raw text with the i flag. Non-ASCII folding characters (e.g. U+017F, U+212A) can be marked client-side but not mined server-side. Align, or record the divergence in the mentions.ts mirror comment."
+      ]
     },
     {
       "id": "REQ-0037",
@@ -895,9 +908,16 @@
         "[COMPLETE] Restate requirement",
         "[COMPLETE] Architecture review",
         "[COMPLETE] Spec drafting",
-        "[PENDING] Implementation"
+        "[IN_PROGRESS] Implementation"
       ],
-      "follow_ups": []
+      "follow_ups": [
+        "Owner decision needed (SPEC-0023 WP-5): NarrativeLog.tsx counts any user row with no tool reply as a turn start. A failed or pending /roll, /rules, /monster or /attack has no reply (worker error path sets status error only), so it shifts the six-turn collapse. WP-5 says other tool commands never start turns. Fix with a server tool signal on the user row, or amend WP-5.",
+        "Test gap (SPEC-0023 WP-4 acceptance): tests/test_slash_dispatch.py does not assert that generate is not called for a worker /narrate. Add the assertion.",
+        "Known follow-up: add a dedicated regenerate test for a /narrate row (reply revised in place via the same path).",
+        "Test gap (SPEC-0023 WP-2, never raises): tests/test_sidechat_prompt.py has no case for a non-Mapping voice_configs (e.g. None).",
+        "Confirm intended: with tool_service None, /narrate with args falls into the side-chat branch (admin, unmined). SPEC-0023 is silent. Add a test if intended. Also tool.dispatch is no longer logged for /narrate with args (inference_service.py slash branch).",
+        "Manual browser checklist (SPEC-0023 F-1, F-2 and M rows) not automated: frontend has no test runner. npm run build passes. Walk the checklist with the backend running."
+      ]
     }
   ]
 }

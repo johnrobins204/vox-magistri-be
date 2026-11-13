@@ -1,4 +1,3 @@
-# reference/rules.py
 """Rules model for the open5e `rules` dataset (SPEC-0014 WP-2; ADR-0009, PAT-ARCH-006)."""
 
 from pathlib import Path
@@ -20,3 +19,6 @@ class Rule(BaseModel):
     third_party: bool
     source_key: str
     description: str
+
+    # NEW FIELD: Holds the cached embedding array for vector search
+    vector: list[float] = Field(default_factory=list)

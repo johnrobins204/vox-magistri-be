@@ -1,4 +1,3 @@
-# intelligence/tools/rules.py
 """
 `/rules` tool (SPEC-0014 WP-2 and WP-7; ADR-0009, PAT-ARCH-009).
 
@@ -8,13 +7,17 @@ builds the rules consult prompt and makes exactly one `generate` call. It never 
 store, never writes messages, and logs counts only.
 """
 
+import asyncio
+import inspect
 import re
 from collections.abc import Sequence
 from typing import Any
 
 from app.config import get_settings
+from app.intelligence.embeddings import cosine_similarity
 from app.intelligence.prompt_builders import build_rules_prompt
 from app.intelligence.tools import ToolError
+from app.intelligence.tools.query_expansion import expand_query_for_5e
 from app.reference.rules import Rule
 from app.services.logger import get_logger
 
@@ -61,26 +64,65 @@ def _name_key(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", name.lower()).strip()
 
 
-def select_rules(question: str, rules: Sequence[Rule], budget_chars: int) -> list[Rule]:
-    """Return the relevant rules to place in the prompt, or [] for training mode.
 
-    Ranks by name-weighted keyword score, keeps one entry per rule name, and packs whole
-    descriptions in rank order within `budget_chars`. Never truncates. If the top-ranked
-    entry does not fit, returns [].
+def select_rules(question: str, rules: Sequence[Rule], budget_chars: int, query_vector: list[float] | None = None) -> list[Rule]:
+    """
+    Hybrid Retrieval: Merges Lexical (keyword) and Semantic (vector) scores.
+    Matches the Min-Max normalization and weighted merge from the C# architecture.
     """
     q = _tokens(question)
     if not q or not rules or budget_chars <= 0:
         return []
 
-    scored: list[tuple[int, Rule]] = []
+    # --- 1. Calculate Raw Scores ---
+    raw_results = []
     for rule in rules:
+        # Lexical (Keyword) Scoring
         name_tokens = _tokens(rule.name)
         name_hits = len(q & name_tokens)
         text_hits = len((q - name_tokens) & _tokens(rule.description))
-        score = NAME_WEIGHT * name_hits + TEXT_WEIGHT * text_hits
-        if score >= MIN_SCORE:
-            scored.append((score, rule))
+        lexical_score = float(NAME_WEIGHT * name_hits + TEXT_WEIGHT * text_hits)
 
+        # Semantic (Vector) Scoring
+        vector_score = 0.0
+        if query_vector and rule.vector:
+            vector_score = cosine_similarity(query_vector, rule.vector)
+
+        raw_results.append({"rule": rule, "lexical": lexical_score, "vector": vector_score})
+
+    # --- 2. Min-Max Normalization (Matches C# `vecRange` logic) ---
+    lex_max = max(r["lexical"] for r in raw_results) if raw_results else 0
+    lex_min = min(r["lexical"] for r in raw_results) if raw_results else 0
+    lex_range = lex_max - lex_min
+
+    vec_max = max(r["vector"] for r in raw_results) if raw_results else 0
+    vec_min = min(r["vector"] for r in raw_results) if raw_results else 0
+    vec_range = vec_max - vec_min
+
+    scored = []
+    for r in raw_results:
+        # Normalize to 0.0 - 1.0
+        norm_lex = (
+            (r["lexical"] - lex_min) / lex_range
+            if lex_range > 0
+            else (1.0 if r["lexical"] > 0 else 0.0)
+        )
+        norm_vec = (
+            (r["vector"] - vec_min) / vec_range
+            if vec_range > 0
+            else (1.0 if r["vector"] > 0 else 0.0)
+        )
+
+        # Merge Weights: 40% Keyword, 60% Vector (Adjustable)
+        hybrid_score = (norm_lex * 0.4) + (norm_vec * 0.6)
+
+        # Apply the equivalent of your MIN_SCORE threshold against the hybrid scale
+        # (Assuming 0.3 out of 1.0 is a decent baseline relevance)
+        if hybrid_score >= 0.3 or r["lexical"] >= MIN_SCORE:
+            scored.append((hybrid_score, r["rule"]))
+
+    # --- 3. Sort, Deduplicate, and Pack ---
+    # Sort by hybrid score, then edition rank
     scored.sort(
         key=lambda item: (-item[0], _EDITION_RANK.get(item[1].edition, 2), item[1].id),
     )
@@ -107,6 +149,7 @@ def select_rules(question: str, rules: Sequence[Rule], budget_chars: int) -> lis
             continue
         chosen.append(rule)
         used += size
+
     return chosen
 
 
@@ -120,7 +163,33 @@ def run(args: str, context: dict) -> dict[str, Any]:
     catalog = catalog or []
 
     budget = get_settings().prompts.rules_budget_chars
-    chosen = select_rules(question, catalog, budget)
+
+    # ---------------------------------------------------------
+    # NEW QUERY EXPANSION LOGIC
+    # ---------------------------------------------------------
+    try:
+        inference_service = context.get("inference")
+        ollama_client = getattr(inference_service, "client", None)
+        
+        if inference_service and ollama_client:
+            # Call expand_query_for_5e using the project's client
+            expanded_terms = asyncio.run(expand_query_for_5e(question, client=ollama_client))
+        else:
+            expanded_terms = []
+            
+        if expanded_terms:
+            logger.info(f"Expanded /rules query with terms: {expanded_terms}")
+            combined_question = question + " " + " ".join(expanded_terms)
+        else:
+            combined_question = question
+    except Exception as e:
+        logger.error(f"Query expansion failed, using original query: {e}")
+        combined_question = question
+    # ---------------------------------------------------------
+
+    # Pass the combined question string into the pure select_rules function
+    chosen = select_rules(combined_question, catalog, budget)
+
     excerpts = [{"name": r.name, "edition": r.edition, "text": r.description} for r in chosen]
     prompt = build_rules_prompt(question, excerpts)
     reply = context["inference"].generate(prompt)
